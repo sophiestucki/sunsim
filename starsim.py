@@ -65,6 +65,7 @@ class StarSim(object):
             self.ccf_rv_range= float(self.conf_file.get('rv','ccf_rv_range'))*1000 #in m/s
             self.ccf_rv_step= float(self.conf_file.get('rv','ccf_rv_step'))*1000 #in m/s
             self.kind_interp = 'cubic'#str(self.conf_file.get('rv','ccf_interpolation_spectra'))
+            self.instrument_ccf = str(self.conf_file.get('rv','instrument'))
             #limb-darkening
             self.use_phoenix_limb_darkening = int(self.conf_file.get('LD','use_phoenix_limb_darkening'))
             self.limb_darkening_law = str(self.conf_file.get('LD','limb_darkening_law'))
@@ -514,8 +515,12 @@ class StarSim(object):
                     ccf_fc_g = spectra.compute_immaculate_facula_rv(self,Ngrid_in_ring,acd,amu,pare,flpk_rv,rv_fc,rv,ccf_fc,flxph,rvel, wv_rv_LR)
                     #ccf_fc_g = spectra.compute_immaculate_facula_rv(self,Ngrid_in_ring,acd,amu,pare,flfc_rv,rv_fc,rv,ccf_fc,flxph,rvel)
 
+                    if self.instrument_ccf != 'None':#tocheck
+                        ccf_ph_tot_new = spectra.add_resol(rv, ccf_ph_tot, self.instrument_ccf)
+                    else:
+                        ccf_ph_tot_new = ccf_ph_tot
 
-                    RV0, C0, F0, B0,_,_ =spectra.compute_ccf_params(self,rv,[ccf_ph_tot],plot_test=False) #compute 0 point of immaculate photosphere
+                    RV0, C0, F0, B0,_,_ =spectra.compute_ccf_params(self,rv,[ccf_ph_tot_new],plot_test=False) #compute 0 point of immaculate photosphere
 
                     #integrate the ccfs with doppler shifts at each time stamp
                     CCF,ff_ph,ff_sp,ff_fc,ff_pl, vec_pos=spectra.generate_rotating_photosphere_rv_sdo(self,Ngrid_in_ring,pare,amu,rs,rv,ccf_ph_tot,ccf_ph_g,ccf_sp_g,ccf_fc_g, inversion) 
@@ -529,6 +534,9 @@ class StarSim(object):
                     sys.exit("Planet transit not available with SDO input")
                 else:
                     rvkepler = 0.0
+
+                if self.instrument_ccf != 'None':#tocheck
+                    CCF = spectra.add_resol(rv, CCF, self.instrument_ccf)
 
                 ccf_params=spectra.compute_ccf_params(self,rv,CCF,plot_test=False)
 
@@ -839,9 +847,14 @@ class StarSim(object):
                             ccf_fc_g = spectra.compute_immaculate_facula_rv(self,Ngrid_in_ring,acd,amu,pare,flpk_rv,rv_fc,rv,ccf_fc,flxph,rvel, wv_rv_LR)
                         elif self.spectral_library == 'mps':
                             ccf_fc_g = spectra.compute_immaculate_facula_rv(self,Ngrid_in_ring,acd,amu,pare,flfc_rv,rv_fc,rv,ccf_fc,flxph,rvel, wv_rv_LR)
+                    
+                    self.results['ccf_quiet'] = ccf_ph_tot
 
-
-                    RV0, C0, F0, B0,_,_ =spectra.compute_ccf_params(self,rv,[ccf_ph_tot],plot_test=False) #compute 0 point of immaculate photosphere
+                    if self.instrument_ccf != 'None':#tocheck
+                        ccf_ph_tot_new = spectra.add_resol(rv, ccf_ph_tot, self.instrument_ccf)
+                    else:
+                        ccf_ph_tot_new = ccf_ph_tot
+                    RV0, C0, F0, B0,_,_ =spectra.compute_ccf_params(self,rv,[ccf_ph_tot_new],plot_test=False) #compute 0 point of immaculate photosphere
 
                     #integrate the ccfs with doppler shifts at each time stamp
                     t,CCF,ff_ph,ff_sp,ff_fc,ff_pl, vec_pos=spectra.generate_rotating_photosphere_rv(self,Ngrid_in_ring,pare,amu,rv,ccf_ph_tot,ccf_ph_g,ccf_sp_g,ccf_fc_g,vec_grid,inversion,plot_map=self.plot_grid_map) 
@@ -855,6 +868,11 @@ class StarSim(object):
                     rvkepler = spectra.keplerian_orbit(t,[self.planet_period,self.planet_semi_amplitude,self.planet_esinw,self.planet_ecosw,self.planet_transit_t0])
                 else:
                     rvkepler = 0.0
+
+                if self.instrument_ccf != 'None':#tocheck
+                    for i in range(len(CCF)):
+                        CCF[i] = spectra.add_resol(rv, CCF[i], self.instrument_ccf)
+
 
                 ccf_params=spectra.compute_ccf_params(self,rv,CCF,plot_test=False)
                 self.results['time']=self.obs_times

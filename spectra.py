@@ -12,6 +12,8 @@ import pickle
 import os
 import shutil
 from configparser import ConfigParser
+from astropy.convolution import convolve_fft 
+
 
 
 
@@ -2014,3 +2016,104 @@ def generate_prior(flag,p1,p2,nw): #generate initial sample from priors
         prior=np.exp(np.random.normal(p1,p2,nw))
 
     return prior
+
+########################################################################################
+########################################################################################
+#                              INSTRUMENTAL   FUNCTIONS                                  #
+########################################################################################
+########################################################################################
+# 2-CLAUSE BSD LICENCE
+#Copyright 2025 Hugo Tabernero 
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
+
+# This code is based on the SteParSyn convolution functions published along with Tabernero et al. (2022) (see convsyn.py at https://github.com/hmtabernero/SteParSyn/ )
+
+
+def vlambda(inlamb,vstep):
+    #Resampler for convolution.
+    # Short explanation: Second Clarke's Law
+    # Long explanation: you need to resample stuff in a convinient spacing before convolving.
+    xw2=max(inlamb)-0.1
+    xw1=min(inlamb)+0.1
+    iw1=np.where(inlamb > xw1)
+    iw2=np.where(inlamb > xw2)
+    iw1=iw1[0]
+    iw2=iw2[0]
+    w1=inlamb[iw1[0]+1]
+    w2=inlamb[iw2[0]-1]
+
+    npix=np.int64((iw2[0]-1)-(iw1[0]+1)*vstep)
+    wmid=np.sqrt(w1*w2)
+    dwave=(np.log10(w2)-np.log10(w1))/(npix-1.)
+    vwavel=np.log10(wmid)-(dwave*np.arange(np.int64(npix/2.)))
+    vwaveu=np.log10(wmid)+(dwave*np.arange(np.int64(npix/2.)))
+    vwavel=10.**vwavel[1:len(vwavel)-1]
+    vwavel=np.sort(vwavel)
+    vwaveu=10.**vwaveu[1:len(vwaveu)-1]
+    vwave=np.concatenate((vwavel,[wmid],vwaveu))
+
+    return vwave
+
+def add_resol(rv, ccf, instrument):
+#"""
+  # This function is mostly based on the SteParSyn broadener (Tabernero et al. 2022) 
+  # SteParsyn is under the two-clause BSD licence, I added a disclaimer to take this into account
+  # Input is wavelength in A, and flux in any unit. If input is in RV you should convert from RV to wavelength by assuming a central lambda (i.e. 6705.1 A).
+        vstep=1
+        vlight=2.99792458e5
+        lamb = 6705.1 * (1 + 1e-3 * rv / vlight)
+
+        vwave=vlambda(lamb,vstep)
+        xw2=max(lamb)-0.1
+        xw1=min(lamb)+0.1
+        iw1=np.where(lamb > xw1)
+        iw2=np.where(lamb > xw2)
+        iw1=iw1[0]
+        iw2=iw2[0]
+        w1=lamb[iw1[0]+1]
+        w2=lamb[iw2[0]-1]
+        tck=interpolate.splrep(lamb,ccf,k=3, s=0)
+        vflux=interpolate.splev(vwave,tck,der=0)
+        wmid=np.sqrt(w1*w2)
+
+        x1=vwave
+        y1=vflux
+
+        if instrument == 'EXPRESS':
+          Resolution = 137000.
+          kop ='g'
+        elif instrument == 'HARPS':
+          Resolution = 115000.
+          kop = 'g'
+        elif instrument == 'HARPS-N':
+          Resolution = 118000.
+          kop = 'g'
+        elif instrument == 'NEID':
+          Resolution = 120000. 
+          kop = 'g'
+      
+        if kop == 'g': 
+            vibr=(vlight/Resolution)/(2.*np.sqrt(2.*np.log(2.)))
+            sigma=vibr*wmid/vlight
+            nx1=len(x1)
+            dx1=(x1[nx1-1]-x1[0])/float(nx1-1)
+            xk = (np.arange(nx1)-nx1/2)*dx1
+            a1=0.
+            a2=sigma
+            zk=(xk-a1)/a2
+            a0=1./np.sqrt(2.*np.pi)/sigma
+            yk=a0*np.exp(-(zk**2.)/2.)
+
+        nfact = np.sum(yk)
+        outflux = convolve_fft(y1, yk/nfact, boundary='fill',fill_value=1.)  
+  
+        #flux in resampled back to he original sampling
+        tck2 = interpolate.splrep(vwave,outflux,k=3, s=0)
+        convolved_flux = interpolate.splev(lamb, tck2, der=0)
+
+        return convolved_flux
