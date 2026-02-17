@@ -113,7 +113,9 @@ def interpolation_nb(xp,x,y,left=0,right=0):
                     yp[i]=y[j-1]+(xi-x[j-1])*(y[j]-y[j-1])/(x[j]-x[j-1])
                     lastidx=j
                     break
-
+                elif x[j] == xi:
+                    yp[i] = y[j]
+                    break
     return yp
 
 
@@ -133,7 +135,7 @@ def cross_correlation_nb(rv,wv,flx,wv_ref,flx_ref):
 
 
 @nb.njit(cache=True,error_model='numpy')
-def cross_correlation_mask(rv,wv,f,wvm,fm, spectral_library):
+def cross_correlation_mask(rv,wv,f,wvm,fm, spectral_library, ccf_norm):
     """
     Function to compute CCF against Phoenix-spectra. The steps used
     are specific to Phoenix spectra, do not use other spectra.
@@ -214,38 +216,43 @@ def cross_correlation_mask(rv,wv,f,wvm,fm, spectral_library):
 
 
     else:
-        print('ELSE')
+        # print('ELSE')
         for i in range(len(rv)):
             wvshift=wvm*(1.0+rv[i]/2.99792458e8) #shift ref spectrum, in m/s
             #for each mask line
             for j in range(lenm):
                 wvline=wvshift[j]
+                
+                if wvline > wv[-1]:
+                    pass
+                else:
+                    dist = wvline - wvmin
+                    k = 0
 
-                dist = wvline - wvmin
-                k = 0
+                    while dist >= 0.0:
+                        k += 1
+                        dist = wvline - wv[k]
 
-                while dist >= 0.0:
-                    k += 1
-                    dist = wvline - wv[k]
+                    idxlf = int(k-1)
 
-                idxlf = int(k-1)
+                    idxrg = idxlf + 1
 
-                idxrg = idxlf + 1
-
-                diffwv=wv[idxrg]-wv[idxlf] #pixel size in wavelength
-                midpix=(wv[idxrg]+wv[idxlf])/2 #wavelength between the two pixels
-                leftmask = wvline - diffwv/2 #left edge of the mask
-                rightmask = wvline + diffwv/2 #right edge of the mask
-                frac1 = (midpix - leftmask)/diffwv #fraction of the mask ovelapping the left pixel
-                frac2 = (rightmask - midpix)/diffwv #fraction of the mask overlapping the right pixel
-                midleft = (leftmask + midpix)/2 #central left overlapp
-                midright = (rightmask + midpix)/2 #central wv right overlap
-                f1 = f[idxlf] + (midleft-wv[idxlf])*(f[idxrg]-f[idxlf])/(diffwv)
-                f2 = f[idxlf] + (midright-wv[idxlf])*(f[idxrg]-f[idxlf])/(diffwv)
-
-                ccf[i]=ccf[i] - f1*fm[j]*frac1 - f2*fm[j]*frac2
-
-    return (ccf-np.min(ccf))/np.max((ccf-np.min(ccf)))
+                    diffwv=wv[idxrg]-wv[idxlf] #pixel size in wavelength
+                    midpix=(wv[idxrg]+wv[idxlf])/2 #wavelength between the two pixels
+                    leftmask = wvline - diffwv/2 #left edge of the mask
+                    rightmask = wvline + diffwv/2 #right edge of the mask
+                    frac1 = (midpix - leftmask)/diffwv #fraction of the mask ovelapping the left pixel
+                    frac2 = (rightmask - midpix)/diffwv #fraction of the mask overlapping the right pixel
+                    midleft = (leftmask + midpix)/2 #central left overlapp
+                    midright = (rightmask + midpix)/2 #central wv right overlap
+                    f1 = f[idxlf] + (midleft-wv[idxlf])*(f[idxrg]-f[idxlf])/(diffwv)
+                    f2 = f[idxlf] + (midright-wv[idxlf])*(f[idxrg]-f[idxlf])/(diffwv)
+                    # print(ccf[i], f1, fm[j], frac1, f2, frac2)
+                    ccf[i]=ccf[i] - f1*fm[j]*frac1 - f2*fm[j]*frac2
+    if ccf_norm:
+        return (ccf-np.min(ccf))/np.max((ccf-np.min(ccf)))
+    else:
+        return ccf
 
 @nb.njit(cache=True,error_model='numpy')
 def weight_mask(wvi,wvf,o_weight,wvm,fm):
@@ -322,8 +329,6 @@ def speed_bisector_nb(rv,ccf,integrated_bis):
                 break
 
     #TEST
-    cutleft = 0
-    cutright = -1
 
     xnew=xnew[cutleft:cutright]
     ynew=ynew[cutleft:cutright]

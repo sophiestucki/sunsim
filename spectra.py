@@ -5,6 +5,9 @@ from scipy import optimize
 import numpy as np
 from pathlib import Path
 from scipy import interpolate
+import scipy.integrate as integrate
+from scipy.ndimage import median_filter
+
 import sys
 import math as m
 from . import nbspectra
@@ -13,6 +16,14 @@ import os
 import shutil
 from configparser import ConfigParser
 from astropy.convolution import convolve_fft 
+# from raccoon import ccf
+
+from specutils import Spectrum1D
+from specutils.manipulation import FluxConservingResampler
+from astropy import units as u
+
+
+
 
 
 
@@ -89,6 +100,7 @@ def interpolate_Phoenix_mu_lc(self,temp,grav):
         Phoenix intensity models covering the desired logg from https://phoenix.astro.physik.uni-goettingen.de/?page_id=73'.format(grav))
 
     if temp<np.min(list_temp) or temp>np.max(list_temp):
+        print(temp, list_temp)
         sys.exit('Error in the interpolation of Phoenix_mu models. The desired T ({}) is outside the grid of models, extrapolation is not supported. Please download the \
         Phoenix intensity models covering the desired T from https://phoenix.astro.physik.uni-goettingen.de/?page_id=73'.format(temp))
         
@@ -163,6 +175,11 @@ def load_MPS_ATLAS_spectra_lc(self, type='ph'):
         data = np.load(self.mps_spectra_folder+'av_solar_ssd_200G_10_mu_angles_PHOENIX_low_res_specint_grid_cleaned.npy', allow_pickle=True).item()
     elif type == 'fc':
         data = np.load(self.mps_spectra_folder+'av_solar_faculae_200G_10_mu_angles_PHOENIX_low_res_specint_grid_cleaned.npy', allow_pickle=True).item()
+
+    # if type == 'ph' or type=='sp':
+    #     data = np.load(self.mps_spectra_folder+'G2_SSD_10_mu_angles.npy', allow_pickle=True).item()
+    # elif type == 'fc':
+    #     data = np.load(self.mps_spectra_folder+'G2_B200G_10_mu_angles.npy', allow_pickle=True).item()
     
     acd = np.fromiter(data.keys(), dtype=float)
     wvp = data[str(acd[0])]['wav'] 
@@ -189,9 +206,9 @@ def load_STAGGER_spectra_lc(self, type='ph'):
     flux = []
     for acd_i in acd:
         if type == 'sp':
-            flux.append(np.array(data[acd_i]['intensity'][idx_wv] * black_body(wvp[idx_wv], self.temperature_spot) / black_body(wvp[idx_wv], self.temperature_photosphere)))
+            flux.append(np.array(data[acd_i]['mean_intensity'][idx_wv] * black_body(wvp[idx_wv], self.temperature_spot) / black_body(wvp[idx_wv], self.temperature_photosphere)))
         else:
-            flux.append(np.array(data[acd_i]['intensity'][idx_wv]))
+            flux.append(np.array(data[acd_i]['mean_intensity'][idx_wv]))
     
 
     return acd, wvp[idx_wv], flux
@@ -244,7 +261,13 @@ def limb_brightening_fc_spec(self, amu, wv):
 
 
 def limb_brightening_bol(self, amu):
-    return ((self.temperature_photosphere + (250.9-407.7*amu+190.9*amu**2)) / self.temperature_photosphere)**4
+    if self.meunier:
+        return ((self.temperature_photosphere + (250.9-407.7*amu+190.9*amu**2)) / self.temperature_photosphere)**4
+    else: 
+        # return ((self.temperature_photosphere + (216-415*amu+207*amu**2)) / self.temperature_photosphere)**4
+        return ((self.temperature_photosphere + (155-290*amu+128*amu**2)) / self.temperature_photosphere)**4
+
+
     # return ((self.temperature_photosphere + (250.9-407.7*amu+190.9*amu**2)) / self.temperature_photosphere)**4 * ((self.temperature_photosphere + self.facula_T_contrast )/ 5808)**4
     # return ((self.temperature_photosphere + (250.9-407.7*amu+190.9*amu**2)) / (self.temperature_photosphere + self.facula_T_contrast))**4
     # return ((self.temperature_photosphere + (250.9-407.7*amu+190.9*amu**2) * ((self.temperature_photosphere + self.facula_T_contrast) / 5808)) / self.temperature_photosphere)**4
@@ -272,12 +295,10 @@ def compute_immaculate_lc(self,Ngrid_in_ring,acd,amu,pare,flnp,f_filt,wv,active_
                 dlp = flnp[idx_low]+(flnp[idx_upp]-flnp[idx_low])*(amu[i]-acd_low)/(acd_upp-acd_low) #limb darkening
             else:
                 if self.limb_extrapolation == 'constant':
-                    print('Limb extrapolation: constant for mu < ', self.limb_lim)
-                    dlp = flnp[-1]
+                    dlp = flnp[0] #check for PHOENIX
                 elif self.limb_extrapolation == 'linear':
-                    print('Limb extrapolation: linear for mu < ', self.limb_lim)
                     if self.limb_lim == acd.min():
-                        dlp = amu[i] / self.limb_lim * flnp[-1]
+                        dlp = amu[i] / self.limb_lim * flnp[0]
                     else:
                         acd_low=np.max(acd[acd<self.limb_lim]) #angles above and below the proj. angle of the grid
                         acd_upp=np.min(acd[acd>=self.limb_lim])
@@ -350,12 +371,10 @@ def compute_immaculate_facula_lc(self,Ngrid_in_ring,acd,amu,pare,flnp,f_filt,wv)
                 dlp = flnp[idx_low]+(flnp[idx_upp]-flnp[idx_low])*(amu[i]-acd_low)/(acd_upp-acd_low) #limb darkening
             else:
                 if self.limb_extrapolation == 'constant':
-                    print('Limb extrapolation: constant for mu < ', self.limb_lim)
-                    dlp = flnp[-1]
+                    dlp = flnp[0]
                 elif self.limb_extrapolation == 'linear':
-                    print('Limb extrapolation: linear for mu < ', self.limb_lim)
                     if self.limb_lim == acd.min():
-                        dlp = amu[i] / self.limb_lim * flnp[-1]
+                        dlp = amu[i] / self.limb_lim * flnp[0]
                     else:
                         acd_low=np.max(acd[acd<self.limb_lim]) #angles above and below the proj. angle of the grid
                         acd_upp=np.min(acd[acd>=self.limb_lim])
@@ -374,7 +393,7 @@ def compute_immaculate_facula_lc(self,Ngrid_in_ring,acd,amu,pare,flnp,f_filt,wv)
         # sflf[i]=np.sum(flf[i,:] * limb_brightening_fc_spec(self, amu[i], wv)) #brightness of onegrid in ring N. 
         if self.spectral_library == 'phoenix' or self.spectral_library == 'stagger': 
             sflf[i]=np.sum(flf[i,:]) *limb_brightening_bol(self, amu[i])#brightness of onegrid in ring N.  
-        elif self.spectral_library == 'mps':
+        elif self.spectral_library == 'mps' or self.spectral_library == 'mps_highres':
             sflf[i]=np.sum(flf[i,:])
         flxfc=flxfc+sflf[i]*Ngrid_in_ring[i]  #total BRIGHTNESS of the immaculate photosphere
 
@@ -1034,12 +1053,19 @@ def interpolate_Phoenix(self,temp,grav,plot=False):
     #nbins depend on the Temperature and wavelength range. 20 bins seems to work for all reasonable parameters. With more bins it starts to pick absorption lines. Less bins degrades the fit. 
     bins=np.linspace(self.wavelength_lower_limit-overhead,self.wavelength_upper_limit+overhead,20)
     wv= wavelength[idx_wv]
-    x_bin,y_bin=nbspectra.normalize_spectra_nb(bins,np.asarray(wv,dtype=np.float64),np.asarray(flux,dtype=np.float64))
+    self.results['test'] = [bins, wv, flux]
+    if self.flux_flat:
+            print('flux norm')
+            x_bin,y_bin=nbspectra.normalize_spectra_nb(bins,np.asarray(wv,dtype=np.float64),np.asarray(flux,dtype=np.float64))
 
+            #divide by 6th deg polynomial
+            print('666')
+            coeff = np.polyfit(x_bin, y_bin, 6)
 
-    # #divide by 6th deg polynomial
-    coeff = np.polyfit(x_bin, y_bin, 6)
-    flux_norm = flux / np.poly1d(coeff)(wv)
+            flux_norm = flux / np.poly1d(coeff)(wv)
+    else:
+        print('no norm. flux')
+        flux_norm = flux / 5e14
     #plots to check normalization. For debugging purposes.
     if plot:
         plt.plot(wv,flux)
@@ -1052,29 +1078,35 @@ def interpolate_Phoenix(self,temp,grav,plot=False):
 
     return interpolated_spectra
 
-def interpolate_mps(self, type='ph'):
+def interpolate_mps(self, type='ph', mu='1.0'):
 
     if type == 'ph' or type == 'sp':
         data = np.load(self.mps_spectra_folder+'av_solar_ssd_200G_10_mu_angles_PHOENIX_high_res_grid_cleaned.npy', allow_pickle=True).item()
     elif type == 'fc':
         data = np.load(self.mps_spectra_folder+'av_solar_faculae_200G_10_mu_angles_PHOENIX_high_res_grid_cleaned.npy', allow_pickle=True).item()
 
-    wavelength = data['1.0']['wav'] 
+    wavelength = data[mu]['wav'] 
 
     overhead=1.0 #Angstrom
     idx_wv=np.array(wavelength>self.wavelength_lower_limit-overhead) & np.array(wavelength<self.wavelength_upper_limit+overhead)
    
-    flux = (np.array(data['1.0']['intensity'] / (1e-8 * data['1.0']['wav'])**2 * 2.99792458e10)[idx_wv])
+    flux = (np.array(data[mu]['intensity'] / (1e-8 * data[mu]['wav'])**2 * 2.99792458e10)[idx_wv])
 
     bins=np.linspace(self.wavelength_lower_limit-overhead,self.wavelength_upper_limit+overhead,20)
     wv= wavelength[idx_wv]
     
-    x_bin,y_bin=nbspectra.normalize_spectra_nb(bins,np.asarray(wv,dtype=np.float64),np.asarray(flux,dtype=np.float64))
-    self.results['fits_spec'] =[wv, flux, x_bin, y_bin]
+    if self.flux_flat:
+        print('flux norm')
+        x_bin,y_bin=nbspectra.normalize_spectra_nb(bins,np.asarray(wv,dtype=np.float64),np.asarray(flux,dtype=np.float64))
 
-    # #divide by 6th deg polynomial
-    coeff = np.polyfit(x_bin, y_bin, 4)
-    flux_norm = flux / np.poly1d(coeff)(wv)
+        #divide by 6th deg polynomial
+        coeff = np.polyfit(x_bin, y_bin, 6)
+
+        flux_norm = flux / np.poly1d(coeff)(wv)
+    else:
+        print('no norm. flux')
+        flux_norm = flux / 5e14
+
 
     if type == 'sp':
         flux *= black_body(wv, self.temperature_spot) / black_body(wv, self.temperature_photosphere) 
@@ -1083,6 +1115,59 @@ def interpolate_mps(self, type='ph'):
     interpolated_spectra = np.array([wv,flux_norm,flux])
 
     return interpolated_spectra
+
+
+def interpolate_mps_mu(self, type='ph', coeff=None, plot=False):
+
+    flux_mu = []
+
+    if type == 'ph' or type == 'sp':
+        data = np.load(self.mps_spectra_folder+'av_solar_ssd_200G_10_mu_angles_PHOENIX_high_res_grid_cleaned.npy', allow_pickle=True).item()
+    elif type == 'fc':
+        data = np.load(self.mps_spectra_folder+'av_solar_faculae_200G_10_mu_angles_PHOENIX_high_res_grid_cleaned.npy', allow_pickle=True).item()
+
+
+    acd = np.fromiter(data.keys(), dtype=float)
+
+    wavelength = data['1.0']['wav'] 
+    overhead=1.0 #Angstrom
+    idx_wv=np.array(wavelength>self.wavelength_lower_limit-overhead) & np.array(wavelength<self.wavelength_upper_limit+overhead)
+
+    bins=np.linspace(self.wavelength_lower_limit-overhead,self.wavelength_upper_limit+overhead,20)
+    wv= wavelength[idx_wv]
+
+    for i, mu in enumerate(data.keys()):
+   
+        flux = (np.array(data[mu]['intensity'] / (1e-8 * data[mu]['wav'])**2 * 2.99792458e10)[idx_wv])
+        if type == 'sp':
+            flux *= black_body(wv, self.temperature_spot) / black_body(wv, self.temperature_photosphere) 
+        
+        if self.flux_flat:
+            x_bin,y_bin=nbspectra.normalize_spectra_nb(bins,np.asarray(wv,dtype=np.float64),np.asarray(flux,dtype=np.float64))
+
+            #divide by 6th deg polynomial
+            coeff = np.polyfit(x_bin, y_bin, 6)
+
+            flux_norm = flux / np.poly1d(coeff)(wv)
+        else:
+            flux_norm = flux 
+
+
+
+        flux_mu.append(flux_norm)
+        if plot:
+            plt.plot(wv,flux)
+            plt.plot(x_bin,y_bin,'ok')
+            plt.plot(wv,np.poly1d(coeff)(wv))
+            plt.show()
+            plt.close()
+
+    if type =='ph':
+        return acd, wv, flux_mu, coeff
+    else:
+        return acd, wv, flux_mu
+
+
 
 def interpolate_stagger(self, type='ph'):
 
@@ -1100,12 +1185,15 @@ def interpolate_stagger(self, type='ph'):
 
     overhead=1.0 #Angstrom
     bins=np.linspace(self.wavelength_lower_limit-overhead,self.wavelength_upper_limit+overhead,20)
-    x_bin,y_bin=nbspectra.normalize_spectra_nb(bins,np.asarray(wv,dtype=np.float64),np.asarray(flux,dtype=np.float64))
-    self.results['fits_spec'] =[wv, flux, x_bin, y_bin]
+    if self.flux_flat:
+            x_bin,y_bin=nbspectra.normalize_spectra_nb(bins,np.asarray(wv,dtype=np.float64),np.asarray(flux,dtype=np.float64))
 
-    # #divide by 6th deg polynomial
-    coeff = np.polyfit(x_bin, y_bin, 4)
-    flux_norm = flux / np.poly1d(coeff)(wv)
+            #divide by 6th deg polynomial
+            coeff = np.polyfit(x_bin, y_bin, 6)
+
+            flux_norm = flux / np.poly1d(coeff)(wv)
+    else:
+        flux_norm = flux / 5e14
 
     interpolated_spectra = np.array([wv,flux_norm,flux])
 
@@ -1180,9 +1268,261 @@ def cifist_coeff_interpolate(amu):
 
 
 def dumusque_coeffs(amu):
-    coeffs=np.array([-1.51773453,  3.52774949, -3.18794328,  1.22541774,  -0.22479665]) #Polynomial fit to ccf in Fig 2 of Dumusque 2014, plus 400m/s to match Fig6 in Herrero 2016
+    # coeffs=np.array([-1.51773453,  3.52774949, -3.18794328,  1.22541774,  -0.22479665]) #Polynomial fit to ccf in Fig 2 of Dumusque 2014, plus 400m/s to match Fig6 in Herrero 2016
+    coeffs=np.array([-1.51773453,  3.52774949, -3.18794328,  1.22541774,  -0.22479665+0.4]) #Polynomial fit to ccf in Fig 2 of Dumusque 2014
     p=np.poly1d(coeffs)
     return p
+
+def compute_immaculate_sphere_rv(self, Ngrid_in_ring,acd,amu,pare, fln, rv, wv, wvm, fm, rvel, type='ph', norm=None):
+    print('compute_immaculate_sphere_rv')
+
+    N = self.n_grid_rings #Number of concentric rings
+    ccf_ring=np.zeros([N,len(rv)]) #initialize the CCF of 1 pixel each ring 
+    rvs_ring=np.zeros([N,len(rv)]) #initialize the RV points of the CCF of 1 pixel each ring 
+    f = []
+    ccf_l = []
+    if type == 'ph':
+        norm=[]
+
+
+    for i in range(0,N): #Loop for each ring, to compute the flux of the star.   
+        if amu[i] > self.limb_lim:
+            acd_low=np.max(acd[acd<amu[i]]) #angles above and below the proj. angle of the grid
+            acd_upp=np.min(acd[acd>=amu[i]])
+            idx_low=np.where(acd==acd_low)[0][0]
+            idx_upp=np.where(acd==acd_upp)[0][0]
+            fln_i = fln[idx_low]+(fln[idx_upp]-fln[idx_low])*(amu[i]-acd_low)/(acd_upp-acd_low)
+
+        else:
+            if self.limb_extrapolation == 'constant':
+                fln_i = fln[0]
+            elif self.limb_extrapolation == 'linear':
+                if self.limb_lim == acd.min():
+                    fln_i = amu[i] / self.limb_lim * fln[0]
+                else:
+                    acd_low=np.max(acd[acd<self.limb_lim]) #angles above and below the proj. angle of the grid
+                    acd_upp=np.min(acd[acd>=self.limb_lim])
+                    idx_low=np.where(acd==acd_low)[0][0]
+                    idx_upp=np.where(acd==acd_upp)[0][0]
+                    dlp_lim = fln[idx_low]+(fln[idx_upp]-fln[idx_low])*(self.limb_lim-acd_low)/(acd_upp-acd_low) #limb darkening
+                    fln_i = amu[i] / self.limb_lim * dlp_lim
+        f.append(fln_i)
+        
+    
+    for i in range(0,N): 
+        ccf_i = nbspectra.cross_correlation_mask(rv, wv, f[i], wvm, fm, self.spectral_library, self.ccf_norm)
+        if type == 'ph':
+            norm.append(np.min(ccf_i))
+            ccf_i /= -np.min(ccf_i)
+            ccf_i -= np.min(ccf_i)
+        else:
+            ccf_i /= -norm[i]
+            ccf_i -= np.min(ccf_i)
+        if type == 'sp':
+            fun_dumusque = self.fun_coeff_bisector_spots(amu[i])
+            if self.remove_bis_spot :
+                fun_bis_sp = bisector_fit(self,rv,ccf_i,plot_test=False,kind_interp=self.kind_interp)
+                rv_i = rv - fun_bis_sp(ccf_i) + fun_dumusque(ccf_i)*1000*self.convective_shift
+            else:
+                rv_i = rv + fun_dumusque(ccf_i)*1000*self.convective_shift
+        else:
+            rv_i = rv
+        flux_pix=pare[i]/(4*np.pi) #brightness of 1 pixel normalized to total flux
+            #brightness of 1 pixel normalized to total flux
+        # print('flux pix:', flux_pix)
+
+        ccf_ring[i,:]=ccf_i * flux_pix 
+        ccf_l.append(ccf_i)
+        rvs_ring[i,:]= rv_i
+
+    #CCF of each pixel, adding doppler and interpolating
+    Ngrids=np.sum(Ngrid_in_ring)
+
+    ccf_tot=np.zeros([Ngrids,len(rv)])
+
+
+    ccf_tot=nbspectra.loop_compute_immaculate_nb(N,Ngrid_in_ring,ccf_tot,rvel,rv,rvs_ring,ccf_ring)
+
+    if type =='ph':
+        self.results['ccf_ph'] = ccf_l
+    elif type=='fc':
+        self.results['ccf_fc'] = ccf_l
+    elif type=='sp':
+        self.results['ccf_sp'] = ccf_l
+
+    return ccf_tot, norm
+
+
+def compute_immaculate_sphere_rv_smooth(self, Ngrid_in_ring,acd,amu,pare, fln, rv, wv, wvm, fm, rvel, type='ph'):
+    print('compute_immaculate_sphere_rv_smooth')
+
+
+    N = self.n_grid_rings #Number of concentric rings
+    ccf_ring=np.zeros([N,len(rv)]) #initialize the CCF of 1 pixel each ring 
+    rvs_ring=np.zeros([N,len(rv)]) #initialize the RV points of the CCF of 1 pixel each ring 
+    f = []
+    ccf_l = []
+
+
+    for i in range(0,N): #Loop for each ring, to compute the flux of the star.   
+        if amu[i] > self.limb_lim:
+            acd_low=np.max(acd[acd<amu[i]]) #angles above and below the proj. angle of the grid
+            acd_upp=np.min(acd[acd>=amu[i]])
+            idx_low=np.where(acd==acd_low)[0][0]
+            idx_upp=np.where(acd==acd_upp)[0][0]
+            fln_i = fln[idx_low]+(fln[idx_upp]-fln[idx_low])*(amu[i]-acd_low)/(acd_upp-acd_low)
+
+        else:
+            if self.limb_extrapolation == 'constant':
+                fln_i = fln[0]
+            elif self.limb_extrapolation == 'linear':
+                if self.limb_lim == acd.min():
+                    fln_i = amu[i] / self.limb_lim * fln[0]
+                else:
+                    acd_low=np.max(acd[acd<self.limb_lim]) #angles above and below the proj. angle of the grid
+                    acd_upp=np.min(acd[acd>=self.limb_lim])
+                    idx_low=np.where(acd==acd_low)[0][0]
+                    idx_upp=np.where(acd==acd_upp)[0][0]
+                    dlp_lim = fln[idx_low]+(fln[idx_upp]-fln[idx_low])*(self.limb_lim-acd_low)/(acd_upp-acd_low) #limb darkening
+                    fln_i = amu[i] / self.limb_lim * dlp_lim
+
+        rel_flux = fln_i / fln[-1]
+        fln_i_s = median_filter(rel_flux, size=self.smoothing_kernel) * fln[-1]
+
+
+
+        f.append(fln_i_s)
+        
+    
+    for i in range(0,N): 
+
+        ccf_i = nbspectra.cross_correlation_mask(rv, wv, f[i], wvm, fm, self.spectral_library, self.ccf_norm)
+
+        if type == 'sp':
+            fun_dumusque = self.fun_coeff_bisector_spots(amu[i])
+            if self.remove_bis_spot :
+                fun_bis_sp = bisector_fit(self,rv,ccf_i,plot_test=False,kind_interp=self.kind_interp)
+                rv_i = rv - fun_bis_sp(ccf_i) +  fun_dumusque(ccf_i)*1000*self.convective_shift
+            else:
+                rv_i = rv + fun_dumusque(ccf_i)*1000*self.convective_shift
+        else:
+            rv_i = rv
+        flux_pix=pare[i]/(4*np.pi) #brightness of 1 pixel normalized to total flux
+            #brightness of 1 pixel normalized to total flux
+        # print('flux pix:', flux_pix)
+
+        ccf_ring[i,:]=ccf_i * flux_pix 
+        ccf_l.append(ccf_i)
+        rvs_ring[i,:]= rv_i
+
+    #CCF of each pixel, adding doppler and interpolating
+    Ngrids=np.sum(Ngrid_in_ring)
+
+    ccf_tot=np.zeros([Ngrids,len(rv)])
+
+
+    ccf_tot=nbspectra.loop_compute_immaculate_nb(N,Ngrid_in_ring,ccf_tot,rvel,rv,rvs_ring,ccf_ring)
+
+    if type =='ph':
+        self.results['ccf_ph'] = ccf_l
+    elif type=='fc':
+        self.results['ccf_fc'] = ccf_l
+
+    return ccf_tot
+
+
+def compute_immaculate_sphere_rv_by_order(self, Ngrid_in_ring,acd,amu,pare, fln, rv,wvb, b, wv, wvm, fm, rvel, type='ph'):
+    print('compute_immaculate_sphere_rv_by_order')
+
+    n_order = len(b)
+    N = self.n_grid_rings #Number of concentric rings
+    ccf_ring=np.zeros([N,len(rv)]) #initialize the CCF of 1 pixel each ring 
+    rvs_ring=np.zeros([N,len(rv)]) #initialize the RV points of the CCF of 1 pixel each ring 
+    f = []
+    fluxcon = FluxConservingResampler()
+    ccf_l = []
+
+
+    for i in range(0,N): #Loop for each ring, to compute the flux of the star.   
+        if amu[i] > self.limb_lim:
+            acd_low=np.max(acd[acd<amu[i]]) #angles above and below the proj. angle of the grid
+            acd_upp=np.min(acd[acd>=amu[i]])
+            idx_low=np.where(acd==acd_low)[0][0]
+            idx_upp=np.where(acd==acd_upp)[0][0]
+            fln_i = fln[idx_low]+(fln[idx_upp]-fln[idx_low])*(amu[i]-acd_low)/(acd_upp-acd_low)
+
+        else:
+            if self.limb_extrapolation == 'constant':
+                fln_i = fln[0]
+            elif self.limb_extrapolation == 'linear':
+                if self.limb_lim == acd.min():
+                    fln_i = amu[i] / self.limb_lim * fln[0]
+                else:
+                    acd_low=np.max(acd[acd<self.limb_lim]) #angles above and below the proj. angle of the grid
+                    acd_upp=np.min(acd[acd>=self.limb_lim])
+                    idx_low=np.where(acd==acd_low)[0][0]
+                    idx_upp=np.where(acd==acd_upp)[0][0]
+                    dlp_lim = fln[idx_low]+(fln[idx_upp]-fln[idx_low])*(self.limb_lim-acd_low)/(acd_upp-acd_low) #limb darkening
+                    fln_i = amu[i] / self.limb_lim * dlp_lim
+
+        f.append(fln_i)
+        
+    
+    for i in range(0,N): 
+        ccf_i_o_list = np.zeros(shape=((n_order, len(rv))))
+        convolved_flux = add_resol(wv, f[i], 'HARPS-N')
+        degraded_flux = Spectrum1D(spectral_axis=wv * u.AA, flux=convolved_flux * u.Unit('erg s-1 cm+2 cm-1')) 
+
+
+        for j in range(n_order):
+            if wvb[j][0] < wv[-1]:
+                downsampled_flux = (fluxcon(degraded_flux, wvb[j] * u.AA))
+                flux_order = (b[j] * downsampled_flux.flux).value 
+                mask_m = (wvm>=wvb[j][0]) & (wvm<=wvb[j][-1])
+                ccf = nbspectra.cross_correlation_mask(rv,np.asarray(wvb[j],dtype='float64'),np.asarray(flux_order,dtype='float64'),np.asarray(wvm[mask_m],dtype='float64'),np.asarray(fm[mask_m],dtype='float64'), self.spectral_library, self.ccf_norm)
+                ccf_i_o_list[j,:] = ccf
+
+        ccf_i = np.nansum(ccf_i_o_list, axis=0)
+        
+
+
+        if type == 'sp':
+            fun_dumusque = self.fun_coeff_bisector_spots(amu[i])
+            if self.remove_bis_spot :
+                print('CONV : ', self.convective_shift)
+                fun_bis_sp = bisector_fit(self,rv,ccf_i,plot_test=False,kind_interp=self.kind_interp)
+                rv_i = rv - fun_bis_sp(ccf_i) + fun_dumusque(ccf_i)*1000*self.convective_shift
+            else:
+                rv_i = rv + fun_dumusque(ccf_i)*1000*self.convective_shift
+
+        else:
+            rv_i = rv
+
+        ccf_ring[i,:]=ccf_i * pare[i] 
+        rvs_ring[i,:]= rv_i
+        ccf_l.append(ccf_i)
+
+    #CCF of each pixel, adding doppler and interpolating
+    Ngrids=np.sum(Ngrid_in_ring)
+
+    ccf_tot=np.zeros([Ngrids,len(rv)])
+    ccf_tot=nbspectra.loop_compute_immaculate_nb(N,Ngrid_in_ring,ccf_tot,rvel,rv,rvs_ring,ccf_ring)
+
+    if type =='ph':
+        self.results['ccf_ph'] = ccf_l
+    elif type=='fc':
+        self.results['ccf_fc'] = ccf_l
+
+    return ccf_tot
+
+
+
+
+
+
+
+
+
 
 
 def compute_immaculate_photosphere_rv(self,Ngrid_in_ring,acd,amu,pare,flpk,rv_ph,rv,ccf,rvel):
@@ -1196,6 +1536,8 @@ def compute_immaculate_photosphere_rv(self,Ngrid_in_ring,acd,amu,pare,flpk,rv_ph
     N = self.n_grid_rings #Number of concentric rings
     flxph = 0.0 #initialze flux of photosphere
     sccf=np.zeros(N)
+    dlp_list=[]
+
 
     for i in range(0,N): #Loop for each ring, to compute the flux of the star.   
 
@@ -1210,12 +1552,10 @@ def compute_immaculate_photosphere_rv(self,Ngrid_in_ring,acd,amu,pare,flpk,rv_ph
                 dlp = flpk[idx_low]+(flpk[idx_upp]-flpk[idx_low])*(amu[i]-acd_low)/(acd_upp-acd_low) #limb darkening
             else:
                 if self.limb_extrapolation == 'constant':
-                    print('Limb extrapolation: constant for mu < ', self.limb_lim)
-                    dlp = flpk[-1]
+                    dlp = flpk[0]
                 elif self.limb_extrapolation == 'linear':
-                    print('Limb extrapolation: linear for mu < ', self.limb_lim)
                     if self.limb_lim == acd.min():
-                        dlp = amu[i] / self.limb_lim * flpk[-1]
+                        dlp = amu[i] / self.limb_lim * flpk[0]
                     else:
                         acd_low=np.max(acd[acd<self.limb_lim]) #angles above and below the proj. angle of the grid
                         acd_upp=np.min(acd[acd>=self.limb_lim])
@@ -1223,7 +1563,6 @@ def compute_immaculate_photosphere_rv(self,Ngrid_in_ring,acd,amu,pare,flpk,rv_ph
                         idx_upp=np.where(acd==acd_upp)[0][0]
                         dlp_lim = flpk[idx_low]+(flpk[idx_upp]-flpk[idx_low])*(self.limb_lim-acd_low)/(acd_upp-acd_low) #limb darkening
                         dlp = amu[i] / self.limb_lim * dlp_lim
-
             sccf[i]=Ngrid_in_ring[i]*np.sum(dlp*pare[i]/(4*np.pi)) #brightness of the ring on the band. Here I multiply by the projected area pare. 
         
         else: #or use a specified limb darkening law
@@ -1232,7 +1571,6 @@ def compute_immaculate_photosphere_rv(self,Ngrid_in_ring,acd,amu,pare,flpk,rv_ph
         
         flxph=flxph+sccf[i] #BRIGHTNESS of the immaculate fotosphere
     
-
 
 
     ccf_ring=np.zeros([N,len(rv_ph)]) #initialize the CCF of 1 pixel each ring 
@@ -1246,16 +1584,22 @@ def compute_immaculate_photosphere_rv(self,Ngrid_in_ring,acd,amu,pare,flpk,rv_ph
         #print('photosphere: ', fun_cifist)
 
         flux_pix=(sccf[i]/Ngrid_in_ring[i])/flxph #brightness of 1 pixel normalized to total flux
-        
-        rvs_ring[i,:]= rv_ph +  fun_cifist(ccf)*1000*self.convective_shift  #add cifist bisector (in km/s, *1000 to convert to m/s), multiply it by a CS factor.
+        dlp_list.append(flux_pix)
+
+        if self.spectral_library != 'mps':
+            rvs_ring[i,:]= rv_ph +  fun_cifist(ccf)*1000*self.convective_shift  #add cifist bisector (in km/s, *1000 to convert to m/s), multiply it by a CS factor.
+        else:
+            rvs_ring[i,:]= rv_ph 
         ccf_ring[i,:]=ccf*flux_pix #CCF values normalized to the contribution to the total flux of 1 pixel of this ring
         #Fer lo dels bisectors
     #CCF of each pixel, adding doppler and interpolating
     Ngrids=np.sum(Ngrid_in_ring)
     ccf_tot=np.zeros([Ngrids,len(rv)])
+
+
     #Compute the position of the grid projected on the sphere and its radial velocity.
     ccf_tot=nbspectra.loop_compute_immaculate_nb(N,Ngrid_in_ring,ccf_tot,rvel,rv,rvs_ring,ccf_ring)
-
+    self.results['dlp'] = dlp_list
 
     return ccf_tot, flxph
 
@@ -1281,12 +1625,10 @@ def compute_immaculate_spot_rv(self,Ngrid_in_ring,acd,amu,pare,flsk,rv_sp,rv,ccf
                 dls = flsk[idx_low]+(flsk[idx_upp]-flsk[idx_low])*(amu[i]-acd_low)/(acd_upp-acd_low) #limb darkening
             else:
                 if self.limb_extrapolation == 'constant':
-                    print('Limb extrapolation: constant for mu < ', self.limb_lim)
-                    dls = flsk[-1]
+                    dls = flsk[0]
                 elif self.limb_extrapolation == 'linear':
-                    print('Limb extrapolation: linear for mu < ', self.limb_lim)
                     if self.limb_lim == acd.min():
-                        dls = amu[i] / self.limb_lim * flsk[-1]
+                        dls = amu[i] / self.limb_lim * flsk[0]
                     else:
                         acd_low=np.max(acd[acd<self.limb_lim]) #angles above and below the proj. angle of the grid
                         acd_upp=np.min(acd[acd>=self.limb_lim])
@@ -1310,12 +1652,8 @@ def compute_immaculate_spot_rv(self,Ngrid_in_ring,acd,amu,pare,flsk,rv_sp,rv,ccf
 
         rvs_ring[i,:]= rv_sp + fun_dumusque(ccf)*1000*self.convective_shift #add solar spot bisector (in km/s, *1000 to convert to m/s). Multiply it by a CS factor.
         
-        ### TEST: convective blueshift in mps spot
-        # if self.spectral_library:
-        #     rvs_ring[i,:]= rv_sp + fun_dumusque(ccf)*1000*self.convective_shift #add solar spot bisector (in km/s, *1000 to convert to m/s). Multiply it by a CS factor.
-        if self.spectral_library == 'mps':
-            print('Spot: Add CFIST')
-            rvs_ring[i,:]= rv_sp + fun_dumusque(ccf)*1000 * (-1) #add solar spot bisector (in km/s, *1000 to convert to m/s). Multiply it by a CS factor.
+
+       
 
         ccf_ring[i,:]=ccf*flux_pix #CCF values normalized to the contribution to the total flux of 1 pixel of this ring
         #Fer lo dels bisectors
@@ -1349,12 +1687,10 @@ def compute_immaculate_facula_rv(self,Ngrid_in_ring,acd,amu,pare,flpk,rv_fc,rv,c
                 dlp = flpk[idx_low]+(flpk[idx_upp]-flpk[idx_low])*(amu[i]-acd_low)/(acd_upp-acd_low) #limb darkening
             else:
                 if self.limb_extrapolation == 'constant':
-                    print('Limb extrapolation: constant for mu < ', self.limb_lim)
-                    dlp = flpk[-1]
+                    dlp = flpk[0]
                 elif self.limb_extrapolation == 'linear':
-                    print('Limb extrapolation: linear for mu < ', self.limb_lim)
                     if self.limb_lim == acd.min():
-                        dlp = amu[i] / self.limb_lim * flpk[-1]
+                        dlp = amu[i] / self.limb_lim * flpk[0]
                     else:
                         acd_low=np.max(acd[acd<self.limb_lim]) #angles above and below the proj. angle of the grid
                         acd_upp=np.min(acd[acd>=self.limb_lim])
@@ -1385,7 +1721,10 @@ def compute_immaculate_facula_rv(self,Ngrid_in_ring,acd,amu,pare,flpk,rv_fc,rv,c
         flux_pix=(sccf[i]/Ngrid_in_ring[i])/flxph #brightness of 1 pixel normalized to total flux
         
 
-        rvs_ring[i,:]= rv_fc + fun_dumusque(ccf)*1000*self.convective_shift #Same as spot. 
+        if self.spectral_library != 'mps':
+            rvs_ring[i,:]= rv_fc + fun_dumusque(ccf)*1000*self.convective_shift #Same as spot. 
+        else:
+            rvs_ring[i,:]= rv_fc
         ccf_ring[i,:]=ccf*flux_pix #CCF values normalized to the contribution to the total flux of 1 pixel of this ring
         #Fer lo dels bisectors
     #CCF of each pixel, adding doppler and interpolating
@@ -1533,6 +1872,8 @@ def compute_ccf_params(self,rv,ccf,plot_test):
 
 
     for i in range(len(ccf)): #loop for each ccf
+        # if self.ccf_norm == 1:
+        #     print('CCF shifted to 0.0')
         ccf[i] = ccf[i] - ccf[i].min() + 0.000001
         #Compute bisector and remove wings
         cutleft0,cutright0,xbis,ybis=nbspectra.speed_bisector_nb(rv,ccf[i]/ccf[i].max(),integrated_bis=True) #FAST
@@ -1728,8 +2069,6 @@ def plot_spot_map_grid(self,vec_grid,typ,inc,time):
 
 
 
-
-
 def fit_multiplicative_offset_jitter(x0,f,y,dy):
     off=x0[0]
     jit=x0[1]
@@ -1758,264 +2097,6 @@ def fit_only_jitter(x0,f,y,dy):
     lnL=-0.5*np.sum(((y-f)/(np.sqrt(dy**2+jit**2)))**2.0+np.log(2.0*np.pi)+np.log(dy**2+jit**2))
     return -lnL
 
-########################################################################################
-########################################################################################
-#                              INVERSION    FUNCTIONS                                  #
-########################################################################################
-########################################################################################
-def lnlike(P,vparam,fit,typ,self):
-    """
-    The natural logarithm of the joint Gaussian likelihood.
-
-    Args:
-        P (array): contains the individual parameter values
-        vparams (array): values of all parameters, including fixed parameters.
-        fit (array): flag indicating is the parameter is to be fitted
-        typ (array): indicates if its lc, rv or crx.
-
-    """
-
-    #Variable p contains all the parameters available, fixed and optimized. P are the optimized parameters,vparam are the fixed params.
-    p=np.zeros(len(vparam))
-    # print(P)
-    ii=0
-    for i in range(len(fit)):
-      if fit[i]==0:
-        p[i]=vparam[i]
-      elif fit[i]==1:
-        p[i]=P[ii]
-        ii=ii+1
-
-
-    #Assign the new variables to the parameters, in the order they are defined.
-    self.temperature_photosphere = p[0]
-    self.spot_T_contrast = p[1]
-    self.facula_T_contrast = p[2]
-    self.facular_area_ratio = p[3]
-    self.convective_shift = p[4]
-    self.rotation_period = p[5]
-    self.inclination = np.deg2rad(90-p[6]) #axis inclinations in rad (inc=0 has the axis pointing up). The input was in deg defined as usual.
-    self.radius = p[7] #in Rsun
-    self.limb_darkening_q1 = p[8]
-    self.limb_darkening_q2 = p[9]
-    self.planet_period = p[10]
-    self.planet_transit_t0 = p[11]
-    self.planet_semi_amplitude = p[12]
-    self.planet_esinw = p[13]
-    self.planet_ecosw = p[14]
-    if (self.planet_esinw**2 + self.planet_ecosw**2)>=1: return -np.inf #check if eccentricity is valid
-    self.planet_radius = p[15]
-    self.planet_impact_param = p[16]
-    self.planet_spin_orbit_angle = p[17]*np.pi/180 #deg2rad
-
-    N_spots=len(self.spot_map)
-    for i in range(N_spots):
-        self.spot_map[i][1]=p[18+i]
-        self.spot_map[i][2]=p[18+N_spots+i]
-        self.spot_map[i][3]=p[18+2*N_spots+i]
-        self.spot_map[i][4]=p[18+3*N_spots+i]
-        self.spot_map[i][5]=p[18+4*N_spots+i]
-        self.spot_map[i][6]=p[18+5*N_spots+i]
-        self.spot_map[i][7]=p[18+6*N_spots+i]
-
-
-    # print(self.temperature_photosphere,self.temperature_spot,self.convective_shift,self.rotation_period,self.inclination,self.radius,self.vsini,self.spot_map[0])
-    #Compute the model for each instrument and observable, and the corresponding lnL
-    lnL=0.0 
-    l=0
-
-
-    # Pr=self.rotation_period
-    # fig,ax = plt.subplots(3,1,figsize=(5,9))
-
-    for i in range(len(self.instruments)):
-
-        for j in np.unique(typ[i]):
-
-            if j==0: #photometric case
-                idx_lc=np.where(np.array(typ[i])==0)[0] #indexs of observables that are lc. Ideally only one
-                self.wavelength_lower_limit=self.data[self.instruments[i]]['wvmin']
-                self.wavelength_upper_limit=self.data[self.instruments[i]]['wvmax']
-                self.filter_name=self.data[self.instruments[i]]['filter']
-                self.compute_forward(observables=['lc'],t=self.data[self.instruments[i]][self.observables[i][idx_lc[0]]]['t'],inversion=True)
-
-                for k in idx_lc:
-                    data=self.data[self.instruments[i]][self.observables[i][k]]['y']
-                    error=self.data[self.instruments[i]][self.observables[i][k]]['yerr']
-                    model=self.results[self.observables[i][k]]
-
-                    if (self.data[self.instruments[i]][self.observables[i][k]]['fix_jitter'] and self.data[self.instruments[i]][self.observables[i][k]]['fix_offset']):
-                        lnL=lnL-0.5*np.sum(((data-model)/(error))**2.0+np.log(2.0*np.pi)+np.log(error**2))
-                    elif self.data[self.instruments[i]][self.observables[i][k]]['fix_offset']:
-                        res=optimize.minimize(nbspectra.fit_only_jitter,2*np.mean(error), args=(model,data,error), method='Nelder-Mead')
-                        lnL=lnL-res.fun                        
-                    elif self.data[self.instruments[i]][self.observables[i][k]]['fix_jitter']:
-                        res=optimize.minimize(nbspectra.fit_only_multiplicative_offset,np.mean(data)/(np.mean(model)+0.0001), args=(model,data,error), method='Nelder-Mead')
-                        lnL=lnL-res.fun
-                    else:
-                        res=optimize.minimize(nbspectra.fit_multiplicative_offset_jitter,[np.mean(data)/(np.mean(model)+0.0001),2*np.mean(error)], args=(model,data,error), method='Nelder-Mead')
-                        lnL=lnL-res.fun 
-
-                    l+=1
-
-
-            if j==1: #spectroscopic case
-                idx_rv=np.where(np.array(typ[i])==1)[0] #indexs of observables that are rv bis or fwhm, contrast. Ideally only one
-                self.wavelength_lower_limit=self.data[self.instruments[i]]['wvmin']
-                self.wavelength_upper_limit=self.data[self.instruments[i]]['wvmax']
-                self.compute_forward(observables=['rv'],t=self.data[self.instruments[i]][self.observables[i][idx_rv[0]]]['t'],inversion=True)
-                
-                for k in idx_rv:
-
-                    data=self.data[self.instruments[i]][self.observables[i][k]]['y']
-                    error=self.data[self.instruments[i]][self.observables[i][k]]['yerr']
-                    model=self.results[self.observables[i][k]]
-                    
-                    if self.data[self.instruments[i]][self.observables[i][k]]['offset_type'] =='multiplicative': #multiplicative offset                        
-                        if (self.data[self.instruments[i]][self.observables[i][k]]['fix_jitter'] and self.data[self.instruments[i]][self.observables[i][k]]['fix_offset']):
-                            lnL=lnL-0.5*np.sum(((data-model)/(error))**2.0+np.log(2.0*np.pi)+np.log(error**2))
-                        elif self.data[self.instruments[i]][self.observables[i][k]]['fix_offset']:
-                            res=optimize.minimize(nbspectra.fit_only_jitter,2*np.mean(error), args=(model,data,error), method='Nelder-Mead')
-                            lnL=lnL-res.fun                        
-                        elif self.data[self.instruments[i]][self.observables[i][k]]['fix_jitter']:
-                            res=optimize.minimize(nbspectra.fit_only_multiplicative_offset,np.mean(data)/(np.mean(model)+0.0001), args=(model,data,error), method='Nelder-Mead')
-                            lnL=lnL-res.fun
-                        else:
-                            res=optimize.minimize(nbspectra.fit_multiplicative_offset_jitter,[np.mean(data)/(np.mean(model)+0.0001),2*np.mean(error)], args=(model,data,error), method='Nelder-Mead')
-                            lnL=lnL-res.fun
-
-                    else: #linear offset
-                        if (self.data[self.instruments[i]][self.observables[i][k]]['fix_jitter'] and self.data[self.instruments[i]][self.observables[i][k]]['fix_offset']):
-                            lnL=lnL-0.5*np.sum(((data-model)/(error))**2.0+np.log(2.0*np.pi)+np.log(error**2))
-                        elif self.data[self.instruments[i]][self.observables[i][k]]['fix_offset']:
-                            res=optimize.minimize(nbspectra.fit_only_jitter,2*np.mean(error), args=(model,data,error), method='Nelder-Mead')
-                            lnL=lnL-res.fun                        
-                        elif self.data[self.instruments[i]][self.observables[i][k]]['fix_jitter']:
-                            res=optimize.minimize(nbspectra.fit_only_linear_offset,np.mean(data)-np.mean(model), args=(model,data,error), method='Nelder-Mead')
-                            lnL=lnL-res.fun
-                        else:
-                            res=optimize.minimize(nbspectra.fit_linear_offset_jitter,[np.mean(data)-np.mean(model),2*np.mean(error)], args=(model,data,error), method='Nelder-Mead')
-                            lnL=lnL-res.fun
-
-
-            if j==2: #chromatic-spectroscopic case
-                idx_crx=np.where(np.array(typ[i])==2)[0] #indexs of observables that are crx. Ideally only one
-                self.wavelength_lower_limit=self.data[self.instruments[i]]['wvmin']
-                self.wavelength_upper_limit=self.data[self.instruments[i]]['wvmax']
-                self.compute_forward(observables=['crx'],t=self.data[self.instruments[i]][self.observables[i][idx_crx[0]]]['t'],inversion=True)
-
-                for k in idx_crx:
-                    data=self.data[self.instruments[i]][self.observables[i][k]]['y']
-                    error=self.data[self.instruments[i]][self.observables[i][k]]['yerr']
-                    model=self.results[self.observables[i][k]]
-                    
-                    if self.data[self.instruments[i]][self.observables[i][k]]['offset_type'] =='multiplicative': #multiplicative offset
-                        
-                        if (self.data[self.instruments[i]][self.observables[i][k]]['fix_jitter'] and self.data[self.instruments[i]][self.observables[i][k]]['fix_offset']):
-                            lnL=lnL-0.5*np.sum(((data-model)/(error))**2.0+np.log(2.0*np.pi)+np.log(error**2))
-                        elif self.data[self.instruments[i]][self.observables[i][k]]['fix_offset']:
-                            res=optimize.minimize(nbspectra.fit_only_jitter,2*np.mean(error), args=(model,data,error), method='Nelder-Mead')
-                            lnL=lnL-res.fun                        
-                        elif self.data[self.instruments[i]][self.observables[i][k]]['fix_jitter']:
-                            res=optimize.minimize(nbspectra.fit_only_multiplicative_offset,np.mean(data)/(np.mean(model)+0.0001), args=(model,data,error), method='Nelder-Mead')
-                            lnL=lnL-res.fun
-                        else:
-                            res=optimize.minimize(nbspectra.fit_multiplicative_offset_jitter,[np.mean(data)/(np.mean(model)+0.0001),2*np.mean(error)], args=(model,data,error), method='Nelder-Mead')
-                            lnL=lnL-res.fun
-
-                    else: #linear offset
-                        
-                        if (self.data[self.instruments[i]][self.observables[i][k]]['fix_jitter'] and self.data[self.instruments[i]][self.observables[i][k]]['fix_offset']):
-                            lnL=lnL-0.5*np.sum(((data-model)/(error))**2.0+np.log(2.0*np.pi)+np.log(error**2))
-                        elif self.data[self.instruments[i]][self.observables[i][k]]['fix_offset']:
-                            res=optimize.minimize(nbspectra.fit_only_jitter,2*np.mean(error), args=(model,data,error), method='Nelder-Mead')
-                            lnL=lnL-res.fun                        
-                        elif self.data[self.instruments[i]][self.observables[i][k]]['fix_jitter']:
-                            res=optimize.minimize(nbspectra.fit_only_linear_offset,np.mean(data)-np.mean(model), args=(model,data,error), method='Nelder-Mead')
-                            lnL=lnL-res.fun
-                        else:
-                            res=optimize.minimize(nbspectra.fit_linear_offset_jitter,[np.mean(data)-np.mean(model),2*np.mean(error)], args=(model,data,error), method='Nelder-Mead')
-                            lnL=lnL-res.fun
-
-    
-    return lnL
-
-
-def lnposterior(P,pbound,logprior,vparam,fit,typ,self):
-    """
-    The natural logarithm of the joint posterior.
-
-    Args:
-        P (array): contains the individual parameter values
-        pbound (2D array): contains the upper and lower bounds of the individual parameters
-        logprior (2D array): contains information abount the priors used. Flag, mean and std.
-        vparams (array): values of all parameters, including fixed parameters.
-        fit (array): flag indicating is the parameter is to be fitted
-        typ (array): indicates if its lc, rv or crx.
-    """
-
-    lp = lnprior(P,pbound,logprior) #get the prior
-
-    # if the prior is not finite return a probability of zero (log probability of -inf), to avoid computing the likelihood and save time
-    if not np.isfinite(lp):
-        return -np.inf
-
-    lnL=lnlike(P,vparam,fit,typ,self)
-
-    np.set_printoptions(precision=3,suppress=True)
-    print(P,lp,lnL,lp+lnL)
-    # return the likeihood times the prior (log likelihood plus the log prior)
-    return lp + lnL
-
-
-
-def lnprior(P,pbound,logprior):
-    """
-    The natural logarithm of the prior probability.
-
-    Args:
-        P (array): contains the individual parameter values
-        pbound (2D array): contains the upper and lower bounds of the individual parameters
-        logprior (2D array): contains information abount the priors used. Flag, mean and std.
-
-    Note:
-        We can ignore the normalisations of the prior here.
-    """
-
-    lp = 0.
-
-    if np.any((pbound[:,1]<P)+(P<pbound[:,0])): #check if the parameters are outside bounds
-        
-        return -np.inf
-
-    for i in range(len(P)):
-        
-        if logprior[i,0]==0:
-            #uniform prior
-            lp+=0.
-
-        if logprior[i,0]==1:
-            #Gaussian prior
-            lp-= 0.5 * ((P[i]-logprior[i,1])/logprior[i,2])**2
-
-        if logprior[i,0]==2:
-            #log-Gaussian prior
-            lp-= 0.5 * ((np.log(P[i])-logprior[i,1])/logprior[i,2])**2
-
-    return lp
-
-
-def generate_prior(flag,p1,p2,nw): #generate initial sample from priors
-    if flag==0:
-        prior=np.random.uniform(p1,p2,nw)
-
-    if flag==1:
-        prior=np.random.normal(p1,p2,nw)
-
-    if flag==2:
-        prior=np.exp(np.random.normal(p1,p2,nw))
-
-    return prior
 
 ########################################################################################
 ########################################################################################
@@ -2059,25 +2140,23 @@ def vlambda(inlamb,vstep):
 
     return vwave
 
-def add_resol(rv, ccf, instrument):
+def add_resol(wavelength, flux, instrument):
 #"""
   # This function is mostly based on the SteParSyn broadener (Tabernero et al. 2022) 
   # SteParsyn is under the two-clause BSD licence, I added a disclaimer to take this into account
   # Input is wavelength in A, and flux in any unit. If input is in RV you should convert from RV to wavelength by assuming a central lambda (i.e. 6705.1 A).
         vstep=1
         vlight=2.99792458e5
-        lamb = 6705.1 * (1 + 1e-3 * rv / vlight)
-
-        vwave=vlambda(lamb,vstep)
-        xw2=max(lamb)-0.1
-        xw1=min(lamb)+0.1
-        iw1=np.where(lamb > xw1)
-        iw2=np.where(lamb > xw2)
+        vwave=vlambda(wavelength,vstep)
+        xw2=max(wavelength)-0.1
+        xw1=min(wavelength)+0.1
+        iw1=np.where(wavelength > xw1)
+        iw2=np.where(wavelength > xw2)
         iw1=iw1[0]
         iw2=iw2[0]
-        w1=lamb[iw1[0]+1]
-        w2=lamb[iw2[0]-1]
-        tck=interpolate.splrep(lamb,ccf,k=3, s=0)
+        w1=wavelength[iw1[0]+1]
+        w2=wavelength[iw2[0]-1]
+        tck=interpolate.splrep(wavelength,flux,k=3, s=0)
         vflux=interpolate.splev(vwave,tck,der=0)
         wmid=np.sqrt(w1*w2)
 
@@ -2114,6 +2193,6 @@ def add_resol(rv, ccf, instrument):
   
         #flux in resampled back to he original sampling
         tck2 = interpolate.splrep(vwave,outflux,k=3, s=0)
-        convolved_flux = interpolate.splev(lamb, tck2, der=0)
+        convolved_flux = interpolate.splev(wavelength, tck2, der=0)
 
         return convolved_flux
