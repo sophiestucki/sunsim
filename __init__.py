@@ -4,4 +4,4 @@ __version__ = "3.0.1"
 
 __all__ = ['starsim','spectra','nbspectra','SA']
 
-from . import StarSim
+from .starsim import StarSim
