@@ -507,10 +507,55 @@ def generate_rotating_photosphere_lc_sdo(self,Ngrid_in_ring,pare,rs,bph,bsp,bfc,
 
     return flux, filling_ph, filling_sp, filling_fc, filling_pl, typ
 
+def generate_rotating_photosphere_lc_sdo_transit(self, Ngrid_in_ring, pare, rs, bph, bsp, bfc, flxph, inversion):
+    '''Loop for all the pixels and assign the flux corresponding to the grid element.'''
+    N = self.n_grid_rings 
+    
+    if not inversion:
+        sys.stdout.write(" ")
+        
+    flux = np.zeros([len(self.obs_times)])
+    filling_sp = np.zeros(len(self.obs_times))
+    filling_ph = np.zeros(len(self.obs_times))
+    filling_pl = np.zeros(len(self.obs_times))
+    filling_fc = np.zeros(len(self.obs_times))
 
+    n_pxls = len(self.maps_sp[0])
+    typ_cell, _, _ = nbspectra.projection_pxl_to_ss_grid(Ngrid_in_ring, rs, n_pxls)
+    
+    total_cells = int(np.sum(Ngrid_in_ring))
+    prev_typ = np.zeros((total_cells, 4), dtype=np.float64)
+    prev_typ[:, 0] = 1.0  # Initialize aph = 1.0
+    
+    for k in range(len(self.obs_times)):
+        changed_cells = np.zeros(total_cells, dtype=np.bool_)
+        if k == 0:
+            changed_cells[:] = True
+        else:
+            diff = (self.maps_sp[k] != self.maps_sp[k-1]) | \
+                   (self.maps_fc[k] != self.maps_fc[k-1]) | \
+                   (self.maps_pl[k] != self.maps_pl[k-1])
+            
+            changed_idx = np.unique(typ_cell[diff])
+            changed_idx = changed_idx[~np.isnan(changed_idx)].astype(int)
+            changed_cells[changed_idx] = True
 
+        # Note: prev_flux is removed entirely
+        flux[k], prev_typ, filling_ph[k], filling_sp[k], filling_fc[k], filling_pl[k] = nbspectra.loop_generate_rotating_lc_nb_sdo_transit(
+            N, Ngrid_in_ring, pare, rs, bph, bsp, bfc, flxph, 
+            [self.maps_sp[k], self.maps_fc[k], self.maps_pl[k]],
+            typ_cell, changed_cells, prev_typ
+        )
+        
 
+        filling_ph[k] = 100 * filling_ph[k] / np.dot(Ngrid_in_ring, pare)
+        filling_sp[k] = 100 * filling_sp[k] / np.dot(Ngrid_in_ring, pare)
+        filling_fc[k] = 100 * filling_fc[k] / np.dot(Ngrid_in_ring, pare)
+        filling_pl[k] = 100 * filling_pl[k] / np.dot(Ngrid_in_ring, pare)
 
+    typ = prev_typ.copy()
+        
+    return flux, filling_ph, filling_sp, filling_fc, filling_pl, typ
 
 
 

@@ -1074,6 +1074,89 @@ def loop_generate_rotating_lc_nb_sdo(N,Ngrid_in_ring,pare,rs,bph,bsp,bfc,flxph,s
 
     return flux ,typ, Aph, Asp, Afc, Apl
 
+@nb.njit(cache=True, error_model='numpy')
+def loop_generate_rotating_lc_nb_sdo_transit(N, Ngrid_in_ring, pare, rs, bph, bsp, bfc, flxph, sdo_input, typ_cell, changed_cells, prev_typ):
+    [array_sp, array_fc, array_pl] = sdo_input
+    
+    total_cells = len(prev_typ)
+    asp_sum = np.zeros(total_cells)
+    afc_sum = np.zeros(total_cells)
+    apl_sum = np.zeros(total_cells)
+    n_tot = np.zeros(total_cells)
+    
+    # 1. Single pass accumulation (Only for changed cells)
+    rows, cols = array_sp.shape
+    for r in range(rows):
+        for c in range(cols):
+            cell_val = typ_cell[r, c]
+            if not np.isnan(cell_val):
+                cell_id = int(cell_val)
+                if changed_cells[cell_id]: 
+                    n_tot[cell_id] += 1
+                    
+                    val_sp = array_sp[r, c]
+                    if not np.isnan(val_sp): asp_sum[cell_id] += val_sp
+                        
+                    val_fc = array_fc[r, c]
+                    if not np.isnan(val_fc): afc_sum[cell_id] += val_fc
+                        
+                    val_pl = array_pl[r, c]
+                    if not np.isnan(val_pl): apl_sum[cell_id] += val_pl
+                    
+    # 2. Fresh global recalculation of Flux to prevent baseline drift
+    flux = flxph
+    Aph, Asp, Afc, Apl = 0.0, 0.0, 0.0, 0.0
+    
+    cell_id = 0
+    for i in range(N): # Loop for each ring
+        for j in range(Ngrid_in_ring[i]): # Loop for each grid cell
+            
+            # Recompute geometries ONLY if the cell changed
+            if changed_cells[cell_id]:
+                asp, afc, apl = 0.0, 0.0, 0.0
+                
+                if n_tot[cell_id] > 0:
+                    asp = asp_sum[cell_id] / n_tot[cell_id]
+                    afc = afc_sum[cell_id] / n_tot[cell_id]
+                    apl = apl_sum[cell_id] / n_tot[cell_id]
+
+                if apl > 1.0: apl = 1.0
+                if apl > 0.0:
+                    asp = asp * (1.0 - apl)
+                    afc = afc * (1.0 - apl)
+
+                if asp > 1.0: 
+                    asp = 1.0
+                    afc = 0.0
+                if afc + asp > 1.0:
+                    afc = 1.0 - asp
+                
+                aph = 1.0 - asp - afc - apl
+                if aph < 0.0: aph = 0.0
+                
+                # Update state tracker
+                prev_typ[cell_id, 0] = aph
+                prev_typ[cell_id, 1] = asp
+                prev_typ[cell_id, 2] = afc
+                prev_typ[cell_id, 3] = apl
+                
+            # Retrieve current geometries (either freshly computed or cleanly cached)
+            curr_aph = prev_typ[cell_id, 0]
+            curr_asp = prev_typ[cell_id, 1]
+            curr_afc = prev_typ[cell_id, 2]
+            curr_apl = prev_typ[cell_id, 3]
+            
+            # Freshly apply to the total epoch flux
+            flux = flux - (1.0 - curr_aph) * bph[i] + curr_asp * bsp[i] + bfc[i] * curr_afc
+            
+            Aph += curr_aph * pare[i]
+            Asp += curr_asp * pare[i]
+            Afc += curr_afc * pare[i]
+            Apl += curr_apl * pare[i]
+            
+            cell_id += 1
+            
+    return flux, prev_typ, Aph, Asp, Afc, Apl
 
 
 @nb.njit(cache=True,error_model='numpy')

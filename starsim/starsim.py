@@ -94,6 +94,7 @@ class StarSim(object):
             self.reference_time = float(self.conf_file.get('spots','reference_time'))
             self.sdo_input = int(self.conf_file.get('spots', 'sdo_input'))
             self.sdo_input_path=str(self.conf_file.get('spots', 'SDO_input_path'))
+            self.sdo_transit = int(self.conf_file.get('spots', 'sdo_transit'))
 
 
             #planet
@@ -148,11 +149,7 @@ class StarSim(object):
 
             # SDO input
             if self.sdo_input:
-                if self.sdo_input_path ==None:
-                    self.obs_times = np.array([])
-                    self.maps_sp = []
-                    self.maps_fc = []
-                else:
+                if self.sdo_input_path:
                     spot_map_list = []
                     faculae_map_list = []
                     t = []
@@ -379,7 +376,11 @@ class StarSim(object):
                     brigh_grid_fc, flx_fc = spectra.compute_immaculate_facula_lc(self,Ngrid_in_ring,acd,amu,pare,flfc_lc,f_filt,wvp_lc) #returns spectrum of grid in ring N, its brightness, and the total flux
                 
                 if self.sdo_input:
-                    FLUX,ff_ph,ff_sp,ff_fc,ff_pl, typ=spectra.generate_rotating_photosphere_lc_sdo(self,Ngrid_in_ring,pare,rs,brigh_grid_ph,brigh_grid_sp,brigh_grid_fc,flx_ph,inversion)
+                    if self.sdo_transit:
+                        print('Transit')
+                        FLUX,ff_ph,ff_sp,ff_fc,ff_pl, typ=spectra.generate_rotating_photosphere_lc_sdo_transit(self,Ngrid_in_ring,pare,rs,brigh_grid_ph,brigh_grid_sp,brigh_grid_fc,flx_ph,inversion)
+                    else:
+                        FLUX,ff_ph,ff_sp,ff_fc,ff_pl, typ=spectra.generate_rotating_photosphere_lc_sdo(self,Ngrid_in_ring,pare,rs,brigh_grid_ph,brigh_grid_sp,brigh_grid_fc,flx_ph,inversion)
                 else:
                     t,FLUX_n,FLUX, ff_ph,ff_sp,ff_fc,ff_pl,typ=spectra.generate_rotating_photosphere_lc(self,Ngrid_in_ring,pare,amu,brigh_grid_ph,brigh_grid_sp,brigh_grid_fc,flx_ph,vec_grid,inversion,plot_map=self.plot_grid_map)
                 
