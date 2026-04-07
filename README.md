@@ -2,7 +2,7 @@ CREDITS
 
 The original version of this code is based on work by David Baroch.
 
-Contributors and subsequent developments:
+Contributors and subsequent developments (merge ONGOING):
 
 Sophie Stucki:
 
@@ -17,6 +17,9 @@ Jordi Blanco Pozo:
 * Implementation of planetary transits within the 2D array projection framework
 * Performance and speed improvements
 
-Oscar Poqueras (merge in progress):
+Oscar Poqueras:
 
 * Development of time-series disk-integrated flux (low resolution)
+* Transmission spectroscopy (low resolution)
+* Inverse mode
+
