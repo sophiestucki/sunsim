@@ -990,18 +990,14 @@ def interpolate_Phoenix(self,temp,grav,plot=False):
     bins=np.linspace(self.wavelength_lower_limit-overhead,self.wavelength_upper_limit+overhead,20)
     wv= wavelength[idx_wv]
     self.results['test'] = [bins, wv, flux]
-    if self.flux_flat:
-            print('flux norm')
-            x_bin,y_bin=nbspectra.normalize_spectra_nb(bins,np.asarray(wv,dtype=np.float64),np.asarray(flux,dtype=np.float64))
+ 
+    x_bin,y_bin=nbspectra.normalize_spectra_nb(bins,np.asarray(wv,dtype=np.float64),np.asarray(flux,dtype=np.float64))
 
-            #divide by 6th deg polynomial
-            print('666')
-            coeff = np.polyfit(x_bin, y_bin, 6)
+    #divide by 6th deg polynomial
+    print('666')
+    coeff = np.polyfit(x_bin, y_bin, 6)
 
-            flux_norm = flux / np.poly1d(coeff)(wv)
-    else:
-        print('no norm. flux')
-        flux_norm = flux / 5e14
+    flux_norm = flux / np.poly1d(coeff)(wv)
     #plots to check normalization. For debugging purposes.
     if plot:
         plt.plot(wv,flux)
@@ -1108,15 +1104,12 @@ def interpolate_stagger(self, type='ph'):
 
     overhead=1.0 #Angstrom
     bins=np.linspace(self.wavelength_lower_limit-overhead,self.wavelength_upper_limit+overhead,20)
-    if self.flux_flat:
-            x_bin,y_bin=nbspectra.normalize_spectra_nb(bins,np.asarray(wv,dtype=np.float64),np.asarray(flux,dtype=np.float64))
+    x_bin,y_bin=nbspectra.normalize_spectra_nb(bins,np.asarray(wv,dtype=np.float64),np.asarray(flux,dtype=np.float64))
 
-            #divide by 6th deg polynomial
-            coeff = np.polyfit(x_bin, y_bin, 6)
+    #divide by 6th deg polynomial
+    coeff = np.polyfit(x_bin, y_bin, 6)
 
-            flux_norm = flux / np.poly1d(coeff)(wv)
-    else:
-        flux_norm = flux / 5e14
+    flux_norm = flux / np.poly1d(coeff)(wv)
 
     interpolated_spectra = np.array([wv,flux_norm,flux])
 
@@ -1226,19 +1219,16 @@ def compute_immaculate_sphere_rv(self, Ngrid_in_ring,acd,amu,pare, fln, rv, wv, 
         
     
     for i in range(0,N): 
-        ccf_i = nbspectra.cross_correlation_mask(rv, wv, f[i], wvm, fm, self.spectral_library, self.ccf_norm)
+        if self.spectral_library == 'phoenix':
+            ccf_norm = 1
+        else:
+            ccf_norm = 0
+
+        ccf_i = nbspectra.cross_correlation_mask(rv, wv, f[i], wvm, fm, self.spectral_library, ccf_norm)
         
         if type == 'sp':
             fun_dumusque = self.fun_coeff_bisector_spots(self, amu[i])
-            if self.remove_bis_spot :
-                fun_bis_sp = bisector_fit(self,rv,ccf_i,plot_test=True,kind_interp=self.kind_interp)
-                if self.add_median_diff>0:
-                    rv_i = rv - fun_bis_sp(ccf_i) + np.median(- fun_bis_sp(ccf_i)) + self.add_median_diff + fun_dumusque(ccf_i)*1000*self.convective_shift
-                else:
-                    rv_i = rv - fun_bis_sp(ccf_i) + fun_dumusque(ccf_i)*1000*self.convective_shift
-
-            else:
-                rv_i = rv + fun_dumusque(ccf_i)*1000*self.convective_shift
+            rv_i = rv + fun_dumusque(ccf_i)*1000*self.convective_shift
         else:
             rv_i = rv
         flux_pix=pare[i]/(4*np.pi) #brightness of 1 pixel normalized to total flux
@@ -1315,7 +1305,7 @@ def compute_immaculate_sphere_rv_by_order(self, Ngrid_in_ring,acd,amu,pare, fln,
                 downsampled_flux = (fluxcon(degraded_flux, wvb[j] * u.AA))
                 flux_order = (b[j] * downsampled_flux.flux).value 
                 mask_m = (wvm>=wvb[j][0]) & (wvm<=wvb[j][-1])
-                ccf = nbspectra.cross_correlation_mask(rv,np.asarray(wvb[j],dtype='float64'),np.asarray(flux_order,dtype='float64'),np.asarray(wvm[mask_m],dtype='float64'),np.asarray(fm[mask_m],dtype='float64'), self.spectral_library, self.ccf_norm)
+                ccf = nbspectra.cross_correlation_mask(rv,np.asarray(wvb[j],dtype='float64'),np.asarray(flux_order,dtype='float64'),np.asarray(wvm[mask_m],dtype='float64'),np.asarray(fm[mask_m],dtype='float64'), self.spectral_library, 0)
                 ccf_i_o_list[j,:] = ccf
 
         ccf_i = np.nansum(ccf_i_o_list, axis=0)
@@ -1324,16 +1314,7 @@ def compute_immaculate_sphere_rv_by_order(self, Ngrid_in_ring,acd,amu,pare, fln,
 
         if type == 'sp':
             fun_dumusque = self.fun_coeff_bisector_spots(self, amu[i])
-            if self.remove_bis_spot :
-                fun_bis_sp = bisector_fit(self,rv,ccf_i,plot_test=True,kind_interp=self.kind_interp)
-                if self.add_median_diff>0:
-                    rv_i = rv - fun_bis_sp(ccf_i) + np.median(- fun_bis_sp(ccf_i)) + self.add_median_diff + fun_dumusque(ccf_i)*1000*self.convective_shift
-                else:
-                    rv_i = rv - fun_bis_sp(ccf_i) + fun_dumusque(ccf_i)*1000*self.convective_shift
-
-            else:
-                rv_i = rv + fun_dumusque(ccf_i)*1000*self.convective_shift
-
+            rv_i = rv  + fun_dumusque(ccf_i)*1000*self.convective_shift
         else:
             rv_i = rv
 
@@ -1711,8 +1692,7 @@ def compute_ccf_params(self,rv,ccf,plot_test):
 
 
     for i in range(len(ccf)): #loop for each ccf
-        # if self.ccf_norm == 1:
-        #     print('CCF shifted to 0.0')
+ 
         ccf[i] = ccf[i] - ccf[i].min() + 0.000001
         #Compute bisector and remove wings
         cutleft0,cutright0,xbis,ybis=nbspectra.speed_bisector_nb(rv,ccf[i]/ccf[i].max(),integrated_bis=True) #FAST
