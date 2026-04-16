@@ -161,25 +161,14 @@ def interpolate_Phoenix_mu_lc(self,temp,grav):
     angle0 = flux[0]*0.0 #LD of 90 deg, to avoid dividing by 0? (not sure, ask Kike)
 
     flux_joint = np.vstack([flux[::-1],angle0]) #add LD coeffs at 0 and 1 proj angles
-    # flpk=flux_joint[0]*np.pi*np.sin(np.cos(amu[0]))**2#Add all fluxes of all angles multiplied by their areas to compute the integrated flux
-    # for i in range(1,len(amu)):
-    #     flpk=flpk+flux_joint[i]*(np.sin(np.cos(amu[i]))**2-np.sin(np.cos(amu[i-1]))**2)*np.pi
-
-
 
     return amu, wavelength[idx_wv], flux_joint
 
-##TODO add the spot here
 def load_MPS_ATLAS_spectra_lc(self, type='ph'):
     if type == 'ph' or type=='sp':
         data = np.load(self.mps_spectra_folder+'av_solar_ssd_200G_10_mu_angles_PHOENIX_low_res_specint_grid_cleaned.npy', allow_pickle=True).item()
     elif type == 'fc':
         data = np.load(self.mps_spectra_folder+'av_solar_faculae_200G_10_mu_angles_PHOENIX_low_res_specint_grid_cleaned.npy', allow_pickle=True).item()
-
-    # if type == 'ph' or type=='sp':
-    #     data = np.load(self.mps_spectra_folder+'G2_SSD_10_mu_angles.npy', allow_pickle=True).item()
-    # elif type == 'fc':
-    #     data = np.load(self.mps_spectra_folder+'G2_B200G_10_mu_angles.npy', allow_pickle=True).item()
     
     acd = np.fromiter(data.keys(), dtype=float)
     wvp = data[str(acd[0])]['wav'] 
@@ -257,25 +246,17 @@ def limb_darkening_law(self,amu):
 
 def limb_brightening_fc_spec(self, amu, wv):
     return 1 + (1-amu) * 71.190 * (self.facula_T_contrast / 30) * (5778.0 / self.temperature_photosphere)**2 * (1 / wv)
-    # return (((self.temperature_photosphere + (250.9-407.7*amu+190.9*amu**2) * (self.facula_T_contrast / 250.9)) / self.temperature_photosphere)**4 - 1) / wv + 1
 
 
 def limb_brightening_bol(self, amu):
     if self.meunier:
         return ((self.temperature_photosphere + (250.9-407.7*amu+190.9*amu**2)) / self.temperature_photosphere)**4
     else: 
-        # return ((self.temperature_photosphere + (216-415*amu+207*amu**2)) / self.temperature_photosphere)**4
-        return ((self.temperature_photosphere + (155-290*amu+128*amu**2)) / self.temperature_photosphere)**4
-
-
-    # return ((self.temperature_photosphere + (250.9-407.7*amu+190.9*amu**2)) / self.temperature_photosphere)**4 * ((self.temperature_photosphere + self.facula_T_contrast )/ 5808)**4
-    # return ((self.temperature_photosphere + (250.9-407.7*amu+190.9*amu**2)) / (self.temperature_photosphere + self.facula_T_contrast))**4
-    # return ((self.temperature_photosphere + (250.9-407.7*amu+190.9*amu**2) * ((self.temperature_photosphere + self.facula_T_contrast) / 5808)) / self.temperature_photosphere)**4
-    # return ((self.temperature_photosphere + (250.9-407.7*amu+190.9*amu**2-34.1) * (self.facula_T_contrast / 250.9) + 34.1) / self.temperature_photosphere)**4
+        return ((self.temperature_photosphere + (216-415*amu+207*amu**2)) / self.temperature_photosphere)**4 #for the sun
+        # return ((self.temperature_photosphere + (155-290*amu+128*amu**2)) / self.temperature_photosphere)**4 #for M-dwarf
 
 
 def compute_immaculate_lc(self,Ngrid_in_ring,acd,amu,pare,flnp,f_filt,wv,active_region_type): #Oscar: I added an active region type in order to know which Imu curves I should output so as to determine the limb darkening coefficients.
-
 
     N = self.n_grid_rings #Number of concentric rings
     flxph = 0.0 #initialze flux of photosphere
@@ -306,45 +287,15 @@ def compute_immaculate_lc(self,Ngrid_in_ring,acd,amu,pare,flnp,f_filt,wv,active_
                         idx_upp=np.where(acd==acd_upp)[0][0]
                         dlp_lim = flnp[idx_low]+(flnp[idx_upp]-flnp[idx_low])*(self.limb_lim-acd_low)/(acd_upp-acd_low) #limb darkening
                         dlp = amu[i] / self.limb_lim * dlp_lim
-            
-            if self.return_Imu==1 and active_region_type=='ph':
-                os.makedirs(os.path.dirname('Imu_curves/Imu_dlp_{}.pickle'.format(i)), exist_ok=True) #Check if directory exists, if not then create it
-                with open('Imu_curves/Imu_dlp_{}.pickle'.format(i), 'wb') as handle:
-                    #pickle.dump(dlp, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                    pickle.dump([dlp,amu[i]], handle, protocol=pickle.HIGHEST_PROTOCOL)
-                    #pickle.dump(np.array([dlp,amu[i]]), handle, protocol=pickle.HIGHEST_PROTOCOL)
-                #np.save('Imu_curves/Imu_dlp_{}.npy'.format(i),dlp)
-                #np.save('Imu_curves/Imu_dlp_{}.npy'.format(i),np.array([dlp,amu[i]],dtype=object))
-                #np.savetxt('Imu_curves/Imu_dlp_{}.txt'.format(i),np.array(dlp),delimiter='\t')
-                #np.savetxt('Imu_curves/Imu_dlp_{}.txt'.format(i),np.array([dlp,amu[i]]),delimiter='\t')
+
         
         else: #or use a specified limb darkening law
             dlp = flnp[0]*limb_darkening_law(self,amu[i])
 
-
         flp[i,:]=dlp*pare[i]/(4*np.pi)*f_filt(wv) #spectra of one grid in ring N multiplied by the filter.
         sflp[i]=np.sum(flp[i,:]) #brightness of onegrid in ring N.
         
-        if self.return_Imu==1 and active_region_type=='ph':
-            os.makedirs(os.path.dirname('Imu_curves/Imu_flp_{}.pickle'.format(i)), exist_ok=True) #Check if directory exists, if not then create it
-            with open('Imu_curves/Imu_flp_{}.pickle'.format(i), 'wb') as handle:
-                pickle.dump([flp[i,:],amu[i]], handle, protocol=pickle.HIGHEST_PROTOCOL)
-                #pickle.dump(np.array([sflp[i],amu[i]]), handle, protocol=pickle.HIGHEST_PROTOCOL)
-            #np.save('Imu_curves/Imu_sflp_{}.npy',format(i),np.array([sflp[i],amu[i]]),delimiter='\t')
-            #np.savetxt('Imu_curves/Imu_sflp_{}.txt',format(i),sflp,delimiter='\t')
-            #np.savetxt('Imu_curves/Imu_sflp_{}.txt',format(i),np.array([sflp[i],amu[i]]),delimiter='\t')
-        
-        if self.return_Imu==1 and active_region_type=='ph':
-            os.makedirs(os.path.dirname('Imu_curves/Imu_sflp_{}.pickle'.format(i)), exist_ok=True) #Check if directory exists, if not then create it
-            with open('Imu_curves/Imu_sflp_{}.pickle'.format(i), 'wb') as handle:
-                pickle.dump([sflp[i],amu[i]], handle, protocol=pickle.HIGHEST_PROTOCOL)
-                #pickle.dump(np.array([sflp[i],amu[i]]), handle, protocol=pickle.HIGHEST_PROTOCOL)
-            #np.save('Imu_curves/Imu_sflp_{}.npy',format(i),np.array([sflp[i],amu[i]]),delimiter='\t')
-            #np.savetxt('Imu_curves/Imu_sflp_{}.txt',format(i),sflp,delimiter='\t')
-            #np.savetxt('Imu_curves/Imu_sflp_{}.txt',format(i),np.array([sflp[i],amu[i]]),delimiter='\t')
-        
         flxph=flxph+sflp[i]*Ngrid_in_ring[i] #total BRIGHTNESS of the immaculate photosphere
-    
     
     return sflp, flxph
 
@@ -390,7 +341,6 @@ def compute_immaculate_facula_lc(self,Ngrid_in_ring,acd,amu,pare,flnp,f_filt,wv)
 
         flf[i,:]=dlp*pare[i]/(4*np.pi)*f_filt(wv) #spectra of one grid in ring N multiplied by the filter.
         #Limb brightening
-        # sflf[i]=np.sum(flf[i,:] * limb_brightening_fc_spec(self, amu[i], wv)) #brightness of onegrid in ring N. 
         if self.spectral_library == 'phoenix' or self.spectral_library == 'stagger': 
             sflf[i]=np.sum(flf[i,:]) *limb_brightening_bol(self, amu[i])#brightness of onegrid in ring N.  
         elif self.spectral_library == 'mps' or self.spectral_library == 'mps_highres':
@@ -507,69 +457,6 @@ def generate_rotating_photosphere_lc_sdo(self,Ngrid_in_ring,pare,rs,bph,bsp,bfc,
 
     return flux, filling_ph, filling_sp, filling_fc, filling_pl, typ
 
-def generate_rotating_photosphere_lc_sdo_transit(self, Ngrid_in_ring, pare, rs, bph, bsp, bfc, flxph, inversion):
-    '''Loop for all the pixels and assign the flux corresponding to the grid element.'''
-    N = self.n_grid_rings 
-    
-    if not inversion:
-        sys.stdout.write(" ")
-        
-    flux = np.zeros([len(self.obs_times)])
-    filling_sp = np.zeros(len(self.obs_times))
-    filling_ph = np.zeros(len(self.obs_times))
-    filling_pl = np.zeros(len(self.obs_times))
-    filling_fc = np.zeros(len(self.obs_times))
-
-    n_pxls = len(self.maps_sp[0])
-    typ_cell, _, _ = nbspectra.projection_pxl_to_ss_grid(Ngrid_in_ring, rs, n_pxls)
-    
-    total_cells = int(np.sum(Ngrid_in_ring))
-    prev_typ = np.zeros((total_cells, 4), dtype=np.float64)
-    prev_typ[:, 0] = 1.0  # Initialize aph = 1.0
-    
-    for k in range(len(self.obs_times)):
-        changed_cells = np.zeros(total_cells, dtype=np.bool_)
-        if k == 0:
-            changed_cells[:] = True
-        else:
-            diff = (self.maps_sp[k] != self.maps_sp[k-1]) | \
-                   (self.maps_fc[k] != self.maps_fc[k-1]) | \
-                   (self.maps_pl[k] != self.maps_pl[k-1])
-            
-            changed_idx = np.unique(typ_cell[diff])
-            changed_idx = changed_idx[~np.isnan(changed_idx)].astype(int)
-            changed_cells[changed_idx] = True
-
-        # Note: prev_flux is removed entirely
-        flux[k], prev_typ, filling_ph[k], filling_sp[k], filling_fc[k], filling_pl[k] = nbspectra.loop_generate_rotating_lc_nb_sdo_transit(
-            N, Ngrid_in_ring, pare, rs, bph, bsp, bfc, flxph, 
-            [self.maps_sp[k], self.maps_fc[k], self.maps_pl[k]],
-            typ_cell, changed_cells, prev_typ
-        )
-        
-
-        filling_ph[k] = 100 * filling_ph[k] / np.dot(Ngrid_in_ring, pare)
-        filling_sp[k] = 100 * filling_sp[k] / np.dot(Ngrid_in_ring, pare)
-        filling_fc[k] = 100 * filling_fc[k] / np.dot(Ngrid_in_ring, pare)
-        filling_pl[k] = 100 * filling_pl[k] / np.dot(Ngrid_in_ring, pare)
-
-    typ = prev_typ.copy()
-        
-    return flux, filling_ph, filling_sp, filling_fc, filling_pl, typ
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -587,7 +474,6 @@ def generate_rotating_photosphere_lc_sdo_transit(self, Ngrid_in_ring, pare, rs, 
 
 def compute_immaculate_spec(self,Ngrid_in_ring,acd,amu,pare,flnp,wv,active_region_type): #Oscar: I added an active region type in order to know which Imu curves and other arrays I should output for debugging.
 
-
     N = self.n_grid_rings #Number of concentric rings
     spec_ph = np.zeros(len(wv)) #initialze spectrum of photosphere
     spec_rings_ph=np.zeros([N,len(wv)]) #spectrum of each ring
@@ -602,92 +488,28 @@ def compute_immaculate_spec(self,Ngrid_in_ring,acd,amu,pare,flnp,wv,active_regio
             idx_low=np.where(acd==acd_low)[0][0]
             idx_upp=np.where(acd==acd_upp)[0][0]
             dlp = flnp[idx_low]+(flnp[idx_upp]-flnp[idx_low])*(amu[i]-acd_low)/(acd_upp-acd_low) #limb darkening
-            if self.return_Imu==1 and active_region_type=='ph':
-                os.makedirs(os.path.dirname('Imu_curves/Imu_dlp_{}.pickle'.format(i)), exist_ok=True) #Check if directory exists, if not then create it
-                with open('Imu_curves/Imu_dlp_{}.pickle'.format(i), 'wb') as handle:
-                    pickle.dump([dlp,amu[i]], handle, protocol=pickle.HIGHEST_PROTOCOL)
-        
+
         else: #or use a specified limb darkening law
             dlp = flnp[0]*limb_darkening_law(self,amu[i])
         
-
-
         spec_rings_ph[i,:]=dlp*pare[i]/(4*np.pi) #spectrum of one grid in ring N.
 
         if active_region_type == 'fc':
             spec_rings_ph[i,:]  *= limb_brightening_bol(self, amu[i])
-            hdu = fits.PrimaryHDU(spec_rings_ph[i,:])
-            hdu.header['T_PHOT'] = (self.temperature_photosphere, 'Photosphere temperature [K]')
-            hdu.header['LOG_G'] = (self.logg, 'surface gravity')
-            hdu.header['UNITS'] = ('erg/s/cm^2/cm', 'Units of flux')
-            hdu.header['MU'] = (amu[i], 'Cosine of angle between normal and LOS')
-
-            hdul = fits.HDUList([hdu])
-
-            # Write the FITS file to disk
-            hdul.writeto('/home/sophie-stucki/Documents/starsim_simulations/spec_fc/spec_fc_T_ph_{:.1f}_logg_{:.1f}_mu_{:.2f}.fits'.format(self.temperature_photosphere,self.logg, amu[i]), overwrite=True)
-        
-        elif active_region_type == 'ph':
-            hdu = fits.PrimaryHDU(spec_rings_ph[i,:])
-            hdu.header['T_PHOT'] = (self.temperature_photosphere, 'Photosphere temperature [K]')
-            hdu.header['LOG_G'] = (self.logg, 'surface gravity')
-            hdu.header['UNITS'] = ('erg/s/cm^2/cm', 'Units of flux')
-            hdu.header['MU'] = (amu[i], 'Cosine of angle between normal and LOS')
-
-            hdul = fits.HDUList([hdu])
-
-            # Write the FITS file to disk
-            hdul.writeto('/home/sophie-stucki/Documents/starsim_simulations/spec_ph/spec_ph_T_ph_{:.1f}_logg_{:.1f}_mu_{:.2f}.fits'.format(self.temperature_photosphere,self.logg, amu[i]), overwrite=True)
-        
-
-        
-        if self.return_Imu==1 and active_region_type=='ph':
-            os.makedirs(os.path.dirname('Imu_curves/Imu_spec_rings_ph_{}.pickle'.format(i)), exist_ok=True) #Check if directory exists, if not then create it
-            with open('Imu_curves/Imu_spec_rings_ph_{}.pickle'.format(i), 'wb') as handle:
-                pickle.dump([spec_rings_ph[i,:],amu[i]], handle, protocol=pickle.HIGHEST_PROTOCOL)
-        
-    
         
         
         spec_ph=spec_ph+spec_rings_ph[i,:]*Ngrid_in_ring[i] #total BRIGHTNESS of the immaculate photosphere
-        #Why multiply by Ngrid_in_ring[i]??? Answer: Ï think it's because we calculated the spectrum of one pixel in ring N, and then we multiply it by the number of pixels in that ring. The code says "grid" instead of "pixel".
-            #an element of an array,
-            #an entry (or an element) of a matrix,
-            #a cell of a grid.
-        
-    if self.return_Imu==1 and active_region_type=='ph':
-        os.makedirs(os.path.dirname('Imu_curves/spec_ph.pickle'), exist_ok=True) #Check if directory exists, if not then create it
-        with open('Imu_curves/spec_ph.pickle', 'wb') as handle:
-            pickle.dump(spec_ph, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    
-    if self.return_Imu==1 and active_region_type=='ph':
-        os.makedirs(os.path.dirname('Imu_curves/Ngrid_in_ring.pickle'), exist_ok=True) #Check if directory exists, if not then create it
-        with open('Imu_curves/Ngrid_in_ring.pickle', 'wb') as handle:
-            pickle.dump(Ngrid_in_ring, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-    if active_region_type == 'fc' or active_region_type == 'ph':
-        hdu = fits.PrimaryHDU(wv)
-        hdu.header['UNITS'] = ('angstrom', 'Units of wavelength')
-        hdul = fits.HDUList([hdu])
-
-        # Write the FITS file to disk
-        hdul.writeto('/home/sophie-stucki/Documents/starsim_simulations/spec_{}/spec_{}_wv_grid.fits'.format(active_region_type, active_region_type), overwrite=True)
-
-
-        
+            
     return spec_rings_ph, spec_ph
 
 
 
-
-#t,SPEC,ff_ph,ff_sp,ff_fc,ff_pl=spectra.generate_rotating_photosphere_spec(self,Ngrid_in_ring,pare,amu,spec_rings_ph,spec_rings_sp,spec_rings_fc,spec_ph,vec_grid,inversion,plot_map=self.plot_grid_map)
 def generate_rotating_photosphere_spec(self,Ngrid_in_ring,pare,amu,spec_rings_ph,spec_rings_sp,spec_rings_fc,spec_ph,vec_grid,inversion,plot_map=True):
     '''Loop for all the pixels and assign the spectrum corresponding to the grid element.
     '''
     simulate_planet=self.simulate_planet
     N = self.n_grid_rings #Number of concentric rings
     
-    iteration=0
 
     #Now loop for each Observed time and for each grid element. Compute if the grid is ph spot or fc and assign the corresponding CCF.
     # print('Diff rotation law is hard coded. Check ref time for inverse problem. Add more Spot evo laws')
@@ -724,7 +546,7 @@ def generate_rotating_photosphere_spec(self,Ngrid_in_ring,pare,amu,spec_rings_ph
         for i in range(len(vec_spot)):
             dist=m.acos(np.dot(vec_spot[i],np.array([1,0,0])))
             
-            if (dist-spot_pos[i,2]) <= (np.pi/2): #TOCHECK
+            if (dist-spot_pos[i,2]) <= (np.pi/2): 
                 vis[i]=1.0
         
         if (planet_pos[0]-planet_pos[2]<1):
@@ -751,7 +573,76 @@ def generate_rotating_photosphere_spec(self,Ngrid_in_ring,pare,amu,spec_rings_ph
             plot_spot_map_grid(self,vec_grid,typ,self.inclination,t)
 
     return self.obs_times, spec, filling_ph, filling_sp, filling_fc, filling_pl
-    #return self.obs_times, flux/flxph, filling_ph, filling_sp, filling_fc, filling_pl
+
+def generate_rotating_photosphere_spec_sdo(self,Ngrid_in_ring,pare,amu,rs, spec_rings_ph,spec_rings_sp,spec_rings_fc,spec_ph,vec_grid,inversion,plot_map=True):
+    '''Loop for all the pixels and assign the spectrum corresponding to the grid element.
+    '''
+    simulate_planet=self.simulate_planet
+    N = self.n_grid_rings #Number of concentric rings
+    
+
+    #Now loop for each Observed time and for each grid element. Compute if the grid is ph spot or fc and assign the corresponding CCF.
+    # print('Diff rotation law is hard coded. Check ref time for inverse problem. Add more Spot evo laws')
+    if not inversion:
+        sys.stdout.write(" ")
+    spec=np.zeros([len(self.obs_times),len(spec_ph)]) #initialize total spectrum at each timestamp
+    filling_sp=np.zeros(len(self.obs_times))
+    filling_ph=np.zeros(len(self.obs_times))
+    filling_pl=np.zeros(len(self.obs_times))
+    filling_fc=np.zeros(len(self.obs_times))
+
+    for k,t in enumerate(self.obs_times):
+        typ=[] #type of grid, ph sp or fc
+        
+        if simulate_planet:
+            planet_pos=compute_planet_pos(self,t)#compute the planet position at current time. In polar coordinates!! 
+        else:
+            planet_pos = [2.0,0.0,0.0]
+
+
+        if self.spot_map.size==0:
+            spot_pos=np.array([np.array([m.pi/2,-m.pi,0.0,0.0])])
+        else:
+            spot_pos=compute_spot_position(self,t) #compute the position of all spots at the current time. Returns theta and phi of each spot.      
+
+        vec_spot=np.zeros([len(self.spot_map),3])
+        xspot = np.cos(self.inclination)*np.sin(spot_pos[:,0])*np.cos(spot_pos[:,1])+np.sin(self.inclination)*np.cos(spot_pos[:,0])
+        yspot = np.sin(spot_pos[:,0])*np.sin(spot_pos[:,1])
+        zspot = np.cos(spot_pos[:,0])*np.cos(self.inclination)-np.sin(self.inclination)*np.sin(spot_pos[:,0])*np.cos(spot_pos[:,1])
+        vec_spot[:,:]=np.array([xspot,yspot,zspot]).T #spot center in cartesian
+
+        #COMPUTE IF ANY SPOT IS VISIBLE
+        vis=np.zeros(len(vec_spot)+1)
+        for i in range(len(vec_spot)):
+            dist=m.acos(np.dot(vec_spot[i],np.array([1,0,0])))
+            
+            if (dist-spot_pos[i,2]) <= (np.pi/2): 
+                vis[i]=1.0
+        
+        if (planet_pos[0]-planet_pos[2]<1):
+            vis[-1]=1.0
+ 
+
+
+        #Loop for each ring.
+        if (np.sum(vis)==0.0):
+            spec[k,:],typ, filling_ph[k], filling_sp[k], filling_fc[k], filling_pl[k] = spec_ph, [[1.0,0.0,0.0,0.0]]*np.sum(Ngrid_in_ring), np.dot(Ngrid_in_ring,pare), 0.0, 0.0, 0.0
+        else:
+            spec[k,:],typ, filling_ph[k], filling_sp[k], filling_fc[k], filling_pl[k] = nbspectra.loop_generate_rotating_spec_nb_sdo(N,Ngrid_in_ring,pare,amu,spot_pos,vec_grid,vec_spot,simulate_planet,planet_pos,spec_rings_ph,spec_rings_sp,spec_rings_fc,spec_ph, rs, [self.maps_sp[k], self.maps_fc[k]])
+
+
+        filling_ph[k]=100*filling_ph[k]/np.dot(Ngrid_in_ring,pare)
+        filling_sp[k]=100*filling_sp[k]/np.dot(Ngrid_in_ring,pare)
+        filling_fc[k]=100*filling_fc[k]/np.dot(Ngrid_in_ring,pare)
+        filling_pl[k]=100*filling_pl[k]/np.dot(Ngrid_in_ring,pare)
+        
+        if not inversion:
+            sys.stdout.write("\rDate {0}. ff_ph={1:.3f}%. ff_sp={2:.3f}%. ff_fc={3:.3f}%. ff_pl={4:.3f}%. [{5}/{6}]%".format(t,filling_ph[k],filling_sp[k],filling_fc[k],filling_pl[k],k+1,len(self.obs_times)))
+
+        if plot_map:
+            plot_spot_map_grid(self,vec_grid,typ,self.inclination,t)
+
+    return self.obs_times, spec, filling_ph, filling_sp, filling_fc, filling_pl
 
 
 
@@ -1140,18 +1031,12 @@ def interpolate_mps(self, type='ph', mu='1.0'):
     bins=np.linspace(self.wavelength_lower_limit-overhead,self.wavelength_upper_limit+overhead,20)
     wv= wavelength[idx_wv]
     
-    if self.flux_flat:
-        print('flux norm')
-        x_bin,y_bin=nbspectra.normalize_spectra_nb(bins,np.asarray(wv,dtype=np.float64),np.asarray(flux,dtype=np.float64))
+    x_bin,y_bin=nbspectra.normalize_spectra_nb(bins,np.asarray(wv,dtype=np.float64),np.asarray(flux,dtype=np.float64))
 
-        #divide by 6th deg polynomial
-        coeff = np.polyfit(x_bin, y_bin, 6)
+    #divide by 6th deg polynomial
+    coeff = np.polyfit(x_bin, y_bin, 6)
 
-        flux_norm = flux / np.poly1d(coeff)(wv)
-    else:
-        print('no norm. flux')
-        flux_norm = flux / 5e14
-
+    flux_norm = flux / np.poly1d(coeff)(wv)
 
     if type == 'sp':
         flux *= black_body(wv, self.temperature_spot) / black_body(wv, self.temperature_photosphere) 
@@ -1187,17 +1072,10 @@ def interpolate_mps_mu(self, type='ph', coeff=None, plot=False):
         if type == 'sp':
             flux *= black_body(wv, self.temperature_spot) / black_body(wv, self.temperature_photosphere) 
         
-        if self.flux_flat:
-            x_bin,y_bin=nbspectra.normalize_spectra_nb(bins,np.asarray(wv,dtype=np.float64),np.asarray(flux,dtype=np.float64))
-
-            #divide by 6th deg polynomial
-            coeff = np.polyfit(x_bin, y_bin, 6)
-
-            flux_norm = flux / np.poly1d(coeff)(wv)
-        else:
-            flux_norm = flux 
-
-
+        x_bin,y_bin=nbspectra.normalize_spectra_nb(bins,np.asarray(wv,dtype=np.float64),np.asarray(flux,dtype=np.float64))
+        #divide by 6th deg polynomial
+        coeff = np.polyfit(x_bin, y_bin, 6)
+        flux_norm = flux / np.poly1d(coeff)(wv)
 
         flux_mu.append(flux_norm)
         if plot:
@@ -1289,17 +1167,6 @@ def cifist_coeff_interpolate(amu):
     cxm[8,:]=np.array([-11.62006536,39.30962189,-52.38161244,34.98243089,-12.40650704,2.57940618,-0.37337442]) #0.2
     cxm[9,:]=np.array([-14.14768805,47.9566719,-64.20294114,43.23156971,-15.57423374,3.13318175,-0.14451226]) #0.1
 
-    #PARAMS FROM A CCF COMPUTED WITH PHOENIX TEMPLATE T=5770
-    # cxm[0,:]=np.array([1.55948401e+01, -5.59100775e+01,  7.98788742e+01, -5.79129621e+01, 2.23124361e+01, -4.37451926e+00,  2.76815127e-02 ]) 
-    # cxm[1,:]=np.array([1.48171843e+01, -5.31901561e+01,  7.60918868e+01, -5.51846846e+01, 2.12359712e+01, -4.15656905e+00,  3.09723630e-02 ])
-    # cxm[2,:]=np.array([1.26415104e+01, -4.56361886e+01,  6.57500389e+01, -4.81159578e+01, 1.87476161e+01, -3.73215320e+00, -2.45358044e-02 ])
-    # cxm[3,:]=np.array([1.10344258e+01, -3.99142119e+01,  5.76936246e+01, -4.24457366e+01, 1.66941114e+01, -3.37376671e+00, -4.49380604e-02 ])
-    # cxm[4,:]=np.array([9.9741693 , -36.19064232,  52.47896315, -38.75624903, 15.32328162,  -3.09800143,  -0.07223029 ])
-    # cxm[5,:]=np.array([9.76117497, -35.11883268,  50.48605512, -36.96972057, 14.50139362,  -2.88347426,  -0.08276774]) #0.5
-    # cxm[6,:]=np.array([10.38959989, -36.94083878,  52.3841557 , -37.73932243,14.50154753,  -2.76975367,  -0.07371497 ]) #0.4
-    # cxm[7,:]=np.array([1.18987101e+01, -4.18327688e+01,  5.84865087e+01, -4.13494763e+01,  1.54611520e+01, -2.78820894e+00, -2.90506536e-02 ]) #0.3
-    # cxm[8,:]=np.array([13.77559813, -48.38724031,  67.48002787, -47.40940284, 17.46750576,  -3.01431973,   0.09248942 ]) #0.2
-    # cxm[9,:]=np.array([16.73411412, -59.08156701,  82.84718709, -58.44626604, 21.52853771,  -3.72660173,   0.37589346 ]) #0.1
 
     #extrapolate for amu<0.1
     if amu<=0.1:
@@ -1312,11 +1179,15 @@ def cifist_coeff_interpolate(amu):
     return p
 
 
-def dumusque_coeffs(amu):
+def dumusque_coeffs(self, amu):
     # coeffs=np.array([-1.51773453,  3.52774949, -3.18794328,  1.22541774,  -0.22479665]) #Polynomial fit to ccf in Fig 2 of Dumusque 2014, plus 400m/s to match Fig6 in Herrero 2016
-    coeffs=np.array([-1.51773453,  3.52774949, -3.18794328,  1.22541774,  -0.22479665+0.4]) #Polynomial fit to ccf in Fig 2 of Dumusque 2014
+    if self.spectral_library == 'phoenix':
+        coeffs=np.array([-1.51773453,  3.52774949, -3.18794328,  1.22541774,  -0.22479665]) #Polynomial fit to ccf in Fig 2 of Dumusque 2014
+    else:
+        coeffs = np.array([ 69.72233642, -111.07077255,   66.13347937,  -19.34395212,    2.85797555, 0.16536442]) #new coeef for MURaM spectra
     p=np.poly1d(coeffs)
     return p
+
 
 def compute_immaculate_sphere_rv(self, Ngrid_in_ring,acd,amu,pare, fln, rv, wv, wvm, fm, rvel, type='ph', norm=None):
     print('compute_immaculate_sphere_rv')
@@ -1356,121 +1227,21 @@ def compute_immaculate_sphere_rv(self, Ngrid_in_ring,acd,amu,pare, fln, rv, wv, 
     
     for i in range(0,N): 
         ccf_i = nbspectra.cross_correlation_mask(rv, wv, f[i], wvm, fm, self.spectral_library, self.ccf_norm)
-        if type == 'ph':
-            norm.append(np.min(ccf_i))
-            ccf_i /= -np.min(ccf_i)
-            ccf_i -= np.min(ccf_i)
-        else:
-            ccf_i /= -norm[i]
-            ccf_i -= np.min(ccf_i)
-        if type == 'sp':
-            fun_dumusque = self.fun_coeff_bisector_spots(amu[i])
-            if self.remove_bis_spot :
-                fun_bis_sp = bisector_fit(self,rv,ccf_i,plot_test=False,kind_interp=self.kind_interp)
-                rv_i = rv - fun_bis_sp(ccf_i) + fun_dumusque(ccf_i)*1000*self.convective_shift
-            else:
-                rv_i = rv + fun_dumusque(ccf_i)*1000*self.convective_shift
-        else:
-            rv_i = rv
-        flux_pix=pare[i]/(4*np.pi) #brightness of 1 pixel normalized to total flux
-            #brightness of 1 pixel normalized to total flux
-        # print('flux pix:', flux_pix)
-
-        ccf_ring[i,:]=ccf_i * flux_pix 
-        ccf_l.append(ccf_i)
-        rvs_ring[i,:]= rv_i
-
-    #CCF of each pixel, adding doppler and interpolating
-    Ngrids=np.sum(Ngrid_in_ring)
-
-    ccf_tot=np.zeros([Ngrids,len(rv)])
-
-
-    ccf_tot=nbspectra.loop_compute_immaculate_nb(N,Ngrid_in_ring,ccf_tot,rvel,rv,rvs_ring,ccf_ring)
-
-    if type =='ph':
-        self.results['ccf_ph'] = ccf_l
-    elif type=='fc':
-        self.results['ccf_fc'] = ccf_l
-    elif type=='sp':
-        self.results['ccf_sp'] = ccf_l
-
-    return ccf_tot, norm
-
-
-def compute_immaculate_sphere_rv_smooth(self, Ngrid_in_ring,acd,amu,pare, fln, rv, wv, wvm, fm, rvel, type='ph', norm=None):
-    print('compute_immaculate_sphere_rv_smooth')
-
-
-    N = self.n_grid_rings #Number of concentric rings
-    ccf_ring=np.zeros([N,len(rv)]) #initialize the CCF of 1 pixel each ring 
-    rvs_ring=np.zeros([N,len(rv)]) #initialize the RV points of the CCF of 1 pixel each ring 
-    f = []
-    ccf_l = []
-    if type == 'ph':
-        norm=[]
-
-    bins=np.linspace(self.wavelength_lower_limit-1,self.wavelength_upper_limit+1,20)
-    x_bin,y_bin=nbspectra.normalize_spectra_nb(bins,np.asarray(wv,dtype=np.float64),np.asarray(fln[-1],dtype=np.float64))
-
-    coeff_1 = np.polyfit(x_bin, y_bin, 6)
-
-
-    for i in range(0,N): #Loop for each ring, to compute the flux of the star.   
-        if amu[i] > self.limb_lim:
-            acd_low=np.max(acd[acd<amu[i]]) #angles above and below the proj. angle of the grid
-            acd_upp=np.min(acd[acd>=amu[i]])
-            idx_low=np.where(acd==acd_low)[0][0]
-            idx_upp=np.where(acd==acd_upp)[0][0]
-            fln_i = fln[idx_low]+(fln[idx_upp]-fln[idx_low])*(amu[i]-acd_low)/(acd_upp-acd_low)
-
-        else:
-            if self.limb_extrapolation == 'constant':
-                fln_i = fln[0]
-            elif self.limb_extrapolation == 'linear':
-                if self.limb_lim == acd.min():
-                    fln_i = amu[i] / self.limb_lim * fln[0]
-                else:
-                    acd_low=np.max(acd[acd<self.limb_lim]) #angles above and below the proj. angle of the grid
-                    acd_upp=np.min(acd[acd>=self.limb_lim])
-                    idx_low=np.where(acd==acd_low)[0][0]
-                    idx_upp=np.where(acd==acd_upp)[0][0]
-                    dlp_lim = fln[idx_low]+(fln[idx_upp]-fln[idx_low])*(self.limb_lim-acd_low)/(acd_upp-acd_low) #limb darkening
-                    fln_i = amu[i] / self.limb_lim * dlp_lim
-
-    
-        x_bin,y_bin=nbspectra.normalize_spectra_nb(bins,np.asarray(wv,dtype=np.float64),np.asarray(fln[i],dtype=np.float64))
-        coeff_2 = np.polyfit(x_bin, y_bin, 6)
-        fln_i_s =  np.poly1d(coeff_2)(wv)/np.poly1d(coeff_1)(wv)* fln[-1]
-
-
-
-        f.append(fln_i_s)
         
-    
-    for i in range(0,N): 
-
-        ccf_i = nbspectra.cross_correlation_mask(rv, wv, f[i], wvm, fm, self.spectral_library, self.ccf_norm)
-        if type == 'ph':
-            norm.append(np.min(ccf_i))
-            ccf_i /= -np.min(ccf_i)
-            ccf_i -= np.min(ccf_i)
-        else:
-            ccf_i /= -norm[i]
-            ccf_i -= np.min(ccf_i)
-
         if type == 'sp':
-            fun_dumusque = self.fun_coeff_bisector_spots(amu[i])
+            fun_dumusque = self.fun_coeff_bisector_spots(self, amu[i])
             if self.remove_bis_spot :
-                fun_bis_sp = bisector_fit(self,rv,ccf_i,plot_test=False,kind_interp=self.kind_interp)
-                rv_i = rv - fun_bis_sp(ccf_i) +  fun_dumusque(ccf_i)*1000*self.convective_shift
+                fun_bis_sp = bisector_fit(self,rv,ccf_i,plot_test=True,kind_interp=self.kind_interp)
+                if self.add_median_diff>0:
+                    rv_i = rv - fun_bis_sp(ccf_i) + np.median(- fun_bis_sp(ccf_i)) + self.add_median_diff + fun_dumusque(ccf_i)*1000*self.convective_shift
+                else:
+                    rv_i = rv - fun_bis_sp(ccf_i) + fun_dumusque(ccf_i)*1000*self.convective_shift
+
             else:
                 rv_i = rv + fun_dumusque(ccf_i)*1000*self.convective_shift
         else:
             rv_i = rv
         flux_pix=pare[i]/(4*np.pi) #brightness of 1 pixel normalized to total flux
-            #brightness of 1 pixel normalized to total flux
-        # print('flux pix:', flux_pix)
 
         ccf_ring[i,:]=ccf_i * flux_pix 
         ccf_l.append(ccf_i)
@@ -1492,6 +1263,8 @@ def compute_immaculate_sphere_rv_smooth(self, Ngrid_in_ring,acd,amu,pare, fln, r
         self.results['ccf_sp'] = ccf_l
 
     return ccf_tot, norm
+
+
 
 
 def compute_immaculate_sphere_rv_by_order(self, Ngrid_in_ring,acd,amu,pare, fln, rv,wvb, b, wv, wvm, fm, rvel, type='ph'):
@@ -1550,11 +1323,14 @@ def compute_immaculate_sphere_rv_by_order(self, Ngrid_in_ring,acd,amu,pare, fln,
 
 
         if type == 'sp':
-            fun_dumusque = self.fun_coeff_bisector_spots(amu[i])
+            fun_dumusque = self.fun_coeff_bisector_spots(self, amu[i])
             if self.remove_bis_spot :
-                print('CONV : ', self.convective_shift)
-                fun_bis_sp = bisector_fit(self,rv,ccf_i,plot_test=False,kind_interp=self.kind_interp)
-                rv_i = rv - fun_bis_sp(ccf_i) + fun_dumusque(ccf_i)*1000*self.convective_shift
+                fun_bis_sp = bisector_fit(self,rv,ccf_i,plot_test=True,kind_interp=self.kind_interp)
+                if self.add_median_diff>0:
+                    rv_i = rv - fun_bis_sp(ccf_i) + np.median(- fun_bis_sp(ccf_i)) + self.add_median_diff + fun_dumusque(ccf_i)*1000*self.convective_shift
+                else:
+                    rv_i = rv - fun_bis_sp(ccf_i) + fun_dumusque(ccf_i)*1000*self.convective_shift
+
             else:
                 rv_i = rv + fun_dumusque(ccf_i)*1000*self.convective_shift
 
@@ -1709,7 +1485,7 @@ def compute_immaculate_spot_rv(self,Ngrid_in_ring,acd,amu,pare,flsk,rv_sp,rv,ccf
         
         # fun_cifist = self.fun_coeff_bisectors_amu(amu[i])
 
-        fun_dumusque = self.fun_coeff_bisector_spots(amu[i])
+        fun_dumusque = self.fun_coeff_bisector_spots(self, amu[i])
 
         flux_pix=(sccf[i]/Ngrid_in_ring[i])/flxph #brightness of 1 pixel normalized to total flux
 
@@ -1779,7 +1555,7 @@ def compute_immaculate_facula_rv(self,Ngrid_in_ring,acd,amu,pare,flpk,rv_fc,rv,c
             
         
 
-        fun_dumusque = self.fun_coeff_bisector_faculae(amu[i])
+        fun_dumusque = self.fun_coeff_bisector_faculae(self, amu[i])
  
         flux_pix=(sccf[i]/Ngrid_in_ring[i])/flxph #brightness of 1 pixel normalized to total flux
         

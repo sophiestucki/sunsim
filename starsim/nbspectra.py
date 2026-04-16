@@ -213,10 +213,10 @@ def cross_correlation_mask(rv,wv,f,wvm,fm, spectral_library, ccf_norm):
                 f2 = f[idxlf] + (midright-wv[idxlf])*(f[idxrg]-f[idxlf])/(diffwv)
 
                 ccf[i]=ccf[i] - f1*fm[j]*frac1 - f2*fm[j]*frac2
+                
 
 
     else:
-        # print('ELSE')
         for i in range(len(rv)):
             wvshift=wvm*(1.0+rv[i]/2.99792458e8) #shift ref spectrum, in m/s
             #for each mask line
@@ -249,10 +249,11 @@ def cross_correlation_mask(rv,wv,f,wvm,fm, spectral_library, ccf_norm):
                     f2 = f[idxlf] + (midright-wv[idxlf])*(f[idxrg]-f[idxlf])/(diffwv)
                     # print(ccf[i], f1, fm[j], frac1, f2, frac2)
                     ccf[i]=ccf[i] - f1*fm[j]*frac1 - f2*fm[j]*frac2
+                    
     if ccf_norm:
         return (ccf-np.min(ccf))/np.max((ccf-np.min(ccf)))
     else:
-        return ccf
+        return - ccf / np.min(ccf) + 1 #TEST
 
 @nb.njit(cache=True,error_model='numpy')
 def weight_mask(wvi,wvf,o_weight,wvm,fm):
@@ -1074,89 +1075,6 @@ def loop_generate_rotating_lc_nb_sdo(N,Ngrid_in_ring,pare,rs,bph,bsp,bfc,flxph,s
 
     return flux ,typ, Aph, Asp, Afc, Apl
 
-@nb.njit(cache=True, error_model='numpy')
-def loop_generate_rotating_lc_nb_sdo_transit(N, Ngrid_in_ring, pare, rs, bph, bsp, bfc, flxph, sdo_input, typ_cell, changed_cells, prev_typ):
-    [array_sp, array_fc, array_pl] = sdo_input
-    
-    total_cells = len(prev_typ)
-    asp_sum = np.zeros(total_cells)
-    afc_sum = np.zeros(total_cells)
-    apl_sum = np.zeros(total_cells)
-    n_tot = np.zeros(total_cells)
-    
-    # 1. Single pass accumulation (Only for changed cells)
-    rows, cols = array_sp.shape
-    for r in range(rows):
-        for c in range(cols):
-            cell_val = typ_cell[r, c]
-            if not np.isnan(cell_val):
-                cell_id = int(cell_val)
-                if changed_cells[cell_id]: 
-                    n_tot[cell_id] += 1
-                    
-                    val_sp = array_sp[r, c]
-                    if not np.isnan(val_sp): asp_sum[cell_id] += val_sp
-                        
-                    val_fc = array_fc[r, c]
-                    if not np.isnan(val_fc): afc_sum[cell_id] += val_fc
-                        
-                    val_pl = array_pl[r, c]
-                    if not np.isnan(val_pl): apl_sum[cell_id] += val_pl
-                    
-    # 2. Fresh global recalculation of Flux to prevent baseline drift
-    flux = flxph
-    Aph, Asp, Afc, Apl = 0.0, 0.0, 0.0, 0.0
-    
-    cell_id = 0
-    for i in range(N): # Loop for each ring
-        for j in range(Ngrid_in_ring[i]): # Loop for each grid cell
-            
-            # Recompute geometries ONLY if the cell changed
-            if changed_cells[cell_id]:
-                asp, afc, apl = 0.0, 0.0, 0.0
-                
-                if n_tot[cell_id] > 0:
-                    asp = asp_sum[cell_id] / n_tot[cell_id]
-                    afc = afc_sum[cell_id] / n_tot[cell_id]
-                    apl = apl_sum[cell_id] / n_tot[cell_id]
-
-                if apl > 1.0: apl = 1.0
-                if apl > 0.0:
-                    asp = asp * (1.0 - apl)
-                    afc = afc * (1.0 - apl)
-
-                if asp > 1.0: 
-                    asp = 1.0
-                    afc = 0.0
-                if afc + asp > 1.0:
-                    afc = 1.0 - asp
-                
-                aph = 1.0 - asp - afc - apl
-                if aph < 0.0: aph = 0.0
-                
-                # Update state tracker
-                prev_typ[cell_id, 0] = aph
-                prev_typ[cell_id, 1] = asp
-                prev_typ[cell_id, 2] = afc
-                prev_typ[cell_id, 3] = apl
-                
-            # Retrieve current geometries (either freshly computed or cleanly cached)
-            curr_aph = prev_typ[cell_id, 0]
-            curr_asp = prev_typ[cell_id, 1]
-            curr_afc = prev_typ[cell_id, 2]
-            curr_apl = prev_typ[cell_id, 3]
-            
-            # Freshly apply to the total epoch flux
-            flux = flux - (1.0 - curr_aph) * bph[i] + curr_asp * bsp[i] + bfc[i] * curr_afc
-            
-            Aph += curr_aph * pare[i]
-            Asp += curr_asp * pare[i]
-            Afc += curr_afc * pare[i]
-            Apl += curr_apl * pare[i]
-            
-            cell_id += 1
-            
-    return flux, prev_typ, Aph, Asp, Afc, Apl
 
 
 @nb.njit(cache=True,error_model='numpy')
@@ -1482,13 +1400,8 @@ def check_spot_overlap(spot_map,Q): #TODO
 ########################################################################################
 ########################################################################################
 
-#TODO
-
-#spec[k,:],typ, filling_ph[k], filling_sp[k], filling_fc[k], filling_pl[k] = nbspectra.loop_generate_rotating_spec_nb(N,Ngrid_in_ring,pare,amu,spot_pos,vec_grid,vec_spot,simulate_planet,planet_pos,spec_rings_ph,spec_rings_sp,spec_rings_fc,spec_ph,vis)
 @nb.njit(cache=True,error_model='numpy')
 def loop_generate_rotating_spec_nb(N,Ngrid_in_ring,pare,amu,spot_pos,vec_grid,vec_spot,simulate_planet,planet_pos,spec_rings_ph,spec_rings_sp,spec_rings_fc,spec_ph,vis):
- 
-
     #define things
     width=np.pi/(2*N-1) #width of one grid element, in radiants
     spec = spec_ph
@@ -1588,7 +1501,6 @@ def loop_generate_rotating_spec_nb(N,Ngrid_in_ring,pare,amu,spot_pos,vec_grid,ve
 
     #add the corresponding spectrum flux to the total spectrum
     spec = spec - (1-aph)*spec_rings_ph[0,:]+asp*spec_rings_sp[0,:]+spec_rings_fc[0,:]*afc
-    #spec = spec - (1-aph)*bph[i]+asp*bsp[i]+bfc[i]*afc
 
 
     Aph=aph*pare[0]
@@ -1715,6 +1627,115 @@ def loop_generate_rotating_spec_nb(N,Ngrid_in_ring,pare,amu,spot_pos,vec_grid,ve
             
 
     return spec ,typ, Aph, Asp, Afc, Apl
+
+
+@nb.njit(cache=True,error_model='numpy')
+def loop_generate_rotating_spec_nb_sdo(N,Ngrid_in_ring,pare,amu,spot_pos,vec_grid,vec_spot,simulate_planet,planet_pos,spec_rings_ph,spec_rings_sp,spec_rings_fc,spec_ph, rs, sdo_input):
+    spec = spec_ph
+    [array_sp, array_fc] = sdo_input
+    n_pxls = len(array_sp)
+    typ_cell,_, _ = projection_pxl_to_ss_grid(Ngrid_in_ring, rs, n_pxls)
+    aph=0.0
+    asp=0.0 #fraction covered by all spots
+    afc=0.0
+    apl=0.0
+    # Central cell
+    k = 0
+
+    idx = typ_cell == k
+    n_tot = np.nansum(idx.ravel())
+
+    if n_tot > 0:
+        asp = np.nansum(array_sp.ravel()[idx.ravel()]) / n_tot
+        afc = np.nansum(array_fc.ravel()[idx.ravel()]) / n_tot
+
+
+    if afc<0.0:
+        afc=0.0
+            
+    if afc>1.0:
+        afc=1.0
+
+    if asp>1.0:
+        asp=1.0
+        afc=0.0
+
+    if apl>1.0:
+        apl=1.0
+        asp=0.0
+        afc=0.0
+
+    if afc + asp > 1.0:
+        afc = 1.0 - asp
+
+    if apl>0.0:
+        asp=asp*(1-apl)
+        afc=afc*(1-apl)
+    
+    aph=1-asp-afc-apl  
+    
+
+    #add the corresponding flux to the total flux
+    spec = spec - (1-aph)*spec_rings_ph[0,:]+asp*spec_rings_sp[0,:]+spec_rings_fc[0,:]*afc
+    
+    Aph=aph*pare[0]
+    Asp=asp*pare[0]
+    Afc=afc*pare[0]
+    Apl=apl*pare[0]
+    typ=[[aph,asp,afc,apl]]
+
+    for i in range(1,N): #Loop for each ring.
+        for j in range(Ngrid_in_ring[i]): #Loop for each grid
+            k+=1
+            aph=0.0
+            asp=0.0 #fraction covered by all spots
+            afc=0.0
+            apl=0.0
+
+            idx = typ_cell == k
+            n_tot = np.nansum(idx.ravel())
+
+            if n_tot > 0:
+                asp = np.nansum(array_sp.ravel()[idx.ravel()]) / n_tot
+                afc = np.nansum(array_fc.ravel()[idx.ravel()]) / n_tot
+
+            if afc<0.0:
+                afc=0
+                
+            if afc>1.0:
+                afc=1.0
+
+            if asp>1.0:
+                asp=1.0
+                afc=0.0
+
+            if apl>1.0:
+                apl=1.0
+                asp=0.0
+                afc=0.0
+
+            if afc + asp > 1.0:
+                afc = 1.0 - asp
+
+            if apl>0.0:
+                asp=asp*(1-apl)
+                afc=afc*(1-apl)
+            
+            aph=1-asp-afc-apl
+
+
+            spec = spec - (1-aph)*spec_rings_ph[i,:]+asp*spec_rings_sp[i,:]+spec_rings_fc[i,:]*afc
+            
+            Aph=Aph+aph*pare[i]
+            Asp=Asp+asp*pare[i]
+            Afc=Afc+afc*pare[i]
+            Apl=Apl+apl*pare[i]
+            typ.append([aph,asp,afc,apl])
+                
+
+    return spec ,typ, Aph, Asp, Afc, Apl
+
+  
 
 
 
