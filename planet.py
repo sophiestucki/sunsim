@@ -1,3 +1,15 @@
+"""
+planet: a transiting planet for StarSim.
+
+The planet is a dark disc in front of the star. Its orbit (period, transit time, semi-major axis, impact parameter,
+eccentricity) gives its position on the disc at any time (positions), and its RV semi-amplitude gives the reflex
+Keplerian RV of the star (keplerian_rv). The projected spin-orbit angle lambda orients its path on the disc with
+respect to the projected rotation axis of the star.
+
+Coordinates on the disc: polar (rho, theta), rho in stellar radii from the disc centre; x_disc = rho cos(theta) is
+along the projected stellar equator (the y axis of the grid) and y_disc = rho sin(theta) along the projected rotation
+axis (the z axis of the grid).
+"""
 import numpy as np
 
 import nbspectra
@@ -45,17 +57,19 @@ class planet(object):
 
     @staticmethod
     def true_anomaly(x,period,ecc,tperi):
-        #sin and cos of the true anomaly at the times x (Newton's method, nbspectra.true_anomaly_nb)
+        """sin and cos of the true anomaly at the times x (Newton's method for the Kepler equation, nbspectra.true_anomaly_nb)."""
         return nbspectra.true_anomaly_nb(np.atleast_1d(np.asarray(x, dtype=np.float64)), float(period), float(ecc), float(tperi))
 
     @staticmethod
     def Ttrans_2_Tperi(T0, P, e, w):
-        #time of periastron from the time of transit
+        """Time of periastron from the time of transit T0, period P, eccentricity e and argument of periastron w [rad]."""
         return nbspectra.ttrans_2_tperi_nb(float(T0), float(P), float(e), float(w))
 
     @staticmethod
     def keplerian_orbit(x,params):
-        #RV of the star induced by the planet [m/s]; params = [period, K, esinw, ecosw, t_transit]
+        """RV of the star induced by the planet [m/s] at the times x: K [cos(f+w) + e cos(w)], with f the true anomaly.
+        params = [period, K, esinw, ecosw, t_transit]. At the transit (f + w = pi/2) the RV is e cos(w) K, and it decreases
+        after it (the star moves towards the observer)."""
         period=params[0]
         t_trans=params[4]
         krv=params[1]
@@ -101,12 +115,14 @@ class planet(object):
         t_peri = self.Ttrans_2_Tperi(self.planet_transit_t0,self.planet_period, ecc, omega)
         sinf,cosf=self.true_anomaly(t,self.planet_period,ecc,t_peri)
 
+        #angle f + w + pi/2 along the orbit (the planet is in front of the star, at the transit, when it is pi)
         cosftrueomega=cosf*np.cos(omega+np.pi/2)-sinf*np.sin(omega+np.pi/2) #cos(f+w)=cos(f)*cos(w)-sin(f)*sin(w)
         sinftrueomega=cosf*np.sin(omega+np.pi/2)+sinf*np.cos(omega+np.pi/2) #sin(f+w)=cos(f)*sin(w)+sin(f)*cos(w)
 
         cosi = (self.planet_impact_param/self.planet_semi_major_axis)*(1+self.planet_esinw)/(1-ecc**2) #cosine of planet inclination (i=90 is transit)
 
         lam = self.planet_spin_orbit_angle
+        #distance star-planet, and position on the sky: the orbit (inclination i) rotated by lambda around the line of sight
         rpl=self.planet_semi_major_axis*(1-ecc**2)/(1+ecc*cosf)
         xpl=rpl*(-np.cos(lam)*sinftrueomega-np.sin(lam)*cosftrueomega*cosi)
         ypl=rpl*(np.sin(lam)*sinftrueomega-np.cos(lam)*cosftrueomega*cosi)

@@ -1,3 +1,17 @@
+"""
+spectrum_utils: tools to prepare the spectra and masks given to flux_grid and CCF_grid.
+
+* general            : black_body, vacuum2air / air2vacuum
+* faculae            : limb brightening of facular spectra that have none (e.g. Phoenix): facula_dT,
+                       limb_brightening_factor, add_limb_brightening, FACULA_DT_LAWS
+* Phoenix models     : interpolate_phoenix_mu (SPECINT, specific intensity at many mu, low resolution) and
+                       interpolate_phoenix (HiRes, disc-integrated, high resolution), interpolated in temperature, logg
+                       and metallicity; helpers phoenix_grid, phoenix_weights, phoenix_continuum
+* instruments        : add_resol (degrade a spectrum to the resolution of an instrument)
+* CCF masks          : mask_weights
+
+All the spectra are returned in the format of SunSim, {mu: {'wav': wavelengths [A], 'intensity': intensity}}.
+"""
 import sys
 import matplotlib.pyplot as plt
 from astropy.io import fits
@@ -36,7 +50,7 @@ from astropy import units as u
 ########################################################################################
 
 def black_body(wv,T):
-    #Computes the BB flux with temperature T at wavelengths wv(in nanometers)
+    """Planck function B_lambda(T) [erg/s/cm^2/cm/sr] at the wavelengths wv [A] and temperature T [K]."""
     c = 2.99792458e10 #speed of light in cm/s
     k = 1.380658e-16  #boltzmann constant
     h = 6.6260755e-27 #planck
@@ -45,6 +59,7 @@ def black_body(wv,T):
     return bb
 
 def vacuum2air(wv): #wv in angstroms
+	"""Vacuum wavelengths [A] -> air wavelengths [A] (refractive index of the air, two-term dispersion formula)."""
 	wv=wv*1e-4 #A to micrometer
 	a=0
 	b1=5.792105e-2
@@ -58,6 +73,8 @@ def vacuum2air(wv): #wv in angstroms
 	return w
 
 def air2vacuum(wv): #wv in angstroms
+    """Air wavelengths [A] -> vacuum wavelengths [A] (same refractive index as vacuum2air, evaluated at the air
+    wavelength: an approximation of the inverse)."""
     wv=wv*1e-4 #A to micrometer
     a=0
     b1=5.792105e-2
@@ -298,6 +315,11 @@ def add_resol(wavelength, flux, instrument):
   # This function is mostly based on the SteParSyn broadener (Tabernero et al. 2022) 
   # SteParsyn is under the two-clause BSD licence, I added a disclaimer to take this into account
   # Input is wavelength in A, and flux in any unit. If input is in RV you should convert from RV to wavelength by assuming a central lambda (i.e. 6705.1 A).
+        """Spectrum (wavelength [A], flux) degraded to the resolution of an instrument: convolved with a gaussian of
+        FWHM c/R in velocity (EXPRESS R=137000, HARPS 115000, HARPS-N 118000, NEID 120000), on a grid of constant
+        velocity step, then resampled on the original wavelengths. Based on the SteParSyn broadener (see above).
+        NOTE: it needs a function vlambda(wavelength, vstep) (grid of constant velocity step) that is not defined in
+        this module, and an unknown instrument name fails (kop is not set)."""
         vstep=1
         vlight=2.99792458e5
         vwave=vlambda(wavelength,vstep)
@@ -351,6 +373,9 @@ def add_resol(wavelength, flux, instrument):
         return convolved_flux
 
 def mask_weights(pathmask):
+    """Lines of a CCF mask from a text file: wavelengths wvm [A, vacuum] and weights fm.
+    Two columns (wavelength, weight), or three (start, end, weight: HARPS masks, in air; the centre of every line is
+    converted to vacuum). The program exits if the file is missing or has another format."""
     try:
         d = np.loadtxt(pathmask,unpack=True)
         if len(d) == 2:

@@ -1,3 +1,28 @@
+"""
+main: the StarSim class, which simulates the time series of a star with active regions (spots, faculae) and
+transiting planets.
+
+How a simulation works
+----------------------
+1. The visible disc is cut in N_rings concentric rings and every ring in cells (nbspectra.generate_grid_coordinates_nb).
+2. For each kind of surface (quiet photosphere, spot, facula) a grid gives the signal of every cell if it were
+   entirely of that kind: flux_grid (photometry: one value per ring; spectroscopy: one spectrum per cell) or CCF_grid
+   (one CCF per ring, placed here on the velocity of every cell).
+3. At every epoch the position of the regions and of the planets gives the filling factors of every cell
+   (fraction quiet / spot / facula / planet), and the signal of the star is
+        signal(t) = sum over the cells of ff_quiet*grid_quiet + ff_spot*grid_spot + ff_facula*grid_facula
+   (the planets are dark). The geometry of all the epochs is computed first with NumPy, then all the epochs are done in
+   one parallel Numba call (nbspectra.timeseries_nb).
+4. In ccf mode, the RV, FWHM, contrast and BIS of every CCF are measured (compute_ccf_params).
+
+Example
+-------
+    ss = StarSim(time, N_rings=20, inclination=0, rotation_period=25.4, mode=['photometry'],
+                 active_regions_map=[active_region('sp', 10, 90, 180)],
+                 flux_grid_qp=g_quiet.grid, flux_grid_sp=g_spot.grid, flux_grid_fc=g_facula.grid)
+    ss.generate_timeseries()
+    ss.flux_var, ss.ff_sp
+"""
 import numpy as np
 from pathlib import Path
 from multiprocessing import Pool
@@ -23,7 +48,38 @@ SOLAR_DIFFERENTIAL_ROTATION = (-1.698, -2.346)
 
 class StarSim(object): 
     """
-    Simulation class
+    Simulation of a star with active regions and planets: light curve, spectra and/or CCFs at the epochs `time`.
+
+    Star
+      time               : epochs [days] (array)
+      N_rings            : number of concentric rings of the grid of the disc (the grids given must have the same)
+      inclination        : angle between the rotation axis and the plane of the sky [rad]: 0 = equator-on, pi/2 = pole-on
+      rotation_period    : rotation period at the equator [days]
+      differential_rotation : coefficients (c1, c2, ...) [deg/day] of Omega(lat) = Omega_eq + c1 sin^2(lat) + c2 sin^4(lat)
+                           + ...; 0 / None = rigid rotation, one number = c1 only, SOLAR_DIFFERENTIAL_ROTATION for the
+                           Sun. It moves the regions and changes the rotation velocity of the cells (ccf mode).
+      stellar_radius     : [solar radii], for the rotation velocity
+    Surface
+      active_regions_map : list of active_region.active_region (spots 'sp' and faculae 'fc'); None = no region
+      active_regions_mask: active_region_mask.active_region_mask object: the spots and faculae come from 2D maps of the disc, one pair of
+                           maps per epoch (map mode; every epoch of `time` must have its maps, e.g. time = maps.times).
+                           Not together with active_regions_map.
+      planet             : planet.planet object, a list of them, or None (no planet)
+    Grids (the three kinds of surface: qp = quiet photosphere, sp = spot, fc = facula)
+      flux_grid_qp, flux_grid_sp, flux_grid_fc : flux_grid(...).grid, for 'photometry' (one value per ring, mode
+                           'photometry' of flux_grid) or 'spectroscopy' (one spectrum per cell, mode 'spectroscopy')
+      ccf_grid_qp, ccf_grid_sp, ccf_grid_fc    : CCF_grid objects (after built_grid()), for 'ccf'
+    mode                 : list with any of 'photometry', 'spectroscopy', 'ccf' (the geometry is shared). Photometry and
+                           spectroscopy need different flux grids, so they cannot be run together.
+    total_flux_qp        : not used (kept for compatibility)
+
+    After generate_timeseries():
+      flux_var (photometry), spec_var (spectroscopy), ccf_var and ccf_rv (ccf) and, in ccf mode, rv_var, fwhm_var,
+      contrast_var, bis_var, xbis_var, ybis_var and rv_kepler;
+      ff_quiet, ff_sp, ff_fc, ff_pl: fraction of the disc covered by each kind of surface [% of the projected area];
+      regions_pos, regions_vec, planet_pos, visible: geometry of the regions and planets at every epoch.
+    Other attributes: vsini (equatorial, m/s), rvel (line-of-sight rotation velocity of every cell, m/s),
+    rotation_rate (Omega(lat)/Omega_eq of every cell), amu, parea, Ngrid_in_ring, vec_grid (grid of the disc).
     """
     def __init__(self, time, N_rings, inclination, rotation_period, differential_rotation=0, stellar_radius=1, active_regions_map=None, active_regions_mask=None, total_flux_qp=None, flux_grid_qp=None, flux_grid_sp=None, flux_grid_fc=None, ccf_grid_qp=None, ccf_grid_sp=None, ccf_grid_fc=None, planet=None, mode=['photometry']):
 
@@ -41,8 +97,14 @@ class StarSim(object):
         #differential rotation: coefficients (c1, c2, ...) [deg/day] of
         #Omega(lat) = Omega_eq + c1 sin^2(lat) + c2 sin^4(lat) + ...   (Omega_eq = 360/rotation_period deg/day)
         #0 or None = rigid rotation; a single number = c1 only; SOLAR_DIFFERENTIAL_ROTATION for the Sun
-        self.differential_rotation = tuple(np.atleast_1d(np.asarray(0.0 if differential_rotation is None else differential_rotation, dtype=np.float64)).tolist())
+        self.differential_rotation = nbspectra.differential_rotation_coeffs(differential_rotation)
         self.active_regions_map = [] if active_regions_map is None else active_regions_map
+        #2D maps of the spots and faculae (active_region_mask.active_region_mask): if given, the regions come from the maps (map mode)
+        if active_regions_mask is not None:
+            if not hasattr(active_regions_mask, 'filling_factors'):
+                raise TypeError("active_regions_mask must be a active_region_mask.active_region_mask object, got %r" % (active_regions_mask,))
+            if self.active_regions_map:
+                raise ValueError("give either active_regions_map (circular regions) or active_regions_mask (2D maps), not both")
         self.active_regions_mask = active_regions_mask
 
         #transiting planets: a planet.planet object, a list of them, or None (no planet)
@@ -77,11 +139,15 @@ class StarSim(object):
 
         #rotation velocity of every cell [m/s], for the Doppler shift of the CCF (same formulas as flux_grid / old StarSim)
         self.stellar_radius = stellar_radius
+        #theta: colatitude of every cell with respect to the rotation axis (0 at the visible pole), phi: its longitude
+        #measured from the line of sight. The line-of-sight velocity of a rigid rotation is vsini * sin(theta) * sin(phi).
         theta = np.arccos(zs*np.cos(-inclination)-xs*np.sin(-inclination))
         phi = np.arctan2(ys, xs*np.cos(-inclination)+zs*np.sin(-inclination))
-        vsini = 1000*2*np.pi*(stellar_radius*696342)*np.cos(inclination)/(rotation_period*86400)
+        vsini = 1000*2*np.pi*(stellar_radius*696342)*np.cos(inclination)/(rotation_period*86400)   #at the equator
         self.vsini = vsini
-        self.rvel = np.ascontiguousarray(vsini*np.sin(theta)*np.sin(phi), dtype=np.float64)
+        #with differential rotation every cell rotates at Omega(lat)/Omega_eq times the equatorial rate (sin(lat) = cos(theta))
+        self.rotation_rate = nbspectra.rotation_rate_relative(np.cos(theta), rotation_period, self.differential_rotation)
+        self.rvel = np.ascontiguousarray(vsini*self.rotation_rate*np.sin(theta)*np.sin(phi), dtype=np.float64)
 
     def _regions_arrays(self):
         """Parameters of the active regions as arrays (degrees), and their type: 1 = spot, 2 = facula."""
@@ -99,7 +165,7 @@ class StarSim(object):
                 vec_spot (n_times, n_regions, 3): centre of the regions in cartesian coordinates (x towards the observer);
                 visible  (n_times, n_regions) bool: some part of the region is on the visible hemisphere.
         The radius is given by the evolution law of every region (active_region.radius); a region with radius 0
-        is not there (not visible). (appearance_time and lifetime are only used through the evolution law.)"""
+        is not there (not visible): outside its lifetime, or when its evolution law gives a radius <= 0."""
         t = np.atleast_1d(np.asarray(times, dtype=np.float64))[:, None]
         colat, longi, size, ref, _ = self._regions_arrays()
         sl = np.sin(np.deg2rad(90 - colat))                     #sin(latitude)
@@ -117,10 +183,14 @@ class StarSim(object):
             rad = np.zeros(dt.shape)
         spot_pos = np.stack([theta, phi, rad], axis=-1)
 
+        #centre of every region in the frame of the grid (x towards the observer, z along the projected rotation axis):
+        #position (theta, phi) on the rotating star, rotated by the inclination of the axis
         ci, si = np.cos(self.inclination), np.sin(self.inclination)
         st, ct = np.sin(theta), np.cos(theta)
         vec_spot = np.stack([ci*st*np.cos(phi)+si*ct, st*np.sin(phi), ct*ci-si*st*np.cos(phi)], axis=-1)
 
+        #visible if some part of the region is on the visible hemisphere: angular distance of its centre from the disc
+        #centre (arccos(x)) minus its radius below 90 degrees
         visible = (np.arccos(np.clip(vec_spot[..., 0], -1.0, 1.0)) - rad <= np.pi/2) & (rad > 0)
         return spot_pos, vec_spot, visible
 
@@ -134,54 +204,38 @@ class StarSim(object):
         By default the CCFs are self.ccf_var on the velocity grid self.ccf_rv.
         Returns rvs, contrast, fwhm, BIS, raw_xbis, raw_ybis: rv, contrast and fwhm come from a gaussian fit, BIS is the
         bisector span, raw_xbis / raw_ybis are the bisectors (velocity and height) of every CCF.
-        The CCFs are not modified.
+        The CCFs are not modified. All the CCFs are done in one parallel Numba call (nbspectra.ccf_params_nb: bisector
+        and Levenberg-Marquardt gaussian fit with analytic Jacobian); identical CCFs (e.g. the epochs without any
+        visible region) are computed only once. The gaussian is fitted on the part of the CCF between the wings of
+        the first CCF.
         '''
         rv = np.ascontiguousarray(self.ccf_rv if rv is None else rv, dtype=np.float64)
-        ccf = np.atleast_2d(self.ccf_var if ccf is None else ccf)
-        rvs=np.zeros(len(ccf)) #initialize
-        fwhm=np.zeros(len(ccf))
-        contrast=np.zeros(len(ccf))
-        BIS=np.zeros(len(ccf))
-        #bisector F/F_c
-        raw_xbis = []
-        raw_ybis = []
-        done = {} #identical CCFs (e.g. the epochs without any visible region) have identical parameters
-        n_failed = 0
+        ccf = np.ascontiguousarray(np.atleast_2d(self.ccf_var if ccf is None else ccf), dtype=np.float64)
 
-        for i in range(len(ccf)): #loop for each ccf
-            c = np.ascontiguousarray(ccf[i] - ccf[i].min() + 0.000001, dtype=np.float64) #shifted to 0.0 (on a copy, ccf is not changed)
-            key = c.tobytes()
-            if key in done:
-                rvs[i], contrast[i], fwhm[i], BIS[i], xbis, ybis = done[key]
-                raw_xbis.append(xbis)
-                raw_ybis.append(ybis)
-                continue
+        #wings of the first CCF: the gaussian of every CCF is fitted between them
+        c0 = ccf[0] - ccf[0].min() + 0.000001
+        cutleft, cutright, _, _ = nbspectra.speed_bisector_nb(rv, c0/c0.max(), True)
 
-            #Compute bisector and remove wings
-            cutleft0,cutright0,xbis,ybis=nbspectra.speed_bisector_nb(rv,c/c.max(),integrated_bis=True)
+        #identical CCFs are computed once (hash of every row: linear, much faster than np.unique on the rows)
+        index = {}
+        inverse = np.empty(len(ccf), dtype=np.int64)
+        first = []
+        for i, row in enumerate(ccf):
+            k = index.setdefault(row.tobytes(), len(first))
+            if k == len(first):
+                first.append(i)
+            inverse[i] = k
+        res = nbspectra.ccf_params_nb(rv, np.ascontiguousarray(ccf[first]), int(cutleft), int(cutright), float(self.vsini))
+        rvs, contrast, fwhm, BIS, xbis, ybis, failed = (a[inverse] for a in res)
 
-            raw_xbis.append(xbis)
-            raw_ybis.append(ybis)
-            BIS[i]=np.mean(xbis[np.array(ybis>=0.1) & np.array(ybis<=0.4)])-np.mean(xbis[np.array(ybis<=0.9) & np.array(ybis>=0.6)])
-            if i==0:
-                cutleft,cutright=cutleft0,cutright0
-            try:
-                popt,_=optimize.curve_fit(nbspectra.gaussian2, rv[cutleft:cutright], c[cutleft:cutright],p0=[np.max(c[cutleft:cutright]),rv[cutleft:cutright][np.argmax(c[cutleft:cutright])]+100,1.5*self.vsini+1000,0.000001]) #fit a gaussian
-            except Exception:
-                popt=[1.0,100000.0,1,100000.0]
-                n_failed += 1
-            contrast[i]=popt[0] #amplitude
-            rvs[i]=popt[1] #mean
-            fwhm[i]=2*m.sqrt(2*np.log(2))*np.abs(popt[2]) #fwhm relation to std
-            done[key] = (rvs[i], contrast[i], fwhm[i], BIS[i], xbis, ybis)
-
-            if plot_test: 
-                plt.plot(xbis,1-ybis,'b')
-                plt.show(block=True)
-
+        n_failed = int(np.sum(failed))
         if n_failed:
             warnings.warn("the gaussian fit failed for %d of %d CCFs: they have the placeholder values rv=100000 m/s, contrast=1" % (n_failed, len(ccf)))
-        return rvs, contrast, fwhm, BIS, raw_xbis, raw_ybis
+        if plot_test:
+            for xb, yb in zip(xbis, ybis):
+                plt.plot(xb, 1-yb, 'b')
+                plt.show(block=True)
+        return rvs, contrast, fwhm, BIS, list(xbis), list(ybis)
 
     def _flux_grids(self, ndim, mode_name):
         """Quiet / spot / facula flux grids as float arrays: (N_rings,) for photometry (one value per ring),
@@ -226,7 +280,7 @@ class StarSim(object):
         self.ccf_rv = rv
         return cells
 
-    def generate_timeseries(self, ccf_params=True):
+    def generate_timeseries(self, ccf_params=True, verbose=True):
         '''Loop for all the epochs and assign, for every observable in self.mode, the signal of the grid elements:
         'photometry'   -> self.flux_var  (n_times,)
         'spectroscopy' -> self.spec_var  (n_times, n_wavelengths)
@@ -234,12 +288,16 @@ class StarSim(object):
                           self.rv_var, self.contrast_var, self.fwhm_var, self.bis_var (n_times,) and the bisectors
                           self.xbis_var, self.ybis_var (n_times, 50)  [see compute_ccf_params]
                           With planets, the Keplerian RV of the star (self.rv_kepler, sum of planet.keplerian_rv) is added to rv_var.
-        The geometry of the regions (filling factors of every cell) is computed once per epoch for all of them.
-        The geometry of the regions and of the planet at all the epochs is computed first, vectorised
+        The geometry (filling factors of every cell) is computed once per epoch and shared by all the modes.
+        The geometry of the regions and of the planets at all the epochs is computed first, vectorised
         (compute_regions_geometry, planet.positions), and stored: self.regions_pos, self.regions_vec
         (n_times, n_regions, 3), self.planet_pos (n_times, n_planets, 3), self.visible (n_times, n_regions+n_planets;
         regions first, then the planets in the order given). self.ff_pl is the fraction of the disc covered by all the planets.
         Then the whole loop over the epochs is a single Numba call, nbspectra.timeseries_nb (epochs in parallel).
+        Map mode (active_regions_mask): the spot / facula filling factors of the cells come from the 2D maps of every
+        epoch (active_region_mask.filling_factors) and the epochs are done by nbspectra.timeseries_maps_nb; regions_pos and
+        regions_vec are then empty and visible only has the planets. With verbose, the progress of the reading of the maps
+        is printed (date, filling factors and progress of every epoch).
         '''
         n_times = len(self.obs_times)
         n_cells = len(self.vec_grid)
@@ -260,22 +318,39 @@ class StarSim(object):
             gq, gs, gf = self._build_ccf_cells()
             cc = (gq, gs, gf, gq.sum(axis=0))
 
-        #geometry of all the regions and of the planet at all the epochs, vectorised (stored for plots / checks)
-        spot_pos, vec_spot, visible = self.compute_regions_geometry(self.obs_times)
+        #position of the planets at all the epochs, vectorised. A planet can be visible when the distance of its
+        #centre from the disc centre (rho) is below 1 + its radius.
         if self.planets:
             planet_pos = np.stack([pl.positions(self.obs_times) for pl in self.planets], axis=1)   #(n_times, n_planets, 3)
         else:
             planet_pos = np.zeros((n_times, 0, 3))
-        vis = np.concatenate([visible, planet_pos[:, :, 0] - planet_pos[:, :, 2] < 1], axis=1).astype(np.float64)
-        self.regions_pos, self.regions_vec, self.planet_pos, self.visible = spot_pos, vec_spot, planet_pos, vis.astype(bool)
+        planet_vis = planet_pos[:, :, 0] - planet_pos[:, :, 2] < 1
+        self.planet_pos = planet_pos
+        grid_args = (self.N_rings, self._Nin_arr, self._parea_arr, np.asarray(self.amu, dtype=np.float64),
+                     np.ascontiguousarray(self.vec_grid, dtype=np.float64))
 
-        #the whole loop over the epochs is one Numba call (epochs in parallel)
-        typ = self._regions_arrays()[4]
-        flux, spec, ccf, filling = nbspectra.timeseries_nb(
-            self.N_rings, self._Nin_arr, self._parea_arr,
-            np.asarray(self.amu, dtype=np.float64), np.ascontiguousarray(self.vec_grid, dtype=np.float64),
-            np.ascontiguousarray(spot_pos), np.ascontiguousarray(vec_spot), vis, typ,
-            bool(self.simulate_planet), np.ascontiguousarray(planet_pos), *ph, *sp, *cc)
+        if self.active_regions_mask is not None:
+            #MAP MODE: spot and facula filling factors of every cell from the 2D maps (one epoch read at a time),
+            #then all the epochs in one Numba call (planets on top)
+            ff_sp_maps, ff_fc_maps = self.active_regions_mask.filling_factors(self.obs_times, self.N_rings, self._Nin_arr,
+                                                                              np.repeat(self._parea_arr, self._Nin_arr),
+                                                                              verbose=verbose)
+            self.regions_pos, self.regions_vec = np.zeros((n_times, 0, 3)), np.zeros((n_times, 0, 3))
+            self.visible = planet_vis
+            flux, spec, ccf, filling = nbspectra.timeseries_maps_nb(
+                *grid_args, ff_sp_maps, ff_fc_maps, bool(self.simulate_planet), np.ascontiguousarray(planet_pos),
+                np.ascontiguousarray(planet_vis), *ph, *sp, *cc)
+        else:
+            #CIRCULAR REGIONS: geometry of all the regions at all the epochs, vectorised (stored for plots / checks)
+            spot_pos, vec_spot, visible = self.compute_regions_geometry(self.obs_times)
+            vis = np.concatenate([visible, planet_vis], axis=1).astype(np.float64)
+            self.regions_pos, self.regions_vec, self.visible = spot_pos, vec_spot, vis.astype(bool)
+
+            #the whole loop over the epochs is one Numba call (epochs in parallel)
+            typ = self._regions_arrays()[4]
+            flux, spec, ccf, filling = nbspectra.timeseries_nb(
+                *grid_args, np.ascontiguousarray(spot_pos), np.ascontiguousarray(vec_spot), vis, typ,
+                bool(self.simulate_planet), np.ascontiguousarray(planet_pos), *ph, *sp, *cc)
         filling_ph, filling_sp, filling_fc, filling_pl = filling
 
         if 'photometry' in self.mode:

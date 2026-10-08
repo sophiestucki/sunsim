@@ -5,6 +5,16 @@ CCF_grid: CCF of the rings of the stellar disc, in two independent steps.
     step 2  rv_treatment()   velocity axis of every ring (bisector removal / bisector added)
 
 The numerical work is done by nbspectra.cross_correlation_mask (phoenix_resolution is passed straight to it).
+
+How StarSim uses it (mode 'ccf'): ccf_grid_qp / ccf_grid_sp / ccf_grid_fc are CCF_grid objects of the quiet
+photosphere, the spots and the faculae (after built_grid()). For every cell, StarSim takes the CCF of its ring
+(ccf_rings), places it on the velocity axis of the ring (rvs_ring) shifted by the rotation velocity of the cell, and
+weights it by the area of the cell (StarSim._build_ccf_cells). The CCFs here are therefore in the rest frame of the
+surface, without rotation.
+
+The CCFs are normalised (nbspectra.cross_correlation_mask), so they do not know how bright the ring is: the limb
+darkening and the contrast of the spots / faculae are given by mu_ratio (brightness of every ring relative to the
+quiet disc centre).
 """
 import warnings
 import numpy as np
@@ -46,6 +56,27 @@ def ring_intensity(mu, acd, fln, limb_lim, limb_extrapolation='linear'):
     raise ValueError("limb_extrapolation must be 'constant' or 'linear', got %r" % (limb_extrapolation,))
 
 
+def ring_ccf(mu, acd, ccfs, limb_lim, limb_extrapolation='linear'):
+    """CCF of a ring at projected angle mu from the CCFs of the spectra at the tabulated angles (acd ascending,
+    ccfs = CCFs at acd). Linear interpolation between the tabulated angles. Below limb_lim:
+      'constant' -> CCF at the smallest tabulated angle (the CCF of the spectrum used by ring_intensity);
+      'linear'   -> CCF at limb_lim: ring_intensity only rescales the spectrum there (mu/limb_lim), which does not
+                    change the normalised CCF (the brightness of the ring is given by mu_ratio)."""
+    if mu > limb_lim:
+        return ring_intensity(mu, acd, ccfs, limb_lim, limb_extrapolation)
+    if limb_extrapolation == 'constant':
+        return ccfs[0]
+    if limb_extrapolation == 'linear':
+        if limb_lim == acd.min():
+            return ccfs[0]
+        acd_low = np.max(acd[acd < limb_lim])           # tabulated angles below and above limb_lim
+        acd_upp = np.min(acd[acd >= limb_lim])
+        idx_low = np.where(acd == acd_low)[0][0]
+        idx_upp = np.where(acd == acd_upp)[0][0]
+        return ccfs[idx_low] + (ccfs[idx_upp] - ccfs[idx_low]) * (limb_lim - acd_low) / (acd_upp - acd_low)
+    raise ValueError("limb_extrapolation must be 'constant' or 'linear', got %r" % (limb_extrapolation,))
+
+
 def bisector_fit(rv, ccf, kind_interp='linear', integrated_bis=False):
     """Function rv = f(ccf height) interpolating the bisector of the CCF."""
     xnew, ynew, xbis, ybis = nbspectra.speed_bisector_nb(rv, ccf, integrated_bis)
@@ -64,6 +95,9 @@ def dumusque_bisector(normalization):
 # =============================================================================================
 class CCF_grid(object):
     """
+    CCF of every ring of the disc for one kind of surface (quiet photosphere, spot or facula).
+
+    N_rings       : number of rings of the grid of the disc (the same as in StarSim)
     high_res_flux : {mu: {'wav': wavelengths [A], 'intensity': flux}}   (any key order, it is sorted)
     RVs           : velocity grid of the CCF [m/s]
     wvm, fm       : mask lines [A] and weights
@@ -73,8 +107,8 @@ class CCF_grid(object):
                     orders the grid is not the Phoenix one, so the order CCFs always use the generic branch.
     mu_ratio      : None -> CCF of every ring from its own spectrum (needs >= 2 mu angles).
                     array (N_rings) -> brightness of every ring: the CCF of the ring is multiplied by mu_ratio[i].
-                      * high_res_flux with >= 2 mu angles: CCF of every ring from its own spectrum (interpolated /
-                        extrapolated in mu), times mu_ratio[i]. The bisector of every ring is kept.
+                      * high_res_flux with >= 2 mu angles: CCF of every ring at its own mu (see interpolation),
+                        times mu_ratio[i]. The bisector of every ring is kept.
                       * high_res_flux with ONE spectrum, at mu = 1.0 (it is checked): CCF of the disc centre times
                         mu_ratio[i] for every ring; its bisector is removed in rv_treatment.
     normalization : ccf_norm of nbspectra.cross_correlation_mask
@@ -87,11 +121,17 @@ class CCF_grid(object):
                     order) and multiplied by the blaze of that order.  A table is interpolated (flat outside it);
                     a callable, e.g. a polynomial fit, is only meaningful inside its fit range.
     limb_lim, limb_extrapolation : limb treatment of the ring spectra (limb_lim default: smallest tabulated mu)
+    interpolation : how the CCF of a ring is obtained when several mu are given:
+                    'ccf' (default) -> the CCF of the spectrum at every tabulated mu is computed once (self.ccf_mu),
+                                       and the CCF of every ring is interpolated in mu between them (ring_ccf);
+                    'spectrum'      -> the spectrum of every ring is interpolated in mu (ring_intensity) and its CCF
+                                       is computed (one CCF per ring).
+                    In both cases the Doppler shift of the rotation is added later, by StarSim, cell by cell.
     """
 
     def __init__(self, N_rings, high_res_flux, RVs, wvm, fm, convective_blueshift=0, phoenix_resolution=False,
                  mu_ratio=None, normalization=False, instrument=None, blaze_function=None,
-                 instrumental_efficiency=None, limb_lim=None, limb_extrapolation='linear'):
+                 instrumental_efficiency=None, limb_lim=None, limb_extrapolation='linear', interpolation='ccf'):
         if instrument is not None and blaze_function is None:
             raise ValueError("instrument=%r needs blaze_function=(wvb, blaze)" % (instrument,))
         self.N_rings = N_rings
@@ -107,6 +147,10 @@ class CCF_grid(object):
         self.blaze_function = blaze_function
         self.instrumental_efficiency = instrumental_efficiency
         self.limb_extrapolation = limb_extrapolation
+        if interpolation not in ('ccf', 'spectrum'):
+            raise ValueError("interpolation must be 'ccf' or 'spectrum', got %r" % (interpolation,))
+        self.interpolation = interpolation
+        self.ccf_mu = None             # CCF of the spectrum at every tabulated mu (interpolation='ccf')
 
         # spectral quantities -- built only once.  The mu keys are sorted: index 0 = smallest mu, last = disc centre
         keys = sorted(self.high_res_flux.keys())
@@ -132,14 +176,17 @@ class CCF_grid(object):
     # ---------------------------------------------------------------- properties
     @property
     def wv(self):
+        """Wavelength grid of the spectra [A]."""
         return self._wv
 
     @property
     def flux_i(self):
+        """Spectra at the tabulated mu (n_mu, n_wavelengths), in the order of acd."""
         return self._flux_i
 
     @property
     def acd(self):
+        """Tabulated mu angles of the spectra, ascending (index 0 = closest to the limb)."""
         return self._acd
 
     # ---------------------------------------------------------------- step 1: general CCF
@@ -160,7 +207,9 @@ class CCF_grid(object):
     def compute_ccf(self):
         """Step 1. CCF of every ring in the rest frame (not weighted by area): array (N_rings, len(RVs)).
         Whole spectrum if instrument is None, by order otherwise.
-        >= 2 mu angles : every ring from its own spectrum ('rings' mode), times mu_ratio[i] if mu_ratio is given.
+        >= 2 mu angles : every ring has its own CCF ('rings' mode), times mu_ratio[i] if mu_ratio is given:
+                         interpolated in mu between the CCFs of the tabulated spectra (interpolation='ccf'), or the
+                         CCF of the spectrum interpolated at the mu of the ring (interpolation='spectrum').
         one spectrum   : CCF of the disc-centre spectrum times mu_ratio[i] ('centre' mode; the disc-centre CCF alone
                          is kept in self.ccf_centre).
         The CCF of every ring before the mu_ratio scaling is kept in self.ccf_shape."""
@@ -171,7 +220,13 @@ class CCF_grid(object):
                 raise ValueError("mu_ratio must have one value per ring (%d), got shape %s"
                                  % (self.N_rings, ratio.shape))
         if len(self._acd) >= 2:
-            shape = np.array([self._ccf_of_spectrum(self.ring_spectrum(i)) for i in range(self.N_rings)])
+            if self.interpolation == 'ccf':
+                #one CCF per tabulated mu, then interpolation in mu (before the Doppler shifts of the rotation)
+                self.ccf_mu = np.array([self._ccf_of_spectrum(f) for f in self._flux_i])
+                shape = np.array([ring_ccf(self.amu[i], self._acd, self.ccf_mu, self.limb_lim, self.limb_extrapolation)
+                                  for i in range(self.N_rings)])
+            else:
+                shape = np.array([self._ccf_of_spectrum(self.ring_spectrum(i)) for i in range(self.N_rings)])
             self._ccf_mode, self.ccf_centre = 'rings', None
         else:
             self._check_centre_spectrum()
@@ -183,6 +238,7 @@ class CCF_grid(object):
         return self.ccf_rings
 
     def _ccf_of_spectrum(self, flux):
+        """CCF of one spectrum on self.rvs: whole spectrum (instrument None) or summed over the orders of the instrument."""
         if self.instrument is None:
             return nbspectra.cross_correlation_mask(self.rvs, self._wv, np.asarray(flux, dtype=np.float64),
                                                     self.wvm, self.fm, self.phoenix_resolution, self.normalization)
