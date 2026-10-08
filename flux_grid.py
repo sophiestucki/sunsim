@@ -137,8 +137,8 @@ class flux_grid(object):
         # Compute spectrum for each ring only once
         flp = np.zeros((self.N_rings, len(wv_original)), dtype=np.float64)
         if self.mode == 'photometry':
-            sflp = np.zeros((np.sum(self.Ngrid_in_ring)), dtype=np.float64)
-
+            # one value per ring (all cells of a ring have the same flux)
+            sflp = np.zeros(self.N_rings, dtype=np.float64)
 
         for i in range(self.N_rings):
 
@@ -146,9 +146,7 @@ class flux_grid(object):
 
             flp[i, :] = dlp*self.parea[i]/(4*np.pi)*filt
             if self.mode == 'photometry':
-                start = self.ring_start[i]
-                end = start+self.Ngrid_in_ring[i]
-                sflp[start:end] = _trapz(flp[i,:], self.wv) 
+                sflp[i] = _trapz(flp[i,:], self.wv)
 
 
         if self.mode == 'spectroscopy':
@@ -193,5 +191,6 @@ class flux_grid(object):
 
                 self.total_brightness = _trapz(np.sum(final_flp, axis=0), self.wv)
         elif self.mode == 'photometry':
+                # grid has shape (N_rings,): flux of one cell of each ring
                 self.grid = sflp
-                self.total_brightness = np.sum(sflp)
+                self.total_brightness = np.dot(self.Ngrid_in_ring, sflp)

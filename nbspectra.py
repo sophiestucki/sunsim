@@ -1,4 +1,6 @@
 #NUMBA ############################################
+import os
+os.environ.setdefault('KMP_WARNINGS', '0')   #silence the OpenMP 'omp_set_nested deprecated' info (only works if set before numpy is imported)
 import numba as nb
 import numpy as np
 import math as m
@@ -181,6 +183,26 @@ def overlap_fraction(dist,rad,width,central):
 
 @nb.njit(cache=True,error_model='numpy')
 def generate_ff(N,Ngrid_in_ring,pare,amu,spot_pos,vec_grid,vec_spot,simulate_planet,planet_pos,vis, active_region_types):
+    #active_region_types: list of 'sp' / 'fc' (one per region). One planet: planet_pos = [rho, theta, radius] and
+    #vis = regions + 1 (last = planet). See generate_ff_core (several planets).
+    nreg=len(vis)-1
+    region_type=np.zeros(nreg,dtype=np.int64)
+    for l in range(nreg):
+        if active_region_types[l]=='sp':
+            region_type[l]=1
+        elif active_region_types[l]=='fc':
+            region_type[l]=2
+    pp=np.empty((1,3))
+    for q in range(3):
+        pp[0,q]=planet_pos[q]
+    return generate_ff_core(N,Ngrid_in_ring,pare,amu,spot_pos,vec_grid,vec_spot,simulate_planet,pp,vis,region_type)
+
+
+@nb.njit(cache=True,error_model='numpy')
+def generate_ff_core(N,Ngrid_in_ring,pare,amu,spot_pos,vec_grid,vec_spot,simulate_planet,planet_pos,vis,region_type):
+    #region_type: int array, 1 = spot, 2 = facula (numba-friendly version of the list of 'sp' / 'fc')
+    #planet_pos: (n_planets, 3) rho, theta, radius of every planet; vis: regions first, then one value per planet.
+    #The planets are dark discs; the fraction of a cell covered by the planets is the sum over the planets (max 1).
     #Filling factors do not depend on the order of the
     #regions: in every cell the spots are computed first, and the faculae afterwards, with the spots on top of them.
     #The visible part of a facula depends on how its disc and the disc of each spot are placed (decided once per epoch):
@@ -189,7 +211,8 @@ def generate_ff(N,Ngrid_in_ring,pare,amu,spot_pos,vec_grid,vec_spot,simulate_pla
     #   discs do not overlap     -> facula                   (exact)
     #   partial overlap          -> facula*(1-spot)          (independent approximation)
     ncell=vec_grid.shape[0]
-    nreg=len(vis)-1
+    npl=planet_pos.shape[0]
+    nreg=len(vis)-npl
     width=np.pi/(2*N-1) #width of one grid element, in radiants
     half=width/2.0
 
@@ -200,10 +223,10 @@ def generate_ff(N,Ngrid_in_ring,pare,amu,spot_pos,vec_grid,vec_spot,simulate_pla
     nf=0
     for l in range(nreg):
         if vis[l]==1.0 and spot_pos[l][2]>0.0:
-            if active_region_types[l]=='sp':
+            if region_type[l]==1:
                 sidx[ns]=l
                 ns+=1
-            elif active_region_types[l]=='fc':
+            elif region_type[l]==2:
                 fidx[nf]=l
                 nf+=1
 
@@ -237,10 +260,13 @@ def generate_ff(N,Ngrid_in_ring,pare,amu,spot_pos,vec_grid,vec_spot,simulate_pla
             else:
                 rel[b,a]=3
 
-    planet_on=False
+    planet_on=np.zeros(npl,dtype=np.bool_) #planets in front of the disc
+    any_planet=False
     if simulate_planet:
-        if vis[-1]==1.0:
-            planet_on=True
+        for p in range(npl):
+            if vis[nreg+p]==1.0:
+                planet_on[p]=True
+                any_planet=True
 
     ds=np.zeros(ns) #coverage of the cell by each spot
     df=np.zeros(nf) #and by each facula
@@ -301,19 +327,22 @@ def generate_ff(N,Ngrid_in_ring,pare,amu,spot_pos,vec_grid,vec_spot,simulate_pla
                     if v>0.0:
                         afc+=v*mult
 
-            #PLANET
-            if planet_on:
-                dist=m.sqrt((planet_pos[0]*m.cos(planet_pos[1])-vec_grid[c,1])**2+(planet_pos[0]*m.sin(planet_pos[1])-vec_grid[c,2])**2) #grid-planet distance
+            #PLANETS
+            if any_planet:
                 if central:
                     width2=2.0*m.sin(half)
                 else:
                     width2=amu[i]*width
-                if dist>width2/2+planet_pos[2]:
-                    apl=0.0
-                elif dist<planet_pos[2]-width2/2:
-                    apl=1.0
-                else:
-                    apl=-(dist-planet_pos[2]-width2/2)/width2
+                for p in range(npl):
+                    if not planet_on[p]:
+                        continue
+                    dist=m.sqrt((planet_pos[p,0]*m.cos(planet_pos[p,1])-vec_grid[c,1])**2+(planet_pos[p,0]*m.sin(planet_pos[p,1])-vec_grid[c,2])**2) #grid-planet distance
+                    if dist>width2/2+planet_pos[p,2]:
+                        continue
+                    elif dist<planet_pos[p,2]-width2/2:
+                        apl+=1.0
+                    else:
+                        apl+=-(dist-planet_pos[p,2]-width2/2)/width2
 
             if afc<0:
                 afc=0.0
@@ -713,3 +742,119 @@ def projection_pxl_to_ss_grid(Ngrid_in_ring, rs, n_pxls):
             typ_cell[i, jf] = offsets[ring] + idx
 
     return typ_cell, xg, yg
+
+
+#######################################################################################################
+# Time series: the whole loop over the epochs in one call
+#######################################################################################################
+
+@nb.njit(cache=True)
+def true_anomaly_scalar_nb(x,period,ecc,tperi):
+    #sin and cos of the true anomaly at time x (Newton's method for the Kepler equation)
+    fmean=2.0*np.pi*(x-tperi)/period
+    fecc=fmean
+    diff=1.0
+    while(diff>1.0E-6):
+        fecc_0=fecc
+        fecc=fecc_0-(fecc_0-ecc*m.sin(fecc_0)-fmean)/(1.0-ecc*m.cos(fecc_0))
+        diff=abs(fecc-fecc_0)
+    sinf=m.sqrt(1.0-ecc*ecc)*m.sin(fecc)/(1.0-ecc*m.cos(fecc))
+    cosf=(m.cos(fecc)-ecc)/(1.0-ecc*m.cos(fecc))
+    return sinf,cosf
+
+
+@nb.njit(cache=True)
+def true_anomaly_nb(x,period,ecc,tperi):
+    sinf=np.empty(len(x))
+    cosf=np.empty(len(x))
+    for i in range(len(x)):
+        sinf[i],cosf[i]=true_anomaly_scalar_nb(x[i],period,ecc,tperi)
+    return sinf,cosf
+
+
+@nb.njit(cache=True)
+def ttrans_2_tperi_nb(T0,P,e,w):
+    f=np.pi/2-w
+    E=2*m.atan(m.tan(f/2)*m.sqrt((1-e)/(1+e))) #eccentric anomaly
+    return T0-P/(2*np.pi)*(E-e*m.sin(E)) #time of periastron
+
+
+@nb.njit(cache=True,parallel=True)
+def timeseries_nb(N,Ngrid_in_ring,pare,amu,vec_grid,spot_pos_all,vec_spot_all,vis_all,region_type,simulate_planet,planet_pos_all,
+                  gq_ph,gs_ph,gf_ph,quiet_ph,gq_sp,gs_sp,gf_sp,quiet_sp,gq_cc,gs_cc,gf_cc,quiet_cc):
+    #All the epochs in one call (in parallel). The geometry is computed before, vectorised, for all the epochs:
+    #   spot_pos_all, vec_spot_all (n_times, n_regions, 3), vis_all (n_times, n_regions+n_planets; regions first),
+    #   planet_pos_all (n_times, n_planets, 3).
+    #For every epoch: filling factors of every cell (generate_ff_core) and the signals
+    #   signal = quiet_total + sum over the cells touched by a region or the planet of
+    #            (ff_quiet-1)*grid_quiet + ff_sp*grid_sp + ff_fc*grid_fc
+    #(equal to sum over all cells of ff_quiet*grid_quiet + ff_sp*grid_sp + ff_fc*grid_fc, since untouched cells are quiet).
+    #Photometry grids are per ring (N,), spectroscopy and ccf grids per cell (n_cells, n). A signal with an empty grid
+    #(0 rings / 0 columns) is not computed.
+    #Returns flux (n_times,), spec (n_times, n_wv), ccf (n_times, n_rv), filling factors [% of the disc] (4, n_times):
+    #quiet, spots, faculae, planet.
+    n_times=vis_all.shape[0]
+    ncell=vec_grid.shape[0]
+    do_ph=len(gq_ph)>0
+    nsp=gq_sp.shape[1]
+    ncc=gq_cc.shape[1]
+
+    cell_ring=np.empty(ncell,dtype=np.int64)
+    area_tot=0.0
+    c=0
+    for i in range(N):
+        area_tot+=Ngrid_in_ring[i]*pare[i]
+        for j in range(Ngrid_in_ring[i]):
+            cell_ring[c]=i
+            c+=1
+
+    flux=np.zeros(n_times)
+    spec=np.zeros((n_times,nsp))
+    ccf=np.zeros((n_times,ncc))
+    filling=np.zeros((4,n_times))
+
+    for k in prange(n_times):
+        vis=vis_all[k]
+        spot_pos=spot_pos_all[k]
+        vec_spot=vec_spot_all[k]
+        planet_pos=planet_pos_all[k]
+
+        if np.sum(vis)==0.0:
+            #nothing visible: the star is the quiet photosphere
+            filling[0,k]=100.0
+            if do_ph:
+                flux[k]=quiet_ph[0]
+            for w in range(nsp):
+                spec[k,w]=quiet_sp[w]
+            for w in range(ncc):
+                ccf[k,w]=quiet_cc[w]
+            continue
+
+        ff_quiet,ff_sp,ff_fc,ff_p,Aph,Asp,Afc,Apl=generate_ff_core(N,Ngrid_in_ring,pare,amu,spot_pos,vec_grid,vec_spot,
+                                                                   simulate_planet,planet_pos,vis,region_type)
+        filling[0,k]=100*Aph/area_tot
+        filling[1,k]=100*Asp/area_tot
+        filling[2,k]=100*Afc/area_tot
+        filling[3,k]=100*Apl/area_tot
+
+        if do_ph:
+            flux[k]=quiet_ph[0]
+        for w in range(nsp):
+            spec[k,w]=quiet_sp[w]
+        for w in range(ncc):
+            ccf[k,w]=quiet_cc[w]
+        for q in range(ncell):
+            dq=ff_quiet[q]-1.0
+            fs=ff_sp[q]
+            ff=ff_fc[q]
+            if dq==0.0 and fs==0.0 and ff==0.0: #untouched cell: quiet, already in the total
+                continue
+            if do_ph:
+                r=cell_ring[q]
+                flux[k]+=dq*gq_ph[r]+fs*gs_ph[r]+ff*gf_ph[r]
+            for w in range(nsp):
+                spec[k,w]+=dq*gq_sp[q,w]+fs*gs_sp[q,w]+ff*gf_sp[q,w]
+            for w in range(ncc):
+                ccf[k,w]+=dq*gq_cc[q,w]+fs*gs_cc[q,w]+ff*gf_cc[q,w]
+
+    return flux,spec,ccf,filling

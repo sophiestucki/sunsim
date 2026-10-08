@@ -16,11 +16,16 @@ import warnings
 import nbspectra
 
 
+#Solar differential rotation: coefficients (B, C) [deg/day] of Omega(lat) = Omega_eq + B sin^2(lat) + C sin^4(lat).
+#The profile used in StarSim (with the sin^2 term only, the solar value is B = -2.66 deg/day, Poljancic Beljan et al. 2017).
+SOLAR_DIFFERENTIAL_ROTATION = (-1.698, -2.346)
+
+
 class StarSim(object): 
     """
     Simulation class
     """
-    def __init__(self, time, N_rings, inclination, rotation_period, differential_rotation=0, stellar_radius=1, active_regions_map=None, active_regions_mask=None, total_flux_qp=None, flux_grid_qp=None, flux_grid_sp=None, flux_grid_fc=None, ccf_grid_qp=None, ccf_grid_sp=None, ccf_grid_fc=None, simulate_planet=False, mode=['photometry']):
+    def __init__(self, time, N_rings, inclination, rotation_period, differential_rotation=0, stellar_radius=1, active_regions_map=None, active_regions_mask=None, total_flux_qp=None, flux_grid_qp=None, flux_grid_sp=None, flux_grid_fc=None, ccf_grid_qp=None, ccf_grid_sp=None, ccf_grid_fc=None, planet=None, mode=['photometry']):
 
         self.obs_times = time
         self.total_flux_qp = total_flux_qp
@@ -33,10 +38,21 @@ class StarSim(object):
         self.ccf_grid_fc = ccf_grid_fc
         self.inclination = inclination
         self.rotation_period = rotation_period
-        self.differential_rotation = differential_rotation
-        self.active_regions_map = active_regions_map
+        #differential rotation: coefficients (c1, c2, ...) [deg/day] of
+        #Omega(lat) = Omega_eq + c1 sin^2(lat) + c2 sin^4(lat) + ...   (Omega_eq = 360/rotation_period deg/day)
+        #0 or None = rigid rotation; a single number = c1 only; SOLAR_DIFFERENTIAL_ROTATION for the Sun
+        self.differential_rotation = tuple(np.atleast_1d(np.asarray(0.0 if differential_rotation is None else differential_rotation, dtype=np.float64)).tolist())
+        self.active_regions_map = [] if active_regions_map is None else active_regions_map
         self.active_regions_mask = active_regions_mask
-        self.simulate_planet = simulate_planet
+
+        #transiting planets: a planet.planet object, a list of them, or None (no planet)
+        planets = [] if planet is None else (list(planet) if isinstance(planet, (list, tuple)) else [planet])
+        for pl in planets:
+            if not hasattr(pl, 'positions'):
+                raise TypeError("planet must be a planet.planet object, a list of them, or None; got %r" % (pl,))
+        self.planet = planet
+        self.planets = planets
+        self.simulate_planet = len(planets) > 0
 
         if isinstance(mode, str):                          # a single mode given as a string still works
             mode = [mode]
@@ -67,84 +83,50 @@ class StarSim(object):
         self.vsini = vsini
         self.rvel = np.ascontiguousarray(vsini*np.sin(theta)*np.sin(phi), dtype=np.float64)
 
-    def compute_regions_position(self, t):
-        pos=np.zeros([len(self.active_regions_map),3])
+    def _regions_arrays(self):
+        """Parameters of the active regions as arrays (degrees), and their type: 1 = spot, 2 = facula."""
+        regs = self.active_regions_map
+        colat = np.array([r.latitude for r in regs], dtype=np.float64)
+        longi = np.array([r.longitude for r in regs], dtype=np.float64)
+        size = np.array([r.size for r in regs], dtype=np.float64)
+        ref = np.array([r.reference_time for r in regs], dtype=np.float64)
+        typ = np.array([1 if r.type == 'sp' else 2 for r in regs], dtype=np.int64)
+        return colat, longi, size, ref, typ
 
-        for i in range(len(self.active_regions_map)):
-            tini = self.active_regions_map[i].appearance_time #time of spot apparence
-            dur = self.active_regions_map[i].lifetime #duration of the spot
-            tfin = tini + dur #final time of spot
-            colat = self.active_regions_map[i].latitude #colatitude
-            lat = 90 - colat #latitude
-            longi = self.active_regions_map[i].longitude #longitude
-            rad = self.active_regions_map[i].size #coefficients for the evolution od the radius. Depends on the desired law.
-            #TODO add generalized evoltuion law
-
-            #update longitude adding diff rotation
-            pht = longi + (t-self.active_regions_map[i].reference_time)/self.rotation_period%1*360 + (t-self.active_regions_map[i].reference_time)*self.differential_rotation/(2.66)*(1.698*np.sin(np.deg2rad(lat))**2+2.346*np.sin(np.deg2rad(lat))**4)
-            phsr = pht%360 #make the phase between 0 and 360. 
-            
-            pos[i]=np.array([np.deg2rad(colat), np.deg2rad(phsr), np.deg2rad(rad)])
-            #return position and radii of spots at t in radians.
-
-        return pos
-
-    def true_anomaly(x,period,ecc,tperi):
-        sinf=[]
-        cosf=[]
-        for i in range(len(x)):
-            fmean=2.0*np.pi*(x[i]-tperi)/period
-            #Solve by Newton's method x(n+1)=x(n)-f(x(n))/f'(x(n))
-            fecc=fmean
-            diff=1.0
-            while(diff>1.0E-6):
-                fecc_0=fecc
-                fecc=fecc_0-(fecc_0-ecc*np.sin(fecc_0)-fmean)/(1.0-ecc*np.cos(fecc_0))
-                diff=np.abs(fecc-fecc_0)
-            sinf.append(np.sqrt(1.0-ecc*ecc)*np.sin(fecc)/(1.0-ecc*np.cos(fecc)))
-            cosf.append((np.cos(fecc)-ecc)/(1.0-ecc*np.cos(fecc)))
-        return np.array(sinf),np.array(cosf)
-
-
-    def Ttrans_2_Tperi(T0, P, e, w):
-
-        f = np.pi/2 - w
-        E = 2 * np.arctan(np.tan(f/2) * np.sqrt((1-e)/(1+e)))  # eccentric anomaly
-        Tp = T0 - P/(2*np.pi) * (E - e*np.sin(E))      # time of periastron
-
-        return Tp
-
-
-
-    def compute_planet_pos(self,t):
-        
-        if(self.planet_esinw==0 and self.planet_ecosw==0):
-            ecc=0
-            omega=0
+    def compute_regions_geometry(self, times):
+        """Geometry of all the regions at all the epochs, in one NumPy pass.
+        Returns spot_pos (n_times, n_regions, 3): colatitude, longitude and radius [rad];
+                vec_spot (n_times, n_regions, 3): centre of the regions in cartesian coordinates (x towards the observer);
+                visible  (n_times, n_regions) bool: some part of the region is on the visible hemisphere.
+        The radius is given by the evolution law of every region (active_region.radius); a region with radius 0
+        is not there (not visible). (appearance_time and lifetime are only used through the evolution law.)"""
+        t = np.atleast_1d(np.asarray(times, dtype=np.float64))[:, None]
+        colat, longi, size, ref, _ = self._regions_arrays()
+        sl = np.sin(np.deg2rad(90 - colat))                     #sin(latitude)
+        dt = t - ref
+        #rotation rate relative to the equator [deg/day]: c1 sin^2(lat) + c2 sin^4(lat) + ...
+        domega = np.polynomial.polynomial.polyval(sl**2, (0.0,) + self.differential_rotation)
+        #longitude with rotation and differential rotation, between 0 and 360
+        pht = longi + dt/self.rotation_period%1*360 + dt*domega
+        theta = np.broadcast_to(np.deg2rad(colat), dt.shape)
+        phi = np.deg2rad(pht%360)
+        #radius of every region at every epoch (evolution law, or constant size); <= 0 -> 0, the region is not there
+        if self.active_regions_map:
+            rad = np.deg2rad(np.stack([r.radius(t[:, 0]) for r in self.active_regions_map], axis=1))
         else:
-            ecc=np.sqrt(self.planet_esinw**2+self.planet_ecosw**2)
-            omega=np.arctan2(self.planet_esinw,self.planet_ecosw)
+            rad = np.zeros(dt.shape)
+        spot_pos = np.stack([theta, phi, rad], axis=-1)
 
-        t_peri = Ttrans_2_Tperi(self.planet_transit_t0,self.planet_period, ecc, omega)
-        sinf,cosf=true_anomaly([t],self.planet_period,ecc,t_peri)
+        ci, si = np.cos(self.inclination), np.sin(self.inclination)
+        st, ct = np.sin(theta), np.cos(theta)
+        vec_spot = np.stack([ci*st*np.cos(phi)+si*ct, st*np.sin(phi), ct*ci-si*st*np.cos(phi)], axis=-1)
 
+        visible = (np.arccos(np.clip(vec_spot[..., 0], -1.0, 1.0)) - rad <= np.pi/2) & (rad > 0)
+        return spot_pos, vec_spot, visible
 
-        cosftrueomega=cosf*np.cos(omega+np.pi/2)-sinf*np.sin(omega+np.pi/2) #cos(f+w)=cos(f)*cos(w)-sin(f)*sin(w)
-        sinftrueomega=cosf*np.sin(omega+np.pi/2)+sinf*np.cos(omega+np.pi/2) #sin(f+w)=cos(f)*sin(w)+sin(f)*cos(w)
-
-        if cosftrueomega>0.0: return np.array([1+self.planet_radius*2, 0.0, self.planet_radius]) #avoid secondary transits
-
-        cosi = (self.planet_impact_param/self.planet_semi_major_axis)*(1+self.planet_esinw)/(1-ecc**2) #cosine of planet inclination (i=90 is transit)
-
-        rpl=self.planet_semi_major_axis*(1-ecc**2)/(1+ecc*cosf)
-        xpl=rpl*(-np.cos(self.planet_spin_orbit_angle)*sinftrueomega-np.sin(self.planet_spin_orbit_angle)*cosftrueomega*cosi)
-        ypl=rpl*(np.sin(self.planet_spin_orbit_angle)*sinftrueomega-np.cos(self.planet_spin_orbit_angle)*cosftrueomega*cosi)
-
-        rhopl=np.sqrt(ypl**2+xpl**2)
-        thpl=np.arctan2(ypl,xpl)
-
-        pos=np.array([float(rhopl), float(thpl), self.planet_radius]) #rho, theta, and radii (in Rstar) of the planet
-        return pos
+    def compute_regions_position(self, t):
+        """Colatitude, longitude and radius [rad] of every region at time t, array (n_regions, 3)."""
+        return self.compute_regions_geometry([t])[0][0]
 
     def compute_ccf_params(self, rv=None, ccf=None, plot_test=False):
         '''
@@ -202,15 +184,18 @@ class StarSim(object):
         return rvs, contrast, fwhm, BIS, raw_xbis, raw_ybis
 
     def _flux_grids(self, ndim, mode_name):
-        """Quiet / spot / facula flux grids as float arrays: (n_cells,) for photometry, (n_cells, n_wv) for spectroscopy."""
+        """Quiet / spot / facula flux grids as float arrays: (N_rings,) for photometry (one value per ring),
+        (n_cells, n_wv) for spectroscopy."""
+        n_expected = self.N_rings if ndim == 1 else len(self.vec_grid)
+        what = 'rings' if ndim == 1 else 'cells'
         out = []
         for key, g in (('qp', self.flux_grid_qp), ('sp', self.flux_grid_sp), ('fc', self.flux_grid_fc)):
             if g is None:
                 raise ValueError("mode '%s' needs flux_grid_qp, flux_grid_sp and flux_grid_fc (flux_grid_%s is missing)" % (mode_name, key))
             g = np.ascontiguousarray(g, dtype=np.float64)
-            if g.ndim != ndim or g.shape[0] != len(self.vec_grid):
-                raise ValueError("mode '%s' needs %dD flux grids with %d cells, flux_grid_%s has shape %s (photometry and "
-                                 "spectroscopy together need two different sets of grids)" % (mode_name, ndim, len(self.vec_grid), key, g.shape))
+            if g.ndim != ndim or g.shape[0] != n_expected:
+                raise ValueError("mode '%s' needs %dD flux grids with %d %s, flux_grid_%s has shape %s (photometry and "
+                                 "spectroscopy together need two different sets of grids)" % (mode_name, ndim, n_expected, what, key, g.shape))
             out.append(g)
         return out
 
@@ -248,95 +233,69 @@ class StarSim(object):
         'ccf'          -> self.ccf_var   (n_times, n_rv), velocities in self.ccf_rv, and (if ccf_params) the parameters of the CCFs:
                           self.rv_var, self.contrast_var, self.fwhm_var, self.bis_var (n_times,) and the bisectors
                           self.xbis_var, self.ybis_var (n_times, 50)  [see compute_ccf_params]
+                          With planets, the Keplerian RV of the star (self.rv_kepler, sum of planet.keplerian_rv) is added to rv_var.
         The geometry of the regions (filling factors of every cell) is computed once per epoch for all of them.
+        The geometry of the regions and of the planet at all the epochs is computed first, vectorised
+        (compute_regions_geometry, planet.positions), and stored: self.regions_pos, self.regions_vec
+        (n_times, n_regions, 3), self.planet_pos (n_times, n_planets, 3), self.visible (n_times, n_regions+n_planets;
+        regions first, then the planets in the order given). self.ff_pl is the fraction of the disc covered by all the planets.
+        Then the whole loop over the epochs is a single Numba call, nbspectra.timeseries_nb (epochs in parallel).
         '''
-        simulate_planet=self.simulate_planet
-        N = self.N_rings #Number of concentric rings
         n_times = len(self.obs_times)
-        area_tot = np.dot(self.Ngrid_in_ring,self.parea) #total projected area
-        active_region_types = [region.type for region in self.active_regions_map]
+        n_cells = len(self.vec_grid)
+        empty1, empty2 = np.zeros(0), np.zeros((n_cells, 0))
 
         #Every observable is signal(epoch) = sum over cells of ff_quiet*grid_quiet + ff_sp*grid_sp + ff_fc*grid_fc.
-        #Grids are prepared once; the total of the quiet grid is the signal when no region is visible.
-        signals = {}
+        #Grids are prepared once (unused ones are empty); the total of the quiet grid is the signal when no region is visible.
+        ph = (empty1, empty1, empty1, np.zeros(1))
+        sp = (empty2, empty2, empty2, empty1)
+        cc = (empty2, empty2, empty2, empty1)
         if 'photometry' in self.mode:
-            gq, gs, gf = self._flux_grids(1, 'photometry')
-            signals['photometry'] = (np.zeros(n_times), gq, gs, gf, gq.sum(axis=0))
+            gq, gs, gf = self._flux_grids(1, 'photometry')   #per ring
+            ph = (gq, gs, gf, np.array([np.dot(self._Nin_arr, gq)]))
         if 'spectroscopy' in self.mode:
             gq, gs, gf = self._flux_grids(2, 'spectroscopy')
-            signals['spectroscopy'] = (np.zeros([n_times, gq.shape[1]]), gq, gs, gf, gq.sum(axis=0))
+            sp = (gq, gs, gf, gq.sum(axis=0))
         if 'ccf' in self.mode:
             gq, gs, gf = self._build_ccf_cells()
-            signals['ccf'] = (np.zeros([n_times, gq.shape[1]]), gq, gs, gf, gq.sum(axis=0))
+            cc = (gq, gs, gf, gq.sum(axis=0))
 
-        filling_sp=np.zeros(n_times)
-        filling_ph=np.zeros(n_times)
-        filling_pl=np.zeros(n_times)
-        filling_fc=np.zeros(n_times)
+        #geometry of all the regions and of the planet at all the epochs, vectorised (stored for plots / checks)
+        spot_pos, vec_spot, visible = self.compute_regions_geometry(self.obs_times)
+        if self.planets:
+            planet_pos = np.stack([pl.positions(self.obs_times) for pl in self.planets], axis=1)   #(n_times, n_planets, 3)
+        else:
+            planet_pos = np.zeros((n_times, 0, 3))
+        vis = np.concatenate([visible, planet_pos[:, :, 0] - planet_pos[:, :, 2] < 1], axis=1).astype(np.float64)
+        self.regions_pos, self.regions_vec, self.planet_pos, self.visible = spot_pos, vec_spot, planet_pos, vis.astype(bool)
 
-        sys.stdout.write(" ")
-        for k,t in enumerate(self.obs_times):
+        #the whole loop over the epochs is one Numba call (epochs in parallel)
+        typ = self._regions_arrays()[4]
+        flux, spec, ccf, filling = nbspectra.timeseries_nb(
+            self.N_rings, self._Nin_arr, self._parea_arr,
+            np.asarray(self.amu, dtype=np.float64), np.ascontiguousarray(self.vec_grid, dtype=np.float64),
+            np.ascontiguousarray(spot_pos), np.ascontiguousarray(vec_spot), vis, typ,
+            bool(self.simulate_planet), np.ascontiguousarray(planet_pos), *ph, *sp, *cc)
+        filling_ph, filling_sp, filling_fc, filling_pl = filling
 
-            if simulate_planet:
-                planet_pos=compute_planet_pos(self,t)#compute the planet position at current time. In polar coordinates!! 
-            else:
-                planet_pos = [2.0,0.0,0.0]
-
-
-            if len(self.active_regions_map)==0:
-                spot_pos=np.array([np.array([m.pi/2,-m.pi,0.0,0.0])])
-            else:
-                spot_pos=self.compute_regions_position(t) #compute the position of all spots at the current time. Returns theta and phi of each spot.      
-
-            vec_spot=np.zeros([len(self.active_regions_map),3])
-            xspot = np.cos(self.inclination)*np.sin(spot_pos[:,0])*np.cos(spot_pos[:,1])+np.sin(self.inclination)*np.cos(spot_pos[:,0])
-            yspot = np.sin(spot_pos[:,0])*np.sin(spot_pos[:,1])
-            zspot = np.cos(spot_pos[:,0])*np.cos(self.inclination)-np.sin(self.inclination)*np.sin(spot_pos[:,0])*np.cos(spot_pos[:,1])
-            vec_spot[:,:]=np.array([xspot,yspot,zspot]).T #spot center in cartesian
-
-            #COMPUTE IF ANY SPOT IS VISIBLE
-            vis=np.zeros(len(vec_spot)+1)
-            for i in range(len(vec_spot)):
-                dist = m.acos(np.dot(vec_spot[i],np.array([1,0,0])))
-                
-                if (dist-spot_pos[i,2])<= (np.pi/2):
-                    vis[i]=1.0
-            
-            if (planet_pos[0]-planet_pos[2]<1):
-                vis[-1]=1.0
-    
-            if (np.sum(vis)==0.0):
-                #nothing visible: the star is the quiet photosphere
-                filling_ph[k], filling_sp[k], filling_fc[k], filling_pl[k] = area_tot, 0.0, 0.0, 0.0
-                for out, gq, gs, gf, quiet_total in signals.values():
-                    out[k] = quiet_total
-
-            else:
-                ff_quiet, ff_sp, ff_fc, ff_p, filling_ph[k], filling_sp[k],  filling_fc[k],  filling_pl[k] = nbspectra.generate_ff(N,self.Ngrid_in_ring,self.parea,self.amu,spot_pos,self.vec_grid,vec_spot,self.simulate_planet,planet_pos,vis, active_region_types)
-                ff_quiet, ff_sp, ff_fc = np.asarray(ff_quiet), np.asarray(ff_sp), np.asarray(ff_fc)
-                for out, gq, gs, gf, quiet_total in signals.values():   #one matrix product per grid instead of a loop over cells
-                    out[k] = ff_quiet @ gq + ff_sp @ gs + ff_fc @ gf
-
-            filling_ph[k]=100*filling_ph[k]/area_tot
-            filling_sp[k]=100*filling_sp[k]/area_tot
-            filling_fc[k]=100*filling_fc[k]/area_tot
-            filling_pl[k]=100*filling_pl[k]/area_tot
-            
-           
-            sys.stdout.write("\rDate {0}. ff_ph={1:.3f}%. ff_sp={2:.3f}%. ff_fc={3:.3f}%. ff_pl={4:.3f}%. [{5}/{6}]%".format(t,filling_ph[k],filling_sp[k],filling_fc[k],filling_pl[k],k+1,n_times))
-
-        if 'photometry' in signals:
-            self.flux_var = signals['photometry'][0]
-        if 'spectroscopy' in signals:
-            self.spec_var = signals['spectroscopy'][0]
-        if 'ccf' in signals:
-            self.ccf_var = signals['ccf'][0]
+        if 'photometry' in self.mode:
+            self.flux_var = flux
+        if 'spectroscopy' in self.mode:
+            self.spec_var = spec
+        if 'ccf' in self.mode:
+            self.ccf_var = ccf
         self.ff_quiet = filling_ph
         self.ff_sp = filling_sp
         self.ff_fc = filling_fc
+        self.ff_pl = filling_pl
 
         #parameters of the CCFs last, so that everything above is already stored if this step fails
-        if 'ccf' in signals and ccf_params:
+        if 'ccf' in self.mode and ccf_params:
             rvs, contrast, fwhm, bis, xbis, ybis = self.compute_ccf_params()
+            #Keplerian RV of the star: sum of the planets
+            self.rv_kepler = np.zeros(n_times)
+            for pl in self.planets:
+                self.rv_kepler = self.rv_kepler + pl.keplerian_rv(self.obs_times)
+            rvs = rvs + self.rv_kepler
             self.rv_var, self.contrast_var, self.fwhm_var, self.bis_var = rvs, contrast, fwhm, bis
             self.xbis_var, self.ybis_var = np.array(xbis), np.array(ybis)

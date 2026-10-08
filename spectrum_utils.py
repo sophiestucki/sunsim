@@ -71,6 +71,50 @@ def air2vacuum(wv): #wv in angstroms
     return w
 
 
+########################################################################################
+#                       LIMB BRIGHTENING OF THE FACULAE                                #
+########################################################################################
+
+#Temperature excess of the faculae with respect to the photosphere as a function of mu, dT(mu) = c0 + c1*mu + c2*mu^2 [K]
+FACULA_DT_LAWS = {
+    'meunier': (250.9, -407.7, 190.9),     #Meunier et al. (2010): dT = 250.9 K at the limb, 34.1 K at the disc centre
+    'starsim': (155.0, -290.0, 128.0),     #law used by default in StarSim (meunier=0): 155 K at the limb, -7 K at the centre
+}
+
+
+def facula_dT(mu, law='starsim', scale=1.0):
+    """Temperature excess of a facula with respect to the photosphere [K] at the projected angles mu.
+    law   : name of a law of FACULA_DT_LAWS ('meunier', 'starsim'), polynomial coefficients (c0, c1, c2, ...) in
+            increasing powers of mu, or a function dT(mu) [K]
+    scale : the law is multiplied by this factor (e.g. facula_T_contrast / 250.9 to rescale the Meunier law)"""
+    mu = np.asarray(mu, dtype=np.float64)
+    if callable(law):
+        dT = law(mu)
+    else:
+        coeffs = FACULA_DT_LAWS[law] if isinstance(law, str) else law
+        dT = np.polynomial.polynomial.polyval(mu, np.asarray(coeffs, dtype=np.float64))
+    return scale * np.asarray(dT, dtype=np.float64)
+
+
+def limb_brightening_factor(mu, T_photosphere, law='starsim', scale=1.0):
+    """Bolometric limb brightening of the faculae, ((T_photosphere + dT(mu)) / T_photosphere)^4, at the angles mu
+    (dT from facula_dT). It does not depend on the wavelength."""
+    return ((T_photosphere + facula_dT(mu, law, scale)) / T_photosphere)**4
+
+
+def add_limb_brightening(flux, T_photosphere, law='starsim', scale=1.0):
+    """Facula spectra with the bolometric limb brightening: the spectrum at every mu of a {mu: {'wav', 'intensity'}}
+    dictionary is multiplied by limb_brightening_factor(mu). Returns a new dictionary (flux is not modified).
+    For spectra without their own facular centre-to-limb variation, e.g. Phoenix spectra at T_photosphere +
+    facula_T_contrast (in the old StarSim this factor was applied to the rings when computing the time series)."""
+    out = {}
+    for mu, d in flux.items():
+        new = dict(d)
+        new['intensity'] = np.asarray(d['intensity'], dtype=np.float64) * limb_brightening_factor(float(mu), T_photosphere, law, scale)
+        out[mu] = new
+    return out
+
+
     ########################################################################################
 ########################################################################################
 #                                PHOTOMETRY FUNCTIONS                                  #
@@ -78,98 +122,175 @@ def air2vacuum(wv): #wv in angstroms
 ########################################################################################
 
 
-def interpolate_Phoenix_mu_lc(self,temp,grav):
-    """Cut and interpolate phoenix models at the desired wavelengths, temperatures, logg and metalicity(not yet). For spectroscopy.
-    Inputs
-    temp: temperature of the model; 
-    grav: logg of the model
-    Returns
-    creates a temporal file with the interpolated spectra at the temp and grav desired, for each surface element.
+def interpolate_phoenix_mu(path, temp, logg, metallicity=0.0, wavelength_lower_limit=3000.0, wavelength_upper_limit=10000.0,
+                           overhead=1.0):
+    """Phoenix specific intensity spectra (SPECINT models, low resolution, at several mu) interpolated (linearly) at the
+    temperature, logg and metallicity [Fe/H] desired, cut at the wavelength range (+- overhead [A]). For photometry and
+    low resolution spectroscopy.
+
+    path        : folder with the Phoenix SPECINT models lte*.PHOENIX-ACES-AGSS-COND-SPECINT-2011.fits (its subfolders are
+                  searched too). Download them from PHOENIX_SPECINT_URL
+    temp [K], logg [cgs], metallicity [Fe/H] : must be inside the grid of available models (no extrapolation)
+
+    Returns the spectra in the format used by flux_grid / CCF_grid, {mu: {'wav': wavelengths [A], 'intensity': intensity}},
+    one key for every mu of the models (the mu are read from the second extension of the files). The intensity is the
+    Phoenix specific intensity [erg/s/cm^2/cm/sr]. The wavelength grid of the SPECINT models is 1 A from 500 A.
+    Below the smallest mu, flux_grid extrapolates the intensity linearly to 0 at mu = 0 (as the zero row at mu = 0 that
+    the previous version of this function added).
     """
-    #Demanar tambe la resolucio i ficarho aqui.
+    weights = phoenix_weights(Path(path), temp, logg, metallicity, 'SPECINT')
 
-    import warnings
-    warnings.filterwarnings("ignore")
+    amu = None
+    intensity = None
+    for model, w in weights.items():
+        with fits.open(model) as hdul:
+            data = np.asarray(hdul[0].data, dtype=np.float64)     #(n_mu, n_wavelengths)
+            mu_model = np.asarray(hdul[1].data, dtype=np.float64).ravel()
+        if amu is None:
+            amu = mu_model
+            wavelength = 500.0 + np.arange(data.shape[1])          #wavelength in A
+            idx_wv = (wavelength > wavelength_lower_limit - overhead) & (wavelength < wavelength_upper_limit + overhead)
+            intensity = np.zeros((len(amu), idx_wv.sum()))
+        elif not np.array_equal(mu_model, amu):
+            raise ValueError('The Phoenix SPECINT models used for the interpolation have different mu angles (%s)' % model.name)
+        intensity += w * data[:, idx_wv]
 
-    path = self.path / 'models' / 'Phoenix_mu' #path relatve to working directory 
-    files = [x.name for x in path.glob('lte*fits') if x.is_file()]
-    list_temp=np.unique([float(t[3:8]) for t in files])
-    list_grav=np.unique([float(t[9:13]) for t in files])
-
-    #check if the parameters are inside the grid of models
-    if grav<np.min(list_grav) or grav>np.max(list_grav):
-        sys.exit('Error in the interpolation of Phoenix_mu models. The desired logg ({}) is outside the grid of models, extrapolation is not supported. Please download the \
-        Phoenix intensity models covering the desired logg from https://phoenix.astro.physik.uni-goettingen.de/?page_id=73'.format(grav))
-
-    if temp<np.min(list_temp) or temp>np.max(list_temp):
-        print(temp, list_temp)
-        sys.exit('Error in the interpolation of Phoenix_mu models. The desired T ({}) is outside the grid of models, extrapolation is not supported. Please download the \
-        Phoenix intensity models covering the desired T from https://phoenix.astro.physik.uni-goettingen.de/?page_id=73'.format(temp))
-        
-
-
-    lowT=list_temp[list_temp<=temp].max() #find the model with the temperature immediately below the desired temperature
-    uppT=list_temp[list_temp>=temp].min() #find the model with the temperature immediately above the desired temperature
-    lowg=list_grav[list_grav<=grav].max() #find the model with the logg immediately below the desired logg
-    uppg=list_grav[list_grav>=grav].min() #find the model with the logg immediately above the desired logg
-
-    #load the flux of the four phoenix model
-    name_lowTlowg='lte{:05d}-{:.2f}-0.0.PHOENIX-ACES-AGSS-COND-SPECINT-2011.fits'.format(int(lowT),lowg)
-    name_lowTuppg='lte{:05d}-{:.2f}-0.0.PHOENIX-ACES-AGSS-COND-SPECINT-2011.fits'.format(int(lowT),uppg)
-    name_uppTlowg='lte{:05d}-{:.2f}-0.0.PHOENIX-ACES-AGSS-COND-SPECINT-2011.fits'.format(int(uppT),lowg)
-    name_uppTuppg='lte{:05d}-{:.2f}-0.0.PHOENIX-ACES-AGSS-COND-SPECINT-2011.fits'.format(int(uppT),uppg)
+    wv = wavelength[idx_wv]
+    return {float(mu): {'wav': wv, 'intensity': intensity[i]} for i, mu in enumerate(amu)}
 
 
-    #Check if the files exist in the folder
-    if name_lowTlowg not in files:
-        sys.exit('The file '+name_lowTlowg+' required for the interpolation does not exist. Please download it from https://phoenix.astro.physik.uni-goettingen.de/?page_id=73 and add it to your path: '+str(path))
-    if name_lowTuppg not in files:
-        sys.exit('The file '+name_lowTuppg+' required for the interpolation does not exist. Please download it from https://phoenix.astro.physik.uni-goettingen.de/?page_id=73 and add it to your path: '+path)
-    if name_uppTlowg not in files:
-        sys.exit('The file '+name_uppTlowg+' required for the interpolation does not exist. Please download it from https://phoenix.astro.physik.uni-goettingen.de/?page_id=73 and add it to your path: '+path)
-    if name_uppTuppg not in files:
-        sys.exit('The file '+name_uppTuppg+' required for the interpolation does not exist. Please download it from https://phoenix.astro.physik.uni-goettingen.de/?page_id=73 and add it to your path: '+path)
- 
-    wavelength=np.arange(500,26000) #wavelength in A
-    idx_wv=np.array(wavelength>self.wavelength_lower_limit) & np.array(wavelength<self.wavelength_upper_limit)
+########################################################################################
+########################################################################################
+#                                SPECTROSCOPY FUNCTIONS                                #
+########################################################################################
+########################################################################################
 
-    #read flux files and cut at the desired wavelengths
-    with fits.open(path / name_lowTlowg) as hdul:
-        amu = hdul[1].data
-        amu = np.append(amu[::-1],0.0)
-        flux_lowTlowg=hdul[0].data[:,idx_wv]
-    with fits.open(path / name_lowTuppg) as hdul:
-        flux_lowTuppg=hdul[0].data[:,idx_wv]
-    with fits.open(path / name_uppTlowg) as hdul:
-        flux_uppTlowg=hdul[0].data[:,idx_wv]
-    with fits.open(path / name_uppTuppg) as hdul:
-        flux_uppTuppg=hdul[0].data[:,idx_wv]
-
-    #interpolate in temperature for the two gravities
-    if uppT==lowT: #to avoid nans
-        flux_lowg = flux_lowTlowg 
-        flux_uppg = flux_lowTuppg
-    else:
-        flux_lowg = flux_lowTlowg + ( (temp - lowT) / (uppT - lowT) ) * (flux_uppTlowg - flux_lowTlowg)
-        flux_uppg = flux_lowTuppg + ( (temp - lowT) / (uppT - lowT) ) * (flux_uppTuppg - flux_lowTuppg)
-    #interpolate in log g
-    if uppg==lowg: #to avoid dividing by 0
-        flux = flux_lowg
-    else:
-        flux = flux_lowg + ( (grav - lowg) / (uppg - lowg) ) * (flux_uppg - flux_lowg)
+PHOENIX_URL = 'http://phoenix.astro.physik.uni-goettingen.de/data/HiResFITS/PHOENIX-ACES-AGSS-COND-2011/'
+PHOENIX_SPECINT_URL = 'https://phoenix.astro.physik.uni-goettingen.de/?page_id=73'
+#end of the file names of the two kinds of Phoenix models
+PHOENIX_SUFFIX = {'HiRes': 'PHOENIX-ACES-AGSS-COND-2011-HiRes.fits',        #disc-integrated flux, high resolution
+                  'SPECINT': 'PHOENIX-ACES-AGSS-COND-SPECINT-2011.fits'}    #specific intensity at several mu, low resolution
 
 
+def phoenix_grid(path, kind='HiRes'):
+    """Phoenix models of one kind ('HiRes' or 'SPECINT') available in path (searched in its subfolders too, e.g.
+    Z-0.0/, Z-0.5/, Z+0.5/). File names: lte{T:05d}-{logg:.2f}{[Fe/H]:+.1f}.<PHOENIX_SUFFIX[kind]> (solar is written -0.0).
+    Only models without alpha enhancement are used.
+    Returns {(T, logg, [Fe/H]): file path}."""
+    import re
+    suffix = PHOENIX_SUFFIX[kind]
+    pattern = re.compile(r'^lte(\d{5})-(\d+\.\d{2})([+-]\d+\.\d)\.' + re.escape(suffix) + '$')
+    grid = {}
+    for f in Path(path).rglob('lte*' + suffix):
+        match = pattern.match(f.name)
+        if match:
+            T, logg, feh = (float(v) for v in match.groups())
+            grid[(T, logg, feh + 0.0)] = f      # + 0.0 turns -0.0 into 0.0
+    return grid
 
-    angle0 = flux[0]*0.0 #LD of 90 deg, to avoid dividing by 0? (not sure, ask Kike)
 
-    flux_joint = np.vstack([flux[::-1],angle0]) #add LD coeffs at 0 and 1 proj angles
-    # flpk=flux_joint[0]*np.pi*np.sin(np.cos(amu[0]))**2#Add all fluxes of all angles multiplied by their areas to compute the integrated flux
-    # for i in range(1,len(amu)):
-    #     flpk=flpk+flux_joint[i]*(np.sin(np.cos(amu[i]))**2-np.sin(np.cos(amu[i-1]))**2)*np.pi
+def phoenix_weights(path, temp, logg, metallicity, kind='HiRes'):
+    """Models and weights of the (tri)linear interpolation in T, logg and [Fe/H] between the closest Phoenix models.
+    Returns {file path: weight} (only the models with weight > 0; the weights add up to 1).
+    Raises an error if the parameters are outside the grid (no extrapolation) or if a model needed is missing."""
+    url = PHOENIX_URL if kind == 'HiRes' else PHOENIX_SPECINT_URL
+    grid = phoenix_grid(path, kind)
+    if not grid:
+        raise FileNotFoundError('No Phoenix %s models (lte*.%s) in %s. Download them from %s' % (kind, PHOENIX_SUFFIX[kind], path, url))
+
+    #models immediately below and above the desired value of every parameter
+    brackets = []
+    for name, value, axis in (('T', temp, 0), ('logg', logg, 1), ('[Fe/H]', metallicity, 2)):
+        available = np.unique([key[axis] for key in grid])
+        if value < available.min() or value > available.max():
+            raise ValueError('The desired %s (%s) is outside the grid of Phoenix %s models (%s to %s), extrapolation is not '
+                             'supported. Download the models covering it from %s' % (name, value, kind, available.min(), available.max(), url))
+        low, upp = available[available <= value].max(), available[available >= value].min()
+        weight = 0.0 if upp == low else (value - low) / (upp - low)     #avoid dividing by 0
+        brackets.append(((low, 1.0 - weight), (upp, weight)))
+
+    #the 8 (or less) corners of the interpolation must exist
+    weights = {}
+    for T, wT in brackets[0]:
+        for g, wg in brackets[1]:
+            for z, wz in brackets[2]:
+                w = wT * wg * wz
+                if w == 0.0:
+                    continue
+                if (T, g, z) not in grid:
+                    raise FileNotFoundError('The file lte{:05d}-{:.2f}{:+.1f}.{} required for the interpolation does not exist. '
+                                            'Download it from {} and add it to {}'.format(
+                                                int(T), g, z if z != 0 else -0.0, PHOENIX_SUFFIX[kind], url, path))
+                weights[grid[(T, g, z)]] = weights.get(grid[(T, g, z)], 0.0) + w
+    return weights
 
 
+def phoenix_continuum(wv, flux, lower, upper, nbins=20, deg=6):
+    """Continuum of a Phoenix spectrum: 6th degree polynomial fitted to the maximum of the flux in each of nbins bins.
+    20 bins work for all reasonable parameters: with more bins the maxima fall on absorption lines, with less the fit degrades.
+    Returns the continuum at wv and the points of the fit (x_bin, y_bin)."""
+    edges = np.linspace(lower, upper, nbins)
+    x_bin, y_bin = [], []
+    for a, b in zip(edges[:-1], edges[1:]):
+        sel = np.flatnonzero((wv >= a) & (wv < b))
+        if len(sel):
+            k = sel[np.argmax(flux[sel])]
+            x_bin.append(wv[k])
+            y_bin.append(flux[k])
+    x_bin, y_bin = np.array(x_bin), np.array(y_bin)
+    #Polynomial.fit rescales the wavelengths to [-1, 1]: same polynomial as np.polyfit, without its conditioning problems
+    poly = np.polynomial.Polynomial.fit(x_bin, y_bin, min(deg, len(x_bin) - 1))
+    return poly(wv), x_bin, y_bin
 
-    return amu, wavelength[idx_wv], flux_joint
+
+def interpolate_phoenix(path, temp, logg, metallicity=0.0, wavelength_lower_limit=3000.0, wavelength_upper_limit=10000.0,
+                        normalize=False, overhead=1.0, plot=False):
+    """Phoenix HiRes spectrum interpolated (linearly) at the temperature, logg and metallicity [Fe/H] desired,
+    cut at the wavelength range (+- overhead [A], to allow for Doppler shifts without losing information).
+
+    path        : folder with the Phoenix HiRes models (and its subfolders) and WAVE_PHOENIX-ACES-AGSS-COND-2011.fits
+                  (download them from PHOENIX_URL)
+    temp [K], logg [cgs], metallicity [Fe/H] : must be inside the grid of available models (no extrapolation)
+    normalize   : True -> the flux is divided by its continuum (phoenix_continuum); False -> Phoenix flux [erg/s/cm^2/cm]
+    plot        : plot the spectrum and its continuum (only with normalize=True)
+
+    Returns the spectrum in the format used by flux_grid / CCF_grid, {mu: {'wav': wavelengths [A], 'intensity': flux}},
+    with the single key mu = 1.0: the HiRes models are disc-integrated, they have no mu dependence. Use it with
+    CCF_grid(..., mu_ratio=...), which accepts one spectrum at mu = 1.0. flux_grid needs spectra at several mu
+    (interpolate_phoenix_mu, with the SPECINT models). The wavelengths are in vacuum.
+    With normalize=True, the dictionary also has 'flux' (not normalized) and 'continuum'.
+    """
+    path = Path(path)
+    weights = phoenix_weights(path, temp, logg, metallicity, 'HiRes')
+
+    #Phoenix wavelengths, cut at the desired range
+    wave_file = next(path.rglob('WAVE_PHOENIX-ACES-AGSS-COND-2011.fits'), None)
+    if wave_file is None:
+        raise FileNotFoundError('WAVE_PHOENIX-ACES-AGSS-COND-2011.fits not found in %s. Download it from %s' % (path, PHOENIX_URL))
+    with fits.open(wave_file) as hdul:
+        wavelength = np.asarray(hdul[0].data, dtype=np.float64)
+    idx_wv = (wavelength > wavelength_lower_limit - overhead) & (wavelength < wavelength_upper_limit + overhead)
+    wv = wavelength[idx_wv]
+
+    #trilinear interpolation: weighted sum of the corner models
+    flux = np.zeros(len(wv))
+    for model, w in weights.items():
+        with fits.open(model) as hdul:
+            flux += w * np.asarray(hdul[0].data, dtype=np.float64)[idx_wv]
+
+    spectrum = {'wav': wv, 'intensity': flux}
+    if normalize:
+        continuum, x_bin, y_bin = phoenix_continuum(wv, flux, wavelength_lower_limit - overhead, wavelength_upper_limit + overhead)
+        spectrum = {'wav': wv, 'intensity': flux / continuum, 'flux': flux, 'continuum': continuum}
+        if plot:      #to check the normalisation
+            plt.plot(wv, flux)
+            plt.plot(x_bin, y_bin, 'ok')
+            plt.plot(wv, continuum)
+            plt.xlabel('wavelength [$\\AA$]')
+            plt.show()
+            plt.close()
+
+    return {1.0: spectrum}
 
 
 def add_resol(wavelength, flux, instrument):
