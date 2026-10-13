@@ -1,0 +1,1 @@
+{"variant": "new_old_bugs", "steps": {"import": 0.5784383749123663, "spectra and grids (old_config)": 0.879516166052781, "grids": 0.011354333953931928, "planets": 3.8291094824671745e-05, "maps": 20.557207874953747, "timeseries": 0.028608125052414834, "ccf_params": 0.018118749954737723, "total": 22.080303166992962}, "peak_rss_mb": 663.339008}
