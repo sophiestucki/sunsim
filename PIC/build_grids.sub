@@ -1,7 +1,7 @@
 # Condor submit file, step 1: the grids of every Temp of parameters_2.txt (one job)
 Universe   = vanilla
-Executable = /data/spotless/scratch/sstucki/starsim/pipelines/build_grids.sh
-Arguments  = "1 /data/spotless/scratch/sstucki/starsim/pipelines/parameters_2.txt"
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/build_grids.sh
+Arguments  = "1 /nfs/pic.es/user/s/sstucki/sunsim/PIC/parameters.txt"
 
 RequestCpus   = 1
 RequestMemory = 16GB

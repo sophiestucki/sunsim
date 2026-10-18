@@ -2,7 +2,7 @@
 # Settings shared by build_grids.sh and run_10_opt_rv.sh (sourced by both): folders, period, environment, and
 # write_conf <Temp> <file>, the configuration of the simulations (only spot_T_contrast changes: one grid per Temp).
 
-BASE=/data/spotless/scratch/sstucki/sunsim              # outputs: confs/, grids/, sets/, opt_rv/
+BASE=/data/spotless/scratch/sstucki/starsim              # outputs: confs/, grids/, sets/, opt_rv/
 SDO_DATA=/data/spotless/scratch/sstucki/starsim/SDO_data/  # HMI fits
 START=2015-07-18
 END=2024-01-29
@@ -15,7 +15,7 @@ SORCE="/data/spotless/scratch/sstucki/starsim/observations/DataSSI - SORCE.sav"
 TSIS=/data/spotless/scratch/sstucki/starsim/observations/tsis_tsi_24hr.csv
 WINDOW=""          # e.g. WINDOW="--window 2021-01-01 2024-01-01": only these epochs in the statistics
 
-source /nfs/pic.es/user/s/sstucki/env/simu/bin/activate    # needs sunsim installed: pip install "sunsim[sdo]"
+source /nfs/pic.es/user/s/sstucki/env_sunsim/bin/activate    # needs sunsim installed: pip install "sunsim[sdo]"
 
 write_conf() {
     local Temp=$1 file=$2

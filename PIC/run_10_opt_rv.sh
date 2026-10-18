@@ -5,7 +5,7 @@
 #   bash run_10_opt_rv.sh <threads> <noise_th> <I_th> <A_th> <Temp>
 # e.g. bash run_10_opt_rv.sh 1 8 0.95 20 300
 # A job that stops can be started again: the days and the simulation already done are skipped.
-PIPELINES=/data/spotless/scratch/sstucki/starsim/pipelines
+PIPELINES=/nfs/pic.es/user/s/sstucki/sunsim/PIC
 source "${PIPELINES}/settings.sh"
 export OMP_NUM_THREADS=$1 NUMBA_NUM_THREADS=$1
 
