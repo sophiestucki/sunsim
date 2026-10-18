@@ -1,0 +1,13 @@
+# Condor submit file, step 3: table and figures of all the sets (after run_10_opt_rv.sub)
+Universe   = vanilla
+Executable = /data/spotless/scratch/sstucki/starsim/pipelines/collect_stats.sh
+
+RequestCpus   = 1
+RequestMemory = 4GB
+RequestDisk   = 1GB
+
+Log    = logs/collect_stats.log
+Output = logs/collect_stats.out
+Error  = logs/collect_stats.err
+
+Queue

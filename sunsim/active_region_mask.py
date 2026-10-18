@@ -1,0 +1,396 @@
+"""
+active_region_mask: active regions given as 2D maps of the disc (e.g. from SDO images), one map of the spots and one of the
+faculae per epoch, for StarSim(..., active_regions_mask=active_region_mask(...)).
+
+Files
+-----
+In one folder, for every epoch t (in days, the same unit as the rest of SunSim):
+    spot_map_{t}.npy     or  spot_map_{t}.npz  or  spot_map_{t}.txt
+    faculae_map_{t}.npy  or  faculae_map_{t}.npz  or  faculae_map_{t}.txt
+(.npz: a bit-packed boolean mask, np.savez_compressed(path, packed=np.packbits(mask), shape=mask.shape), as written by
+sdo.make_sdo_maps(..., fmt='npz'): a few tens of kB per map even at 4096 x 4096 pixels.)
+(the names can be changed with spot_pattern / faculae_pattern). {t} is any number (12, 12.5, 2459000.25, 1e3).
+Every map is a square image of the visible disc, the disc filling the image (its diameter is the size of the image),
+with the fraction of every pixel covered by spots (resp. faculae): 0 = quiet, 1 = fully covered (binary masks work).
+Pixels outside the disc are ignored (they can be NaN). If only one of the two maps exists for an epoch, the other
+one is taken as 0 everywhere.
+.npy files are much faster to read than .txt (a 4096 x 4096 text map is ~35-200 MB): with cache_npy=True every text
+map is converted to .npy (next to it) the first time it is read, and the .npy is used afterwards. Binary masks saved
+as uint8 or bool .npy are 4 times smaller (and faster to read) than float32.
+
+Orientation (see nbspectra.pixel_to_cell_nb): the horizontal axis of the image is the projected stellar equator, with
+the rotation moving the regions from left to right (as east -> west on the Sun with north up), the vertical axis is
+the projected rotation axis. origin='upper' (default): row 0 of the array is the top of the image (north), as
+np.loadtxt reads a text image and as imshow shows it; origin='lower': row 0 is the bottom. flip_horizontal=True if the
+regions move from right to left in your images.
+
+How the maps are used
+---------------------
+For a grid of the disc (N_rings), every pixel is assigned once to a cell of the grid (projection, cached for every
+image size). At every epoch the spot and facula filling factors of a cell are the means of the two maps over its
+pixels, the spots on top of the faculae in every pixel (spots_over_faculae); StarSim then computes the light
+curve / spectra / CCFs exactly as with circular regions (planets included).
+The epochs are read and reduced in parallel threads (n_threads, a few maps in memory at a time). With
+cache_filling_factors=True the filling factors are saved in the folder (one hidden .npz file per number of rings),
+and a new run with the same maps and number of rings does not read the maps again (useful when only the spectra,
+the grids or the mode change). The cache is checked against the size and date of every map file.
+"""
+import os
+import re
+import sys
+import time as _time
+import threading
+import warnings
+from concurrent.futures import ThreadPoolExecutor
+import numpy as np
+
+from . import nbspectra
+
+
+class active_region_mask(object):
+    """
+    Spot and facula maps of the disc at several epochs (see the module docstring).
+
+    folder          : folder with the maps
+    spot_pattern, faculae_pattern : file names without extension, with {time} where the epoch is
+    origin          : 'upper' (row 0 = top of the image) or 'lower' (row 0 = bottom)
+    flip_horizontal : True if the regions move from right to left in the images
+    cache_npy       : convert the .txt maps to .npy the first time they are read (written in the same folder)
+    dtype           : type of the text maps in memory (float32 halves the memory of large maps); .npy maps keep
+                      their own type (uint8 / bool masks are the smallest)
+    n_threads       : number of epochs read and reduced at the same time (default: min(4, number of CPUs)); every
+                      thread holds one pair of maps in memory
+    cache_filling_factors : save / reuse the filling factors of every epoch in the folder (see the module docstring)
+    spots_over_faculae : True (default): a pixel that is in both maps is a spot, the facula counts only where there is
+                      no spot (min(fc, 1 - sp) in every pixel). The SDO facula maps include the pixels of the spots
+                      (most spots sit in a facula): without it they would count as spot and as facula. False: the two
+                      maps are averaged independently, the faculae capped only per cell (the old code).
+
+    Attributes: times (sorted epochs found in the folder), files {time: {'sp': path or None, 'fc': path or None}}.
+    """
+    def __init__(self, folder, spot_pattern='spot_map_{time}', faculae_pattern='faculae_map_{time}', origin='upper',
+                 flip_horizontal=False, cache_npy=False, dtype=np.float32, n_threads=None, cache_filling_factors=False,
+                 spots_over_faculae=True):
+        if origin not in ('upper', 'lower'):
+            raise ValueError("origin must be 'upper' or 'lower', got %r" % (origin,))
+        if not os.path.isdir(folder):
+            raise FileNotFoundError("the folder of the maps does not exist: %s" % folder)
+        self.folder = folder
+        self.origin = origin
+        self.flip_horizontal = flip_horizontal
+        self.cache_npy = cache_npy
+        self.dtype = dtype
+        self.n_threads = max(1, min(4, os.cpu_count() or 1)) if n_threads is None else max(1, int(n_threads))
+        self.cache_filling_factors = cache_filling_factors
+        self.spots_over_faculae = bool(spots_over_faculae)
+        self._projections = {}          # (n_rows, n_cols, N_rings) -> (cell of every pixel, number of pixels of every cell)
+        self._lock = threading.Lock()
+
+        #find the files: {time} is any number; .npy is preferred to .txt when both exist
+        number = r'([-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?)'
+        files = {}
+        duplicates = []
+        for kind, pattern in (('sp', spot_pattern), ('fc', faculae_pattern)):
+            if '{time}' not in pattern:
+                raise ValueError("the pattern must contain {time}: %r" % (pattern,))
+            regex = re.compile('^' + re.escape(pattern).replace(re.escape('{time}'), number) + r'\.(npy|npz|txt)$')
+            for name in os.listdir(folder):
+                match = regex.match(name)
+                if not match:
+                    continue
+                t = float(match.group(1))
+                entry = files.setdefault(t, {'sp': None, 'fc': None})
+                path = os.path.join(folder, name)
+                rank = {'.npy': 0, '.npz': 1, '.txt': 2}           # .npy is preferred, then .npz, then .txt
+                if entry[kind] is None:
+                    entry[kind] = path
+                    continue
+                r_new, r_old = rank[os.path.splitext(name)[1]], rank[os.path.splitext(entry[kind])[1]]
+                if r_new == r_old:
+                    #two names of the same epoch and format (e.g. spot_map_0.npy and spot_map_0.0.npy): the newest
+                    duplicates.append((os.path.basename(entry[kind]), name))
+                    if os.path.getmtime(path) > os.path.getmtime(entry[kind]):
+                        entry[kind] = path
+                elif r_new < r_old:
+                    entry[kind] = path
+        if not files:
+            raise FileNotFoundError("no map %s.npy/.txt or %s.npy/.txt in %s"
+                                    % (spot_pattern.replace('{time}', '*'), faculae_pattern.replace('{time}', '*'), folder))
+        if duplicates:
+            warnings.warn("%d maps of the same epoch with two file names in %s (e.g. %s and %s): the newest file is used"
+                          % (len(duplicates), folder, duplicates[0][0], duplicates[0][1]))
+        self.files = files
+        self.times = np.array(sorted(files))
+
+    # ---------------------------------------------------------------- reading
+    def _read(self, path):
+        """One map as a 2D array (npy, or text with spaces / tabs / commas between the values)."""
+        if path.endswith('.npy'):
+            return self._native(np.load(path))
+        if path.endswith('.npz'):                       # bit-packed mask
+            with np.load(path) as d:
+                shape = tuple(int(v) for v in d['shape'])
+                return np.unpackbits(d['packed'], count=shape[0] * shape[1]).reshape(shape)
+        npy = path[:-4] + '.npy'
+        if os.path.exists(npy):
+            return self._native(np.load(npy))
+        with open(path) as f:
+            first = f.readline()
+        sep = ',' if ',' in first else r'\s+'
+        try:                                    # pandas' C parser: much faster than np.loadtxt for large maps
+            import pandas as pd
+            arr = pd.read_csv(path, sep=sep, header=None, dtype=self.dtype, engine='c').to_numpy()
+        except ImportError:
+            arr = np.loadtxt(path, delimiter=',' if sep == ',' else None, dtype=self.dtype)
+        if self.cache_npy:
+            np.save(npy, arr)
+        return arr
+
+    @staticmethod
+    def _native(arr):
+        """.npy maps keep their type (no copy); bool masks are seen as uint8 (same memory, numeric for the kernels)."""
+        return arr.view(np.uint8) if arr.dtype == np.bool_ else arr
+
+    def load(self, time):
+        """Spot and facula maps of an epoch (2D arrays; a missing map is all zeros)."""
+        entry = self._entry(time)
+        sp = self._read(entry['sp']) if entry['sp'] is not None else None
+        fc = self._read(entry['fc']) if entry['fc'] is not None else None
+        if sp is None:
+            sp = np.zeros_like(fc)
+        if fc is None:
+            fc = np.zeros_like(sp)
+        if sp.shape != fc.shape or sp.ndim != 2:
+            raise ValueError("the spot and facula maps at t=%s must be 2D with the same shape, got %s and %s"
+                             % (time, sp.shape, fc.shape))
+        return sp, fc
+
+    def _entry(self, time):
+        """Files of the epoch closest to `time` (it must match to 1e-6 days)."""
+        k = int(np.argmin(np.abs(self.times - time)))
+        if abs(self.times[k] - time) > 1e-6 * max(1.0, abs(time)):
+            raise ValueError("no map for the epoch t=%s (the maps are at %s ... %s)" % (time, self.times[0], self.times[-1]))
+        return self.files[self.times[k]]
+
+    # ---------------------------------------------------------------- projection on the grid
+    def projection(self, shape, N_rings, Ngrid_in_ring):
+        """Cell of every pixel (flattened image, int32, -1 outside the disc) and number of pixels of every cell, for an
+        image of this shape and a grid of N_rings rings (computed once, cached; thread-safe)."""
+        key = (shape[0], shape[1], N_rings)
+        with self._lock:
+            if key not in self._projections:
+                if shape[0] != shape[1]:
+                    warnings.warn("the maps are not square (%d x %d): the disc is taken as an ellipse filling the image" % shape)
+                nin = np.asarray(Ngrid_in_ring, dtype=np.int64)
+                cells = nbspectra.pixel_to_cell_nb(shape[0], shape[1], N_rings, nin, self.origin == 'upper',
+                                                   bool(self.flip_horizontal))
+                npix = np.bincount(cells[cells >= 0], minlength=int(nin.sum())).astype(np.float64)
+                self._projections[key] = (cells, npix)
+            return self._projections[key]
+
+    # ---------------------------------------------------------------- cache of the filling factors
+    def _signature(self, time):
+        """Name, size and date of the map files of an epoch: the cache is valid only if they did not change."""
+        entry = self._entry(time)
+        parts = []
+        for kind in ('sp', 'fc'):
+            path = entry[kind]
+            if path is None:
+                parts.append('-')
+            else:
+                st = os.stat(path)
+                parts.append('%s:%d:%d' % (os.path.basename(path), st.st_size, int(st.st_mtime)))
+        return '|'.join(parts)
+
+    def _cache_path(self, N_rings):
+        return os.path.join(self.folder, '.sunsim_filling_factors_N%d_%s%s%s.npz'
+                            % (N_rings, self.origin, '_flip' if self.flip_horizontal else '',
+                               '' if self.spots_over_faculae else '_independent'))
+
+    def _read_cache(self, N_rings):
+        """{signature of the files of an epoch: (ff_sp, ff_fc)} from the cache file (empty if there is none)."""
+        path = self._cache_path(N_rings)
+        if not os.path.exists(path):
+            return {}
+        try:
+            d = np.load(path)
+            return {str(sig): (d['ff_sp'][k], d['ff_fc'][k]) for k, sig in enumerate(d['signatures'])}
+        except Exception:
+            return {}
+
+    def _write_cache(self, N_rings, cache):
+        sigs = list(cache)
+        try:
+            np.savez(self._cache_path(N_rings), signatures=np.array(sigs),
+                     ff_sp=np.array([cache[k][0] for k in sigs]), ff_fc=np.array([cache[k][1] for k in sigs]))
+        except OSError as e:
+            warnings.warn("could not write the cache of the filling factors in %s: %s" % (self.folder, e))
+
+    # ---------------------------------------------------------------- filling factors
+    def filling_factors(self, times, N_rings, Ngrid_in_ring, cell_area=None, verbose=False):
+        """Spot and facula filling factors of every cell at every epoch: two arrays (n_times, n_cells).
+        The epochs are read and reduced in n_threads parallel threads; the projection is computed once per image
+        size; with cache_filling_factors the epochs already computed for this number of rings are not read again.
+        cell_area (projected area of every cell, optional): to warn only if the cells without any pixel (the narrow
+        rings at the limb when the maps are small) cover more than 0.1% of the disc, and to print the filling factors
+        as fractions of the disc.
+        verbose: print the progress, one line updated at every epoch:
+            Date t. ff_ph=..%. ff_sp=..%. ff_fc=..%. [k/n] elapsed / remaining time
+        (fractions of the projected disc, from the maps, before the planets)."""
+        times = np.atleast_1d(np.asarray(times, dtype=np.float64))
+        ncell = int(np.sum(Ngrid_in_ring))
+        ff_sp = np.zeros((len(times), ncell))
+        ff_fc = np.zeros((len(times), ncell))
+        cache = self._read_cache(N_rings) if self.cache_filling_factors else {}
+        sigs = [self._signature(t) for t in times] if self.cache_filling_factors else [None] * len(times)
+        todo = []
+        for k, sig in enumerate(sigs):
+            if sig is not None and sig in cache and len(cache[sig][0]) == ncell:
+                ff_sp[k], ff_fc[k] = cache[sig]
+            else:
+                todo.append(k)
+
+        def one_epoch(k):
+            sp, fc = self.load(times[k])
+            cells, npix = self.projection(sp.shape, N_rings, Ngrid_in_ring)
+            a, b = nbspectra.maps_to_cells_nb(cells, np.ascontiguousarray(sp).ravel(), np.ascontiguousarray(fc).ravel(), npix,
+                                            self.spots_over_faculae)
+            return k, a, b, npix, sp.shape
+
+        area = np.ones(ncell) if cell_area is None else np.asarray(cell_area, dtype=np.float64)
+        area = area / area.sum()
+
+        def status(k, done, start):
+            """Progress line of epoch k (done epochs computed so far)."""
+            sp_pc, fc_pc = 100*np.dot(ff_sp[k], area), 100*np.dot(ff_fc[k], area)
+            elapsed = _time.perf_counter() - start
+            left = elapsed / done * (len(todo) - done) if done else 0.0
+            sys.stdout.write("\rDate {0:.4f}. ff_ph={1:.3f}%. ff_sp={2:.3f}%. ff_fc={3:.3f}%. [{4}/{5}] {6:.1f} s, ~{7:.1f} s left   "
+                             .format(times[k], 100-sp_pc-fc_pc, sp_pc, fc_pc, done, len(todo), elapsed, left))
+            sys.stdout.flush()
+
+        if verbose:
+            print("2D maps: %d epochs, %d rings (%d cells)%s" % (len(times), N_rings, ncell,
+                  ", %d from the cache" % (len(times) - len(todo)) if len(todo) < len(times) else ""))
+        start = _time.perf_counter()
+        empty_warned = False
+        with ThreadPoolExecutor(max_workers=self.n_threads) as pool:
+            for done, (k, a, b, npix, shape) in enumerate(pool.map(one_epoch, todo), 1):
+                ff_sp[k], ff_fc[k] = a, b
+                if verbose:
+                    status(k, done, start)
+                if sigs[k] is not None:
+                    cache[sigs[k]] = (a, b)
+                if not empty_warned and np.any(npix == 0):
+                    empty = npix == 0
+                    frac = 1.0 if cell_area is None else np.sum(np.asarray(cell_area)[empty]) / np.sum(cell_area)
+                    if frac > 1e-3:
+                        warnings.warn("%d cells of the grid (%.1f%% of the disc) have no pixel in the %d x %d maps (they "
+                                      "are taken as quiet): use larger maps or fewer rings"
+                                      % (np.sum(empty), 100*frac, shape[0], shape[1]))
+                    empty_warned = True
+        if verbose and todo:
+            sys.stdout.write("\n")
+            sys.stdout.flush()
+        if self.cache_filling_factors and todo:
+            self._write_cache(N_rings, cache)
+        return ff_sp, ff_fc
+
+
+class precomputed_filling_factors(object):
+    """Spot and facula filling factors of every cell already computed (e.g. by sdo.make_sdo_maps(..., n_rings=N),
+    read by sdo.load_filling_factors), given to StarSim(..., active_regions_mask=...) in place of the maps: no map is read.
+
+    times        : epochs [days] (n_times,)
+    ff_sp, ff_fc : fraction of every cell covered by spots / faculae (n_times, n_cells) for a grid of N_rings rings
+    StarSim must use the same N_rings, and epochs among `times` (any subset, in any order: e.g. chunks of epochs)."""
+    def __init__(self, times, ff_sp, ff_fc, N_rings):
+        self.times = np.asarray(times, dtype=np.float64)
+        self.ff_sp = np.asarray(ff_sp)
+        self.ff_fc = np.asarray(ff_fc)
+        self.N_rings = int(N_rings)
+        if self.ff_sp.shape != self.ff_fc.shape or self.ff_sp.ndim != 2 or len(self.times) != self.ff_sp.shape[0]:
+            raise ValueError('ff_sp and ff_fc must be (n_times, n_cells) arrays with one row per epoch, got %s, %s for %d '
+                             'epochs' % (self.ff_sp.shape, self.ff_fc.shape, len(self.times)))
+
+    def filling_factors(self, times, N_rings, Ngrid_in_ring, cell_area=None, verbose=False):
+        """The rows of the epochs `times` (as active_region_mask.filling_factors): two float64 arrays (n_times, n_cells)."""
+        if int(N_rings) != self.N_rings:
+            raise ValueError('these filling factors are for %d rings, StarSim has %d' % (self.N_rings, N_rings))
+        if self.ff_sp.shape[1] != int(np.sum(Ngrid_in_ring)):
+            raise ValueError('these filling factors have %d cells, the grid of %d rings %d'
+                             % (self.ff_sp.shape[1], N_rings, int(np.sum(Ngrid_in_ring))))
+        times = np.atleast_1d(np.asarray(times, dtype=np.float64))
+        order = np.argsort(self.times)
+        pos = np.clip(np.searchsorted(self.times[order], times), 0, len(order) - 1)
+        rows = order[pos]
+        bad = np.abs(self.times[rows] - times) > 1e-6 * np.maximum(1.0, np.abs(times))
+        if np.any(bad):
+            raise ValueError('no filling factors for the epochs %s (they are at %s ... %s)'
+                             % (times[bad][:5], self.times.min(), self.times.max()))
+        return self.ff_sp[rows].astype(np.float64), self.ff_fc[rows].astype(np.float64)
+
+
+# -------------------------------------------------------------------- resolution of the maps and number of rings
+def _shape(resolution):
+    """(n_rows, n_cols) from an image size n (square) or a shape (n_rows, n_cols)."""
+    shape = (resolution, resolution) if np.ndim(resolution) == 0 else tuple(resolution)
+    if len(shape) != 2:
+        raise ValueError('resolution must be the size of a square map (n) or a shape (n_rows, n_cols), got %r' % (resolution,))
+    out = []
+    for s in shape:
+        if isinstance(s, (bool, np.bool_)) or not float(s).is_integer() or s < 1:
+            raise ValueError('the size of the maps must be positive integers (pixels), got %r' % (resolution,))
+        out.append(int(s))
+    return tuple(out)
+
+
+def pixels_per_cell(resolution, N_rings):
+    """Number of pixels of a map of this resolution in every cell of a grid of N_rings rings (the projection used by
+    StarSim with active_region_mask). resolution: n (an n x n map) or (n_rows, n_cols).
+    Returns an int64 array (number of cells,), in the order of the cells of the grid (ring by ring)."""
+    n_rows, n_cols = _shape(resolution)
+    N_rings = int(N_rings)
+    if N_rings < 1:
+        raise ValueError('N_rings must be >= 1, got %r' % (N_rings,))
+    nin = np.asarray(nbspectra.generate_grid_coordinates_nb(N_rings)[1], dtype=np.int64)
+    cells = nbspectra.pixel_to_cell_nb(n_rows, n_cols, N_rings, nin, True, False)
+    return np.bincount(cells[cells >= 0], minlength=int(nin.sum()))
+
+
+def max_rings(resolution, min_pixels=1, verbose=False):
+    """Largest number of rings for which every cell of the grid gets at least min_pixels pixels of a map of this
+    resolution (n for an n x n map, or (n_rows, n_cols)). Not needed to run a simulation: a tool to choose N_rings.
+
+    With more rings, the cells of the outer rings (thin in projection, near the limb) get no pixel: their filling
+    factors are 0 whatever the maps (StarSim warns when it happens). min_pixels > 1 asks for a few pixels per cell, for
+    filling factors that are not just 0 or 1 at the limb (a binary map averaged over k pixels has a resolution 1/k).
+    The outermost ring is the narrowest (projected width ~ (pi/(2N))^2 / 2), so the limit grows as sqrt(resolution):
+    ~10 rings for 64 pixels, ~40 for 1024, ~80 for 4096.
+    The number of empty cells only grows with N_rings (checked), so the limit is found by bisection on the exact
+    projection, started from that estimate (~1-2 s for 4096 x 4096 maps)."""
+    n_rows, n_cols = _shape(resolution)
+    min_pixels = int(min_pixels)
+    if min_pixels < 1:
+        raise ValueError('min_pixels must be >= 1, got %r' % (min_pixels,))
+    ok = lambda N: pixels_per_cell((n_rows, n_cols), N).min() >= min_pixels
+    if not ok(1):
+        raise ValueError('a %d x %d map has fewer than %d pixels on the disc' % (n_rows, n_cols, min_pixels))
+    guess = max(2, int(1.25 * np.sqrt(min(n_rows, n_cols)) / np.sqrt(min_pixels) ** 0.5))   # bracket around ~sqrt(n)
+    lo, hi = max(1, guess // 2), guess
+    while not ok(lo):
+        lo, hi = max(1, lo // 2), lo
+    while ok(hi):
+        lo, hi = hi, 2 * hi
+    while hi - lo > 1:
+        mid = (lo + hi) // 2
+        if ok(mid):
+            lo = mid
+        else:
+            hi = mid
+    if verbose:
+        npix = pixels_per_cell((n_rows, n_cols), lo)
+        print('%d x %d maps: at most %d rings (%d cells, %d to %d pixels per cell); %d rings leave %d cells with fewer '
+              'than %d pixels' % (n_rows, n_cols, lo, len(npix), npix.min(), npix.max(), lo + 1,
+                                  np.sum(pixels_per_cell((n_rows, n_cols), lo + 1) < min_pixels), min_pixels))
+    return lo
