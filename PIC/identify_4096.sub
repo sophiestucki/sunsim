@@ -1,0 +1,20 @@
+# Condor submit file, step 2: identification at 4096 px of the decade in 40 blocks of days (N_BLOCKS of
+# settings_4096.sh: keep the two equal), all the sets of thresholds of parameters.txt at once
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/identify_4096.sh
+
+# $1 = workers (days at the same time in the job: ~4 GB of memory each), $2 = block
+Arguments = "2 $(Process)"
+
+RequestCpus   = 2
+RequestMemory = 10GB
+RequestDisk   = 1GB
+
+Log    = logs/identify_4096_$(Process).log
+Output = logs/identify_4096_$(Process).out
+Error  = logs/identify_4096_$(Process).err
+
+stream_output = True
+stream_error  = True
+
+Queue 40

@@ -1,0 +1,21 @@
+# Condor submit file, step 4: one simulation per line of parameters.txt (noise_th, I_th, A_th, Temp), after
+# build_grids_4096.sub and aggregate_4096.sub
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/run_opt_rv_4096.sh
+
+# $1 = OMP_NUM_THREADS, $2 = noise_th, $3 = I_th, $4 = A_th, $5 = Temp
+Arguments = "8 $(noise_th) $(I_th) $(A_th) $(Temp)"
+
+max_materialize = 200
+RequestCpus   = 8
+RequestMemory = 16GB
+RequestDisk   = 1GB
+
+Log    = logs/4096_noise_$(noise_th)_I_$(I_th)_A_$(A_th)_T_$(Temp).log
+Output = logs/4096_noise_$(noise_th)_I_$(I_th)_A_$(A_th)_T_$(Temp).out
+Error  = logs/4096_noise_$(noise_th)_I_$(I_th)_A_$(A_th)_T_$(Temp).err
+
+stream_output = True
+stream_error  = True
+
+Queue noise_th, I_th, A_th, Temp from parameters.txt

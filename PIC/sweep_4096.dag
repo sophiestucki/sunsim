@@ -1,0 +1,16 @@
+# condor_submit_dag sweep_4096.dag : the decade at full resolution (4096 px, 60 rings), the sets of parameters.txt
+#   1. the grids once per T_sp (build_grids_4096.sub)                                   } at the same time
+#   2. identification in 40 blocks of days, all the sets of thresholds at once (identify_4096.sub)  }
+#   3. the days still missing and the filling factors of every set (aggregate_4096.sub)
+#   4. one simulation per line of parameters.txt: light curve, RV, FWHM, BIS, contrast, CCF, MAD / RMS (run_opt_rv_4096.sub)
+#   5. table of all the sets and the figures (collect_stats_4096.sub; it runs even if some sets failed)
+JOB grids     build_grids_4096.sub
+JOB ident     identify_4096.sub
+JOB aggregate aggregate_4096.sub
+JOB sets      run_opt_rv_4096.sub
+JOB collect   collect_stats_4096.sub
+PARENT ident CHILD aggregate
+PARENT grids aggregate CHILD sets
+PARENT sets  CHILD collect
+SCRIPT POST ident /bin/true
+SCRIPT POST sets  /bin/true

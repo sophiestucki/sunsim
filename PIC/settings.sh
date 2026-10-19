@@ -1,6 +1,7 @@
 #!/bin/bash
 # Settings shared by build_grids.sh and run_10_opt_rv.sh (sourced by both): folders, period, environment, and
-# write_conf <Temp> <file>, the configuration of the simulations (only spot_T_contrast changes: one grid per Temp).
+# write_conf <Temp> <file>, the configuration of the simulations (only spot_T_contrast changes: one grid per Temp;
+# n_grid_rings = $N_RINGS, 15 if it is not set).
 
 BASE=/data/spotless/scratch/sstucki/starsim              # outputs: confs/, grids/, sets/, opt_rv/
 SDO_DATA=/data/spotless/scratch/sstucki/starsim/SDO_data/  # HMI fits
@@ -29,7 +30,7 @@ orders_CRX_filename: orders_wv_CARMENES.dat
 [general]
 
 simulation_mode: grid
-n_grid_rings : 15
+n_grid_rings : ${N_RINGS:-15}
 wavelength_lower_limit : 3801.0
 wavelength_upper_limit : 7999.0
 spectral_library : mps_highres
