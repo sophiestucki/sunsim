@@ -34,7 +34,7 @@ from datetime import datetime
 import numpy as np
 
 __all__ = ['mad', 'rms', 'jd_of_date', 'load_harpsn', 'daily_average', 'load_sorce', 'load_tsis', 'load_interventions',
-           'match_days', 'best_shift_match', 'compare_photometry', 'compare_rv', 'print_summary',
+           'match_days', 'best_shift_match', 'compare_photometry', 'compare_rv', 'compare_rv_exposures', 'print_summary',
            'plot_photometry_comparison', 'plot_rv_comparison', 'plot_comparison', 'plot_correlation',
            'sweep_stats', 'load_sweep_stats', 'best_sets', 'plot_sweep_heatmaps', 'plot_sweep_parameters']
 
@@ -96,27 +96,47 @@ def load_harpsn(path, start, end=None, t_start=None, daily=True, quality=False):
     end, t_start : keep only the observations between t_start (default start) and end (dates; default all)
     daily : True (default) returns the averages per day (daily_average), False every observation
     quality : True keeps only the observations with data_quality = 1 (False: all, as in the 10-year comparison)
-    Returns a dict: 'name', 'jd' (UTC), 't' (days since start; daily: the middle of the day, day + 0.5), 'rv', 'fwhm',
-    'bis' [m/s], 'contrast' and, daily, their standard deviations in the day 'rv_err', 'fwhm_err', 'bis_err',
-    'contrast_err' and the number of observations 'n'."""
+    Returns a dict: 'name', 'jd' (UTC at the Earth, middle of the exposure), 't' (days since start; daily: the middle of
+    the day, day + 0.5), 'rv', 'fwhm', 'bis' [m/s], 'contrast' and, daily, their standard deviations in the day 'rv_err',
+    'fwhm_err', 'bis_err', 'contrast_err' and the number of observations 'n' (not daily: the errors of every exposure,
+    same names, and 'jd_start' (UTC) and 'texp' [s] of every exposure).
+    The bjd of the release is barycentric for a target in the direction of the Sun: ~500 s (1 AU / c) before the
+    exposure at the Earth. The times come from the start of the exposure in file_root (HARPN.YYYY-MM-DDTHH-MM-SS.sss,
+    UTC) and texp when they are there, otherwise from bjd (-(TDB - UTC) only: ~8 min early)."""
     import pandas as pd
     data = pd.read_csv(path)
     if quality and 'data_quality' in data:
         data = data[data['data_quality'] == 1]
     data = data.sort_values('bjd')
-    bjd = np.asarray(data['bjd'], dtype=np.float64) + 2400000.0
-    # BJD (TDB) -> JD (UTC): -(TDB - UTC), 69.184 s since 2017 (68.184 s before); < 1e-3 day, only matters at midnight
-    # (the solar observations are made around noon at La Palma)
-    try:
-        from astropy.time import Time
-        jd = Time(bjd, format='jd', scale='tdb').utc.jd
-    except Exception:                                   # no astropy / no leap-second table: the 2017 value
-        jd = bjd - 69.184 / 86400
+    jd_start = texp = None
+    if 'file_root' in data and 'texp' in data:
+        iso = data['file_root'].astype(str).str.extract(r'(\d{4}-\d\d-\d\dT\d\d)-(\d\d)-(\d\d(?:\.\d+)?)')
+        if not iso.isna().any().any():
+            from astropy.time import Time
+            jd_start = Time(list(iso[0] + ':' + iso[1] + ':' + iso[2]), format='isot', scale='utc').jd
+            texp = np.asarray(data['texp'], dtype=np.float64)
+    if jd_start is not None:
+        jd = jd_start + texp / 2 / 86400
+    else:
+        bjd = np.asarray(data['bjd'], dtype=np.float64) + 2400000.0
+        # BJD (TDB) -> JD (UTC): -(TDB - UTC), 69.184 s since 2017 (68.184 s before)
+        try:
+            from astropy.time import Time
+            jd = Time(bjd, format='jd', scale='tdb').utc.jd
+        except Exception:                               # no astropy / no leap-second table: the 2017 value
+            jd = bjd - 69.184 / 86400
     out = {'name': 'HARPS-N', 'jd': jd,
            'rv': 1e3 * np.asarray(data['rv'], dtype=np.float64),
            'fwhm': 1e3 * np.asarray(data['fwhm'], dtype=np.float64),
            'bis': 1e3 * np.asarray(data['bis_span'], dtype=np.float64),
            'contrast': np.asarray(data['contrast'], dtype=np.float64)}
+    if not daily:                                       # the errors of every exposure (daily: the scatter in the day)
+        for k, col, scale in (('rv', 'rv_err', 1e3), ('fwhm', 'fwhm_err', 1e3), ('bis', 'bis_span_err', 1e3),
+                              ('contrast', 'contrast_err', 1.0)):
+            if col in data:
+                out[k + '_err'] = scale * np.asarray(data[col], dtype=np.float64)
+        if jd_start is not None:
+            out['jd_start'], out['texp'] = jd_start, texp
     out = _cut(out, t_start if t_start is not None else start, end)
     out['t'] = _days(out['jd'], start)
     return daily_average(out, start) if daily else out
@@ -267,6 +287,44 @@ def compare_rv(harps, t_sim, y_sim, quantity='rv', interventions=None, shifts=(-
     out = {k: (np.concatenate(v) if v else np.zeros(0)) for k, v in cols.items()}
     out.update(quantity=quantity, n=len(out['res']), interventions=cuts, periods=periods,
                mad=mad(out['res']), rms=rms(out['res']), mad_obs=mad(out['obs']), rms_obs=rms(out['obs']))
+    out['reduction'] = 100 * (out['rms_obs'] - out['rms']) / out['rms_obs'] if out['n'] else np.nan
+    return out
+
+
+def compare_rv_exposures(obs, y_sim, quantity='rv', interventions=None):
+    """Every HARPS-N exposure (load_harpsn(daily=False), or any dict with 't' and quantity) against the simulated value
+    of the same exposure, y_sim (same length as obs['t']: e.g. the simulation at the SDO epoch closest to every
+    exposure), without averaging per day. Medians removed, one offset per instrumental period (interventions, days
+    since start), as compare_rv but without day shifts. Returns the dict of compare_rv ('t', 'obs', 'obs_err', 'sim',
+    'res', 'mad', 'rms', 'mad_obs', 'rms_obs', 'reduction', 'n', 'quantity', 'interventions', 'periods'), so that
+    print_summary, plot_rv_comparison and plot_correlation work with it."""
+    t = np.asarray(obs['t'], dtype=np.float64)
+    y_obs = np.asarray(obs[quantity], dtype=np.float64)
+    y_sim = np.asarray(y_sim, dtype=np.float64)
+    if len(y_sim) != len(t):
+        raise ValueError('y_sim must have one value per exposure (%d), got %d' % (len(t), len(y_sim)))
+    err = np.asarray(obs.get(quantity + '_err', np.full(len(t), np.nan)), dtype=np.float64)
+    ok = np.isfinite(y_obs) & np.isfinite(y_sim)
+    t, y_obs, y_sim, err = t[ok], y_obs[ok] - np.median(y_obs[ok]), y_sim[ok] - np.median(y_sim[ok]), err[ok]
+    cuts = np.zeros(0) if interventions is None else np.sort(np.asarray(interventions, dtype=np.float64))
+    if len(t):
+        cuts = cuts[(cuts > t.min()) & (cuts < t.max())]
+    period = _periods(t, cuts)
+    edges = np.concatenate(([t.min() if len(t) else 0], cuts, [t.max() if len(t) else 0]))
+    res = np.full(len(t), np.nan)
+    periods = []
+    for p in range(len(cuts) + 1):
+        m = period == p
+        info = {'start': edges[p], 'end': edges[p + 1], 'n_sim': int(m.sum()), 'n_obs': int(m.sum()), 'n': int(m.sum()),
+                'shift': 0, 'offset': np.nan, 'rms': np.nan, 'mad': np.nan}
+        if m.any():
+            d = y_obs[m] - y_sim[m]
+            res[m] = d - np.median(d)
+            info.update(offset=float(np.median(d)), rms=rms(d), mad=mad(d))
+        periods.append(info)
+    out = {'t': t, 'obs': y_obs, 'obs_err': err, 'sim': y_sim, 'res': res, 'quantity': quantity, 'n': len(t),
+           'interventions': cuts, 'periods': periods, 'mad': mad(res), 'rms': rms(res), 'mad_obs': mad(y_obs),
+           'rms_obs': rms(y_obs)}
     out['reduction'] = 100 * (out['rms_obs'] - out['rms']) / out['rms_obs'] if out['n'] else np.nan
     return out
 

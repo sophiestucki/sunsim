@@ -1,0 +1,8 @@
+# condor_submit_dag supergranulation.dag :
+#   1. one job per day of supergranulation_days.txt: HMI epochs and 45 s dopplergrams of its exposures (supergranulation_day.sub)
+#   2. all the days: calibration, simulations, statistics and figures (supergranulation_collect.sub; it runs even if
+#      some days failed: only the complete days are used)
+JOB days    supergranulation_day.sub
+JOB collect supergranulation_collect.sub
+PARENT days CHILD collect
+SCRIPT POST days /bin/true

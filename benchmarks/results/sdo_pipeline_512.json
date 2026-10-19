@@ -1,0 +1,26 @@
+{
+ "size": 512,
+ "start": "2015-09-01",
+ "end": "2015-12-01",
+ "data": "/Users/sophiestucki/sunsim/tests/old_version/reference/sdo_2015/hmi",
+ "old_identification": {
+  "time": 92.468322958,
+  "memory": 1154.154496
+ },
+ "old_starsim": {
+  "time": 172.23248325,
+  "memory": 894.386176
+ },
+ "old_maps_MB": 820.492022,
+ "new_w1": {
+  "time": 79.81401562500002,
+  "memory": 944.668672,
+  "cells_MB": 0.387904
+ },
+ "new_w4": {
+  "time": 28.345733666,
+  "memory": 3228.123136,
+  "cells_MB": 0.387904
+ },
+ "n_days": 88
+}

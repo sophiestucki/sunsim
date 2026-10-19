@@ -151,6 +151,53 @@ def _ccf_on_the_fly_check():
     assert 'ccf' not in np.load(ss.save_results(os.path.join(d, 'no_ccf'), ccf=False))
 
 
+def _quiet_velocity_run(v, ff_sp=None, **kw):
+    """CCF mode with cell filling factors (map mode) and a quiet_velocity v (None, an array or a field)."""
+    from sunsim import precomputed_filling_factors
+    g = []
+    for sc in (1.0, 0.5, 1.1):
+        x = ccf(high_res_flux={1.0: {'wav': WV, 'intensity': sc * lines()[1.0]['intensity']}})
+        x.built_grid(bisector=None)
+        g.append(x)
+    t = np.arange(4.0)
+    n_cells = len(StarSim(t, N, 0.0, 25.0).vec_grid)
+    sp = np.zeros((4, n_cells)) if ff_sp is None else ff_sp
+    mask = precomputed_filling_factors(t, sp, np.zeros((4, n_cells)), N)
+    args = dict(time=t, N_rings=N, inclination=0.0, rotation_period=25.0, active_regions_mask=mask, mode=['ccf'],
+                ccf_grid_qp=g[0], ccf_grid_sp=g[1], ccf_grid_fc=g[2], quiet_velocity=v)
+    args.update(kw)
+    s = StarSim(**args)
+    s.generate_timeseries(verbose=False)
+    return s, n_cells
+
+
+def _quiet_velocity_check():
+    """quiet_velocity: 0 changes nothing; the same velocity in every quiet cell shifts the RV by it; a fully spotted
+    cell is not shifted; the field object and remove_ring_profile."""
+    from sunsim import supergranulation as sg
+    ref, n_cells = _quiet_velocity_run(None)
+    zero, _ = _quiet_velocity_run(np.zeros((4, n_cells)))
+    assert np.array_equal(ref.ccf_var, zero.ccf_var)
+    shifts = np.array([0.0, 500.0, -1000.0, 1500.0])           # multiples of the step of RV: exact translations
+    moved, _ = _quiet_velocity_run(sg.quiet_velocity_field(np.arange(4.0), shifts[:, None] + np.zeros((4, n_cells)), N))
+    inner = np.abs(ref.ccf_rv) < ref.ccf_rv.max() - 4000                # the ends are extrapolated cell by cell
+    for k, s in enumerate(shifts):
+        expected = np.interp(ref.ccf_rv - s, ref.ccf_rv, ref.ccf_var[k])
+        assert np.max(np.abs(moved.ccf_var[k] - expected)[inner]) < 1e-9 * np.ptp(ref.ccf_var[k])
+    sp = np.zeros((4, n_cells))
+    sp[:, 0] = 1.0                                               # the central cell is a spot: not moved
+    one = np.zeros((4, n_cells))
+    one[:, 0] = 500.0
+    spotted, _ = _quiet_velocity_run(one, ff_sp=sp)
+    nov, _ = _quiet_velocity_run(None, ff_sp=sp)
+    assert np.array_equal(spotted.ccf_var, nov.ccf_var)
+    ring = sg.ring_of_cells(N)
+    out, prof = sg.remove_ring_profile(10.0 * ring[None, :] + np.zeros((3, 1)), np.ones((3, len(ring))), N)
+    assert np.allclose(out, 0) and np.allclose(prof, 10.0 * np.arange(N))
+    idx, dt = sg.closest([1.0, 2.6, 9.0], [0.0, 2.0, 3.0])
+    assert list(idx) == [0, 2, 2] and np.allclose(dt, np.array([1.0, 0.4, 6.0]) * 86400)
+
+
 def _overlap_check():
     """Relative difference between the planet filling factor of two identical (overlapping) planets and of one."""
     pl = lambda: planet(planet_period=4, planet_transit_t0=0.0, planet_radius=0.1, planet_semi_major_axis=10)
@@ -340,6 +387,12 @@ CASES = [
     ('StarSim: save_results before generate_timeseries',
      lambda: StarSim(time=np.zeros(1), N_rings=N, inclination=0.0, rotation_period=25.0).save_results(TMP), RuntimeError),
     ('correct: ccf_on_the_fly True = False = auto, save_results (npz, txt)', _ccf_on_the_fly_check, None),
+    # velocity of the quiet photosphere (supergranulation)
+    ('StarSim: quiet_velocity without maps', lambda: starsim(quiet_velocity=np.zeros((10, 3))), ValueError),
+    ('StarSim: quiet_velocity of the wrong shape', lambda: _quiet_velocity_run(np.zeros((3, 5))), ValueError),
+    ('StarSim: quiet_velocity of the wrong number of cells', lambda: _quiet_velocity_run(np.zeros((4, 5))), ValueError),
+    ('StarSim: quiet_velocity without ccf', lambda: _quiet_velocity_run(np.zeros((4, 5)), mode=['photometry']), ValueError),
+    ('correct: quiet_velocity (zero, uniform shift, spotted cell, ring profile)', _quiet_velocity_check, None),
     ('correct: local_path not required', lambda: None if local_path('no_such_key_xyz', required=False) is None else 1 / 0, None),
 ]
 

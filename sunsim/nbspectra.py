@@ -1838,6 +1838,44 @@ def timeseries_maps_nb(N,Ngrid_in_ring,pare,amu,vec_grid,ff_sp_all,ff_fc_all,sim
     return flux,spec,ccf,filling
 
 
+@nb.njit(cache=True,error_model='numpy',parallel=True)
+def quiet_velocity_ccf_nb(N,Ngrid_in_ring,ff_sp_all,ff_fc_all,v_all,rvel,rv,rvs_ring,ccf_ring,gq_cc):
+    """Change of the CCF of every epoch (n_times, n_rv) when the quiet photosphere of every cell moves at v_all[k, c]
+    [m/s] (e.g. supergranulation, from a dopplergram) on top of the rotation: in every cell the quiet part,
+    ff_quiet * gq_cc[c] (the CCF of its ring shifted by rvel[c]), is replaced by ff_quiet * the CCF of its ring shifted by
+    rvel[c] + v_all[k, c]. ff_quiet as in timeseries_maps_nb (spots on top of the faculae, no planet). ccf_ring: the CCFs
+    of the quiet rings weighted by the area of a cell, rvs_ring their velocity axes (StarSim._ccf_rings). Cells with
+    v = 0 are skipped (their change is 0). Epochs in parallel."""
+    n_times=v_all.shape[0]
+    ncell=v_all.shape[1]
+    nrv=len(rv)
+    cell_ring=np.empty(ncell,dtype=np.int64)
+    c=0
+    for i in range(N):
+        for j in range(Ngrid_in_ring[i]):
+            cell_ring[c]=i
+            c+=1
+    out=np.zeros((n_times,nrv))
+    for k in prange(n_times):
+        buf=np.empty(nrv)
+        for c in range(ncell):
+            v=v_all[k,c]
+            if v==0.0 or v!=v:
+                continue
+            asp=min(max(ff_sp_all[k,c],0.0),1.0)
+            afc=min(max(ff_fc_all[k,c],0.0),1.0)
+            if afc+asp>1.0:
+                afc=1.0-asp
+            aph=1.0-asp-afc
+            if aph<=0.0:
+                continue
+            i=cell_ring[c]
+            _interp_shifted_nb(rv,rvs_ring[i,:],rvel[c]+v,ccf_ring[i,:],ccf_ring[i,0],ccf_ring[i,-1],buf)
+            for w in range(nrv):
+                out[k,w]+=aph*(buf[w]-gq_cc[c,w])
+    return out
+
+
 # =============================================================================================
 # flux-conserving resampling (instrument orders)
 # =============================================================================================

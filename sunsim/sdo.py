@@ -331,13 +331,10 @@ def _identify_resampled(cont_map, los_map, mu, noise_th, B_th, I_th, A_th, mu_ar
 _PROJECTIONS = {}             # (n_rows, n_cols, n_rings) -> (cell of every pixel, pixels of every cell)
 
 
-def cell_filling_factors(day, n_rings, spots_over_faculae=True):
-    """Spot and facula filling factors of every cell of a SunSim grid of n_rings rings, from one day (identify_day):
-    the same projection of the pixels as active_region_mask(folder, origin='lower') (computed once for every image size)
-    and the same mean over the pixels of every cell (spots over faculae in every pixel). Returns two float32 arrays
-    (n_cells,), what StarSim needs from the maps: the full maps do not have to be written."""
+def cell_projection(shape, n_rings):
+    """Cell of every pixel (flattened, -1 outside the disc) and number of pixels of every cell, for maps of this shape
+    in the frame of identify_day (origin='lower') and a SunSim grid of n_rings rings (computed once per shape)."""
     from . import nbspectra
-    shape = day['spot'].shape
     key = (shape[0], shape[1], int(n_rings))
     if key not in _PROJECTIONS:
         nin = np.asarray(nbspectra.generate_grid_coordinates_nb(int(n_rings))[1], dtype=np.int64)
@@ -347,7 +344,16 @@ def cell_filling_factors(day, n_rings, spots_over_faculae=True):
             warnings.warn('%d cells of the grid of %d rings have no pixel in %d x %d maps (taken as quiet): use larger '
                           'maps or fewer rings (max_rings)' % (np.sum(npix == 0), n_rings, shape[0], shape[1]))
         _PROJECTIONS[key] = (cells, npix)
-    cells, npix = _PROJECTIONS[key]
+    return _PROJECTIONS[key]
+
+
+def cell_filling_factors(day, n_rings, spots_over_faculae=True):
+    """Spot and facula filling factors of every cell of a SunSim grid of n_rings rings, from one day (identify_day):
+    the same projection of the pixels as active_region_mask(folder, origin='lower') (computed once for every image size)
+    and the same mean over the pixels of every cell (spots over faculae in every pixel). Returns two float32 arrays
+    (n_cells,), what StarSim needs from the maps: the full maps do not have to be written."""
+    from . import nbspectra
+    cells, npix = cell_projection(day['spot'].shape, n_rings)
     sp = np.ascontiguousarray(day['spot']).view(np.uint8).ravel()
     fc = np.ascontiguousarray(day['facula']).view(np.uint8).ravel()
     ff_sp, ff_fc = nbspectra.maps_to_cells_nb(cells, sp, fc, npix, bool(spots_over_faculae))

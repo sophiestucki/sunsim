@@ -907,7 +907,7 @@ def _planet(cfg):
 
 def simulate_old_config(conf_file, times=None, observables=('lc',), spot_map=None, old_package=None, paths=None,
                         map_projection=None, reproduce_old_bugs=False, verbose=True, grids=None,
-                        active_regions_mask=None):
+                        active_regions_mask=None, quiet_velocity=None):
     """Run SunSim with the parameters of an old configuration file (see the module docstring).
 
     conf_file   : path of the old .conf file
@@ -933,6 +933,8 @@ def simulate_old_config(conf_file, times=None, observables=('lc',), spot_map=Non
                   made with other thresholds (sunsim.sdo: the grids of a sweep are computed once).
     active_regions_mask : 2D maps (sdo_input = 1): an object that replaces the maps of SDO_input_path, e.g. the cell
                   filling factors of sdo.load_filling_factors (no map is read); times defaults to its epochs.
+    quiet_velocity : 2D maps and RV only: line-of-sight velocity of the quiet photosphere of every cell at every epoch
+                  [m/s] (StarSim(quiet_velocity=...), e.g. supergranulation.quiet_velocity_field from HMI dopplergrams).
     Returns a dict with the keys of the old StarSim.results ('time', 'lc', 'flux', 'ff_ph', 'ff_sp', 'ff_fc', 'ff_pl',
     'rv', 'contrast', 'fwhm', 'bis', 'CCF', 'ccf_quiet', 'raw_xbis', 'raw_ybis', 'spec', 'spec_wv'), 'grids' (for the next call), 'report' and
     'starsim' (the new StarSim object; with 'spec' and other observables, the one of 'lc' / 'rv', and
@@ -1066,7 +1068,8 @@ def simulate_old_config(conf_file, times=None, observables=('lc',), spot_map=Non
     else:
         ss = StarSim(times, N, inclination=inclination, rotation_period=cfg['rotation_period'], differential_rotation=diff_rot,
                      stellar_radius=cfg['radius'], active_regions_map=regions, active_regions_mask=mask, planet=planets,
-                     mode=modes, planet_coverage='ramp' if cfg['_old_bugs'] else 'area', **grids)
+                     mode=modes, planet_coverage='ramp' if cfg['_old_bugs'] else 'area',
+                     quiet_velocity=quiet_velocity if do_rv else None, **grids)
         if do_rv:
             # the old code Doppler-shifts the cells with the rigid rotation velocity (also with differential rotation)
             theta = np.arccos(zs * np.cos(-inclination) - xs * np.sin(-inclination))

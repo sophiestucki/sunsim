@@ -99,6 +99,13 @@ class StarSim(object):
                            (never: the CCFs / spectra of all the cells are built and kept, whatever their memory) or True
                            (always, except in map mode). The CCF time series of the disc (ccf_var) is computed in all the
                            cases; this only changes how the CCF of a cell is obtained (same values, bit for bit).
+    quiet_velocity       : ccf mode with 2D maps (active_regions_mask) only: a line-of-sight velocity [m/s] of the quiet
+                           photosphere of every cell at every epoch, added to its rotation velocity (e.g. the
+                           supergranulation measured on SDO/HMI dopplergrams, sunsim.supergranulation): an array
+                           (n_times, n_cells) in the order of `time`, or an object with a method
+                           velocities(times, N_rings, n_cells) -> (n_times, n_cells) (supergranulation.quiet_velocity_field,
+                           which also works with simulate_in_chunks). The quiet part of every cell, ff_quiet x its CCF, is
+                           shifted by this velocity; the spots and the faculae are not (nbspectra.quiet_velocity_ccf_nb).
 
     After generate_timeseries():
       flux_var (photometry), spec_var (spectroscopy), ccf_var and ccf_rv (ccf) and, in ccf mode, rv_var, fwhm_var,
@@ -109,7 +116,7 @@ class StarSim(object):
     Other attributes: vsini (equatorial, m/s), rvel (line-of-sight rotation velocity of every cell, m/s),
     rotation_rate (Omega(lat)/Omega_eq of every cell), amu, parea, Ngrid_in_ring, vec_grid (grid of the disc).
     """
-    def __init__(self, time, N_rings, inclination, rotation_period, differential_rotation=0, stellar_radius=1, active_regions_map=None, active_regions_mask=None, total_flux_qp=None, flux_grid_qp=None, flux_grid_sp=None, flux_grid_fc=None, spec_grid_qp=None, spec_grid_sp=None, spec_grid_fc=None, ccf_grid_qp=None, ccf_grid_sp=None, ccf_grid_fc=None, planet=None, mode=['photometry'], ccf_cells_max_memory=512, planet_coverage='area', spec_cells_max_memory=512, ccf_on_the_fly='auto', spec_on_the_fly='auto'):
+    def __init__(self, time, N_rings, inclination, rotation_period, differential_rotation=0, stellar_radius=1, active_regions_map=None, active_regions_mask=None, total_flux_qp=None, flux_grid_qp=None, flux_grid_sp=None, flux_grid_fc=None, spec_grid_qp=None, spec_grid_sp=None, spec_grid_fc=None, ccf_grid_qp=None, ccf_grid_sp=None, ccf_grid_fc=None, planet=None, mode=['photometry'], ccf_cells_max_memory=512, planet_coverage='area', spec_cells_max_memory=512, ccf_on_the_fly='auto', spec_on_the_fly='auto', quiet_velocity=None):
 
         #checks of the arguments (clear errors here rather than in the Numba kernels)
         time = _checks.array1d('time', time)
@@ -184,6 +191,19 @@ class StarSim(object):
         if spec_cells_max_memory is not None:
             spec_cells_max_memory = _checks.number('spec_cells_max_memory', spec_cells_max_memory, nonnegative=True)
         self.spec_cells_max_memory = spec_cells_max_memory
+        if quiet_velocity is not None:
+            if active_regions_mask is None:
+                raise ValueError('quiet_velocity needs the 2D maps (active_regions_mask): the filling factors of the cells')
+            if 'ccf' not in mode:
+                raise ValueError("quiet_velocity only changes the CCFs: it needs mode 'ccf', got %r" % (mode,))
+            if planets:
+                raise NotImplementedError('quiet_velocity with planets is not implemented')
+            if not hasattr(quiet_velocity, 'velocities'):
+                quiet_velocity = np.asarray(quiet_velocity, dtype=np.float64)
+                if quiet_velocity.ndim != 2 or quiet_velocity.shape[0] != len(time):
+                    raise ValueError('quiet_velocity must be an array (n_times, n_cells) with one row per epoch of time '
+                                     '(%d), got shape %s' % (len(time), quiet_velocity.shape))
+        self.quiet_velocity = quiet_velocity
         Ngrids, Ngrid_in_ring, centres, amu, rs, alphas, xs, ys, zs, area, parea = nbspectra.generate_grid_coordinates_nb(N_rings)
 
         self.N_rings = N_rings
@@ -390,6 +410,17 @@ class StarSim(object):
         self.ccf_rv = rv
         return rv, rvs_ring, ccf_ring
 
+    def _quiet_velocities(self):
+        """quiet_velocity as a float64 array (n_times, n_cells), NaN set to 0."""
+        n_cells = len(self.vec_grid)
+        qv = self.quiet_velocity
+        v = qv.velocities(self.obs_times, self.N_rings, n_cells) if hasattr(qv, 'velocities') else qv
+        v = np.asarray(v, dtype=np.float64)
+        if v.shape != (len(self.obs_times), n_cells):
+            raise ValueError('quiet_velocity: %d epochs x %d cells expected (grid of %d rings), got %s'
+                             % (len(self.obs_times), n_cells, self.N_rings, v.shape))
+        return np.ascontiguousarray(np.nan_to_num(v, nan=0.0))
+
     def ccf_cells_on_the_fly(self):
         """True if the CCF of the cells is computed for the touched cells at every epoch instead of being kept for all
         the cells (ccf_cells_max_memory; map mode always keeps them)."""
@@ -434,7 +465,7 @@ class StarSim(object):
         is printed (date, filling factors and progress of every epoch).
         The time spent in every step [s] is stored in self.timing: 'grids' (preparation of the grids, CCFs of the
         cells), 'planets' (positions), 'geometry' (regions) or 'maps' (reading and projecting the 2D maps),
-        'timeseries' (the Numba loop over the epochs), 'ccf_params' (RV, FWHM, ... of the CCFs) and 'total'.
+        'timeseries' (the Numba loop over the epochs), 'quiet_velocity' (with quiet_velocity), 'ccf_params' (RV, FWHM, ... of the CCFs) and 'total'.
         '''
         timing = {}
         t_start = t_step = _time.perf_counter()
@@ -515,6 +546,13 @@ class StarSim(object):
                 *grid_args, ff_sp_maps, ff_fc_maps, bool(self.simulate_planet), np.ascontiguousarray(planet_pos),
                 np.ascontiguousarray(planet_vis), *ph, *sp, *cc, self.planet_coverage == 'area')
             lap('timeseries')
+            if self.quiet_velocity is not None:
+                #quiet photosphere of every cell moving on top of the rotation (supergranulation): its CCF shifted
+                v = self._quiet_velocities()
+                rv, rvs_ring, ccf_ring = self._ccf_rings()
+                ccf = ccf + nbspectra.quiet_velocity_ccf_nb(self.N_rings, self._Nin_arr, ff_sp_maps, ff_fc_maps, v,
+                                                            self.rvel, rv, rvs_ring[0], ccf_ring[0], cc[0])
+                lap('quiet_velocity')
         else:
             #CIRCULAR REGIONS: geometry of all the regions at all the epochs, vectorised (stored for plots / checks)
             spot_pos, vec_spot, visible = self.compute_regions_geometry(self.obs_times)
