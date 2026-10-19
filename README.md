@@ -174,6 +174,9 @@ The original version of this code is based on the work of **David Baroch**. Seve
 - Time series of the disc-integrated flux at low resolution
 - Transmission spectroscopy at low resolution
 - Filters
-- Inverse mode (not yet available)
+- Inverse mode (not available in the new version)
 - Performance and speed improvements
 - Tests and benchmarks
+
+**Hugo Tabernero**
+- Instrumental effects
