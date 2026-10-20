@@ -5,7 +5,7 @@ Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/build_grids_fraction.sh
 Arguments  = "1"
 
 RequestCpus   = 1
-RequestMemory = 16GB
+RequestMemory = 4GB
 RequestDisk   = 10GB
 
 Log    = logs/build_grids_fraction.log

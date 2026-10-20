@@ -11,7 +11,7 @@ N_RINGS=60                             # rings of the SunSim grid (write_conf us
 TAG=fraction_size_${SIZE}_N${N_RINGS}
 SETS=${BASE}/sets_${TAG}               # <name>/ : simulation and stats.json of every line of the parameter file
 IDENT=${SETS}/ident                    # <set label>/ : identification of every set of thresholds (shared by all Temp)
-N_BLOCKS=40                            # identification: the days of the period in N_BLOCKS jobs
+N_BLOCKS=80                            # identification: the days of the period in N_BLOCKS jobs (= Queue of identify_fraction.sub)
 PARAMS=${PIPELINES}/parameters_fraction.txt     # lines: noise_th, I_th, B_sat, Temp
 
 # the values of the thresholds of the parameter file (the identification does all their combinations)

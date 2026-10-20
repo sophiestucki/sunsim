@@ -4,7 +4,7 @@ Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/build_grids.sh
 Arguments  = "1 /nfs/pic.es/user/s/sstucki/sunsim/PIC/parameters.txt"
 
 RequestCpus   = 1
-RequestMemory = 16GB
+RequestMemory = 4GB
 RequestDisk   = 10GB
 
 Log    = logs/build_grids.log

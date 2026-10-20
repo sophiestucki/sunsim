@@ -1,13 +1,14 @@
-# Condor submit file, step 2: identification at 4096 px with facular fractions of the decade in 40 blocks of days
+# Condor submit file, step 2: identification at 4096 px with facular fractions of the decade in 80 blocks of days
 # (N_BLOCKS of settings_fraction.sh: keep the two equal), all the sets of thresholds of parameters_fraction.txt at once
 Universe   = vanilla
 Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/identify_fraction.sh
 
-# $1 = workers (days at the same time in the job: ~4 GB of memory each), $2 = block
-Arguments = "2 $(Process)"
+# $1 = workers (days at the same time in the job: ~3 GB of memory each on PIC; the days are independent, the job
+# uses all its CPUs: ~19 s per day and worker with the 100 sets), $2 = block
+Arguments = "4 $(Process)"
 
-RequestCpus   = 2
-RequestMemory = 10GB
+RequestCpus   = 4
+RequestMemory = 16GB
 RequestDisk   = 1GB
 
 Log    = logs/identify_fraction_$(Process).log
@@ -17,4 +18,4 @@ Error  = logs/identify_fraction_$(Process).err
 stream_output = True
 stream_error  = True
 
-Queue 40
+Queue 80

@@ -3,18 +3,18 @@ Universe   = vanilla
 Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/run_10_opt_rv.sh
 
 # Arguments passed to the .sh:
-# $1 = OMP_NUM_THREADS
+# $1 = workers (days identified at the same time: ~2 GB of memory each; the simulation at 15 rings takes ~1 s)
 # $2 = noise_th
 # $3 = I_th
 # $4 = A_th
 # $5 = Temp
 
-Arguments = "1 $(noise_th) $(I_th) $(A_th) $(Temp)"
-#Arguments = "1 8 0.80 1 300"
+Arguments = "8 $(noise_th) $(I_th) $(A_th) $(Temp)"
+#Arguments = "8 8 0.80 1 300"
 
 max_materialize = 200
-RequestCpus   = 50
-RequestMemory = 4GB
+RequestCpus   = 8
+RequestMemory = 16GB
 RequestDisk   = 1GB
 
 # One output/error/log file per parameter combination

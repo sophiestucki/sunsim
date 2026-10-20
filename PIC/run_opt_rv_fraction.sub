@@ -3,12 +3,12 @@
 Universe   = vanilla
 Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/run_opt_rv_fraction.sh
 
-# $1 = OMP_NUM_THREADS, $2 = noise_th, $3 = I_th, $4 = B_sat, $5 = Temp
-Arguments = "8 $(noise_th) $(I_th) $(B_sat) $(Temp)"
+# $1 = OMP_NUM_THREADS (1: the simulation itself takes ~2 s, the rest of the job is serial), $2 = noise_th, $3 = I_th, $4 = B_sat, $5 = Temp
+Arguments = "1 $(noise_th) $(I_th) $(B_sat) $(Temp)"
 
-max_materialize = 200
-RequestCpus   = 8
-RequestMemory = 16GB
+max_materialize = 1000
+RequestCpus   = 1
+RequestMemory = 2GB
 RequestDisk   = 1GB
 
 Log    = logs/fraction_noise_$(noise_th)_I_$(I_th)_Bsat_$(B_sat)_T_$(Temp).log

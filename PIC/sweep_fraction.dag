@@ -2,8 +2,8 @@
 # (faculae='fraction': every bright pixel is min(|B|/mu/B_sat, 1) facula, no area threshold), the sets of
 # parameters_fraction.txt (noise_th, I_th, B_sat, Temp)
 #   1. the grids once per T_sp (build_grids_fraction.sub; shared with sweep_4096.dag)          } at the same time
-#   2. identification in 40 blocks of days, all the sets of thresholds at once (identify_fraction.sub) }
-#   3. the days still missing and the filling factors of every set (aggregate_fraction.sub)
+#   2. identification in 80 blocks of days, all the sets of thresholds at once (identify_fraction.sub) }
+#   3. the days still missing and the filling factors of every set, one job per set (aggregate_fraction.sub)
 #   4. one simulation per line of parameters_fraction.txt: light curve, RV, FWHM, BIS, contrast, CCF, MAD / RMS
 #      (run_opt_rv_fraction.sub)
 #   5. table of all the sets and the figures (collect_stats_fraction.sub; it runs even if some sets failed)
