@@ -6,7 +6,7 @@ Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/run_opt_rv_4096.sh
 # $1 = OMP_NUM_THREADS, $2 = noise_th, $3 = I_th, $4 = A_th, $5 = Temp
 Arguments = "8 $(noise_th) $(I_th) $(A_th) $(Temp)"
 
-max_materialize = 200
+max_materialize = 50
 RequestCpus   = 8
 RequestMemory = 16GB
 RequestDisk   = 1GB

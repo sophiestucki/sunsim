@@ -140,7 +140,7 @@ def fetch_record(series, t_rec, segment, folder, client=None, retries=3, timeout
     ds = '%s[%s]' % (series, t_rec)
     for attempt in range(retries):
         try:
-            keys, segs = client.query(ds, key=drms.const.all, seg=segment)
+            keys, segs = client.query(ds, key='**ALL**', seg=segment)
             if len(keys) == 0:
                 raise FileNotFoundError('no record %s' % ds)
             path = os.path.join(str(folder), '%s.%s.%s.fits' % (series, t_rec.replace(':', ''), segment))

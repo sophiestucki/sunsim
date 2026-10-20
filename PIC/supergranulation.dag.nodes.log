@@ -1,0 +1,69 @@
+035 (2118651.-01.000) 2026-10-20 14:33:34 Cluster submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: days
+...
+000 (2118651.000.000) 2026-10-20 14:33:34 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: days
+...
+000 (2118651.001.000) 2026-10-20 14:33:34 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: days
+...
+000 (2118651.002.000) 2026-10-20 14:33:34 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: days
+...
+000 (2118651.003.000) 2026-10-20 14:33:34 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: days
+...
+000 (2118651.004.000) 2026-10-20 14:33:34 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: days
+...
+000 (2118651.005.000) 2026-10-20 14:33:34 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: days
+...
+001 (2118651.003.000) 2026-10-20 14:33:39 Job executing on host: <192.168.101.229:9618?addrs=192.168.101.229-9618+[2001-67c-1148-301--529]-9618&alias=tds529.pic.es&noUDP&sock=startd_16505_a2b9>
+	SlotName: slot1_4@tds529.pic.es
+	CondorScratchDir = "/home/execute/dir_2214578"
+	Cpus = 10
+	Disk = 2100321
+	GPUs = 0
+	Memory = 8192
+...
+001 (2118651.000.000) 2026-10-20 14:33:39 Job executing on host: <192.168.102.28:9618?addrs=192.168.102.28-9618+[2001-67c-1148-301--818]-9618&alias=td818.pic.es&noUDP&sock=startd_24113_1741>
+	SlotName: slot1_19@td818.pic.es
+	CondorScratchDir = "/home/execute/dir_55912"
+	Cpus = 10
+	Disk = 2100260
+	GPUs = 0
+	Memory = 8192
+...
+001 (2118651.005.000) 2026-10-20 14:33:39 Job executing on host: <192.168.102.27:9618?addrs=192.168.102.27-9618+[2001-67c-1148-301--817]-9618&alias=td817.pic.es&noUDP&sock=startd_24342_2a71>
+	SlotName: slot1_5@td817.pic.es
+	CondorScratchDir = "/home/execute/dir_774978"
+	Cpus = 10
+	Disk = 2100258
+	GPUs = 0
+	Memory = 8192
+...
+001 (2118651.002.000) 2026-10-20 14:33:39 Job executing on host: <192.168.101.139:9618?addrs=192.168.101.139-9618+[2001-67c-1148-301--429]-9618&alias=tds429.pic.es&noUDP&sock=startd_29871_9993>
+	SlotName: slot1_12@tds429.pic.es
+	CondorScratchDir = "/home/execute/dir_1650847"
+	Cpus = 10
+	Disk = 2100316
+	GPUs = 0
+	Memory = 8192
+...
+001 (2118651.004.000) 2026-10-20 14:33:39 Job executing on host: <192.168.102.23:9618?addrs=192.168.102.23-9618+[2001-67c-1148-301--813]-9618&alias=td813.pic.es&noUDP&sock=startd_24494_6cd6>
+	SlotName: slot1_7@td813.pic.es
+	CondorScratchDir = "/home/execute/dir_550867"
+	Cpus = 10
+	Disk = 2100257
+	GPUs = 0
+	Memory = 8192
+...
+001 (2118651.001.000) 2026-10-20 14:33:40 Job executing on host: <192.168.102.46:9618?addrs=192.168.102.46-9618+[2001-67c-1148-301--836]-9618&alias=td836.pic.es&noUDP&sock=startd_23762_5583>
+	SlotName: slot1_18@td836.pic.es
+	CondorScratchDir = "/home/execute/dir_2972768"
+	Cpus = 10
+	Disk = 2103581
+	GPUs = 0
+	Memory = 8192
+...

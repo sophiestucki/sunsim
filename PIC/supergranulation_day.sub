@@ -7,7 +7,7 @@ Arguments = "1 $(day)"
 
 # at most this many days at the same time (JSOC serves a limited bandwidth: do not open too many connections)
 max_materialize = 6
-RequestCpus   = 1
+RequestCpus   = 10
 RequestMemory = 8GB
 RequestDisk   = 2GB
 
