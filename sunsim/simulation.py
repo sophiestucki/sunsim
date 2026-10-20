@@ -106,9 +106,28 @@ class StarSim(object):
                            velocities(times, N_rings, n_cells) -> (n_times, n_cells) (supergranulation.quiet_velocity_field,
                            which also works with simulate_in_chunks). The quiet part of every cell, ff_quiet x its CCF, is
                            shifted by this velocity; the spots and the faculae are not (nbspectra.quiet_velocity_ccf_nb).
+    bis_heights          : ccf mode, heights of the bisector in the BIS (mean at 10-40 % of the height minus mean at
+                           60-90 %). 'fixed' (default): the bisector at fixed heights in each band
+                           (nbspectra.bisector_span_nb), the BIS changes continuously. 'old': the old StarSim, the mean
+                           of the 50 heights of the bisector that fall in each band; these heights start 10 % above the
+                           wings of every CCF, so the number of them in a band changes with the CCF and the BIS jumps
+                           (~0.6 m/s for a solar CCF). Only to reproduce old results.
+    instrument           : spectroscopy only: None (default: the spectra as simulated), or the spectrograph that records
+                           them, an instrument.Instrument (e.g. Instrument.harps()), or a resolution ('HARPS', ..., or R:
+                           degraded to it, no orders). The spectrum of the disc at every epoch is degraded to the
+                           resolution, then resampled on the pixels of every order and multiplied by blaze x efficiency
+                           (Instrument.observe): spec_var is then a dict {order: {'wav': (n_pix,), 'flux': (n_times,
+                           n_pix), 'blaze': (n_pix,)}}, and the spectra before the instrument are kept in spec_highres.
+                           The instrument is the same for every cell and linear in the flux, so applying it to the sum of
+                           the cells is the same as applying it to every cell. The CCFs take their instrument in CCF_grid.
+    spec_wavelength      : with instrument: the wavelengths [A] of the spectroscopy grids. Not needed when the grids are
+                           given as flux_grid objects (spec_grid_xx=flux_grid(...), their wv is used).
+    spectrum_medium      : with instrument: 'vacuum' (default: Phoenix and MURaM spectra) or 'air', the medium of the
+                           wavelengths of the spectra; they are converted to the medium of the orders.
 
     After generate_timeseries():
-      flux_var (photometry), spec_var (spectroscopy), ccf_var and ccf_rv (ccf) and, in ccf mode, rv_var, fwhm_var,
+      flux_var (photometry), spec_var (spectroscopy; a dict of orders with an instrument), ccf_var and ccf_rv (ccf) and,
+      in ccf mode, rv_var, fwhm_var,
       contrast_var, bis_var, xbis_var, ybis_var and rv_kepler;
       ff_quiet, ff_sp, ff_fc, ff_pl: fraction of the disc covered by each kind of surface [% of the projected area];
       results() returns all these time series in a dict, save_results(path) saves them (with the CCF time series);
@@ -116,7 +135,7 @@ class StarSim(object):
     Other attributes: vsini (equatorial, m/s), rvel (line-of-sight rotation velocity of every cell, m/s),
     rotation_rate (Omega(lat)/Omega_eq of every cell), amu, parea, Ngrid_in_ring, vec_grid (grid of the disc).
     """
-    def __init__(self, time, N_rings, inclination, rotation_period, differential_rotation=0, stellar_radius=1, active_regions_map=None, active_regions_mask=None, total_flux_qp=None, flux_grid_qp=None, flux_grid_sp=None, flux_grid_fc=None, spec_grid_qp=None, spec_grid_sp=None, spec_grid_fc=None, ccf_grid_qp=None, ccf_grid_sp=None, ccf_grid_fc=None, planet=None, mode=['photometry'], ccf_cells_max_memory=512, planet_coverage='area', spec_cells_max_memory=512, ccf_on_the_fly='auto', spec_on_the_fly='auto', quiet_velocity=None):
+    def __init__(self, time, N_rings, inclination, rotation_period, differential_rotation=0, stellar_radius=1, active_regions_map=None, active_regions_mask=None, total_flux_qp=None, flux_grid_qp=None, flux_grid_sp=None, flux_grid_fc=None, spec_grid_qp=None, spec_grid_sp=None, spec_grid_fc=None, ccf_grid_qp=None, ccf_grid_sp=None, ccf_grid_fc=None, planet=None, mode=['photometry'], ccf_cells_max_memory=512, planet_coverage='area', spec_cells_max_memory=512, ccf_on_the_fly='auto', spec_on_the_fly='auto', quiet_velocity=None, bis_heights='fixed', instrument=None, spec_wavelength=None, spectrum_medium='vacuum'):
 
         #checks of the arguments (clear errors here rather than in the Numba kernels)
         time = _checks.array1d('time', time)
@@ -182,6 +201,9 @@ class StarSim(object):
         if planet_coverage not in ('area', 'ramp'):
             raise ValueError("planet_coverage must be 'area' (exact) or 'ramp' (old StarSim), got %r" % (planet_coverage,))
         self.planet_coverage = planet_coverage
+        if bis_heights not in ('fixed', 'old'):
+            raise ValueError("bis_heights must be 'fixed' or 'old' (old StarSim), got %r" % (bis_heights,))
+        self.bis_heights = bis_heights
         self.ccf_cells_max_memory = ccf_cells_max_memory
         for name, value in (('ccf_on_the_fly', ccf_on_the_fly), ('spec_on_the_fly', spec_on_the_fly)):
             if not (value == 'auto' or isinstance(value, (bool, np.bool_))):
@@ -204,6 +226,19 @@ class StarSim(object):
                     raise ValueError('quiet_velocity must be an array (n_times, n_cells) with one row per epoch of time '
                                      '(%d), got shape %s' % (len(time), quiet_velocity.shape))
         self.quiet_velocity = quiet_velocity
+        if instrument is not None:
+            from .instrument import Instrument
+            if not isinstance(instrument, Instrument):
+                instrument = Instrument(instrument)            # a resolution: degraded to it, no orders
+            if 'spectroscopy' not in mode:
+                raise ValueError("instrument is applied to the spectra: it needs mode 'spectroscopy' (the CCFs take their "
+                                 "instrument in CCF_grid(..., instrument=...)), got %r" % (mode,))
+        if spectrum_medium not in ('air', 'vacuum'):
+            raise ValueError("spectrum_medium must be 'air' or 'vacuum', got %r" % (spectrum_medium,))
+        self.instrument = instrument
+        self.spec_wavelength = None if spec_wavelength is None else _checks.array1d('spec_wavelength', spec_wavelength,
+                                                                                   increasing=True)
+        self.spectrum_medium = spectrum_medium
         Ngrids, Ngrid_in_ring, centres, amu, rs, alphas, xs, ys, zs, area, parea = nbspectra.generate_grid_coordinates_nb(N_rings)
 
         self.N_rings = N_rings
@@ -280,7 +315,8 @@ class StarSim(object):
 
     def compute_ccf_params(self, rv=None, ccf=None, plot_test=False):
         '''
-        Compute the parameters of the CCFs and their bisector span (10-40% bottom minus 60-90% top).
+        Compute the parameters of the CCFs and their bisector span (10-40% bottom minus 60-90% top, heights of the
+        bisector chosen by self.bis_heights).
         By default the CCFs are self.ccf_var on the velocity grid self.ccf_rv.
         Returns rvs, contrast, fwhm, BIS, raw_xbis, raw_ybis: rv, contrast and fwhm come from a gaussian fit, BIS is the
         bisector span, raw_xbis / raw_ybis are the bisectors (velocity and height) of every CCF.
@@ -305,7 +341,8 @@ class StarSim(object):
             if k == len(first):
                 first.append(i)
             inverse[i] = k
-        res = nbspectra.ccf_params_nb(rv, np.ascontiguousarray(ccf[first]), int(cutleft), int(cutright), float(self.vsini))
+        res = nbspectra.ccf_params_nb(rv, np.ascontiguousarray(ccf[first]), int(cutleft), int(cutright), float(self.vsini),
+                                      self.bis_heights == 'fixed')
         rvs, contrast, fwhm, BIS, xbis, ybis, failed = (a[inverse] for a in res)
 
         n_failed = int(np.sum(failed))
@@ -361,6 +398,24 @@ class StarSim(object):
             out = [np.repeat(g, self._Nin_arr, axis=0) if g.shape[0] == self.N_rings else g for g in out]
         per_ring = out[0].shape[0] == self.N_rings
         return out + [per_ring]
+
+    def _spec_wavelengths(self, n_wv):
+        """Wavelengths of the spectra of spec_var: spec_wavelength, or the wv of the spectroscopy grids given as
+        flux_grid objects."""
+        wv = self.spec_wavelength
+        if wv is None:
+            grids = (self.spec_grid_qp, self.spec_grid_sp, self.spec_grid_fc)
+            if all(g is None for g in grids) and 'photometry' not in self.mode:
+                grids = (self.flux_grid_qp, self.flux_grid_sp, self.flux_grid_fc)
+            wv = next((g.wv for g in grids if hasattr(g, 'built_grid') and getattr(g, 'wv', None) is not None), None)
+            if wv is None:
+                raise ValueError('instrument: the wavelengths of the spectra are not known: give the spectroscopy grids '
+                                 'as flux_grid objects (spec_grid_qp=flux_grid(...), not its .grid), or spec_wavelength')
+        wv = np.asarray(wv, dtype=np.float64)
+        if len(wv) != n_wv:
+            raise ValueError('instrument: %d wavelengths for spectra of %d (with stellar_rotation, the wv of the flux_grid '
+                             'after built_grid)' % (len(wv), n_wv))
+        return wv
 
     def _spec_on_the_fly(self):
         """The three spectroscopy flux_grid objects when the spectra of the cells are computed on the fly (see
@@ -448,7 +503,8 @@ class StarSim(object):
     def generate_timeseries(self, ccf_params=True, verbose=True):
         '''Loop for all the epochs and assign, for every observable in self.mode, the signal of the grid elements:
         'photometry'   -> self.flux_var  (n_times,)
-        'spectroscopy' -> self.spec_var  (n_times, n_wavelengths)
+        'spectroscopy' -> self.spec_var  (n_times, n_wavelengths); with an instrument with orders, a dict
+                          {order: {'wav', 'flux' (n_times, n_pix), 'blaze'}} and the spectra before it in self.spec_highres
         'ccf'          -> self.ccf_var   (n_times, n_rv), velocities in self.ccf_rv, and (if ccf_params) the parameters of the CCFs:
                           self.rv_var, self.contrast_var, self.fwhm_var, self.bis_var (n_times,) and the bisectors
                           self.xbis_var, self.ybis_var (n_times, 50)  [see compute_ccf_params]
@@ -465,7 +521,8 @@ class StarSim(object):
         is printed (date, filling factors and progress of every epoch).
         The time spent in every step [s] is stored in self.timing: 'grids' (preparation of the grids, CCFs of the
         cells), 'planets' (positions), 'geometry' (regions) or 'maps' (reading and projecting the 2D maps),
-        'timeseries' (the Numba loop over the epochs), 'quiet_velocity' (with quiet_velocity), 'ccf_params' (RV, FWHM, ... of the CCFs) and 'total'.
+        'timeseries' (the Numba loop over the epochs), 'quiet_velocity' (with quiet_velocity), 'instrument' (spectra
+        through the instrument), 'ccf_params' (RV, FWHM, ... of the CCFs) and 'total'.
         '''
         timing = {}
         t_start = t_step = _time.perf_counter()
@@ -573,6 +630,11 @@ class StarSim(object):
             self.flux_var = flux
         if 'spectroscopy' in self.mode:
             self.spec_var = spec
+            if self.instrument is not None:
+                #the spectrum of the disc at every epoch through the instrument: one spectrum per order
+                self.spec_highres = spec
+                self.spec_var = self.instrument.observe(self._spec_wavelengths(spec.shape[1]), spec, self.spectrum_medium)
+                lap('instrument')
         if 'ccf' in self.mode:
             self.ccf_var = ccf
         self.ff_quiet = filling_ph
@@ -596,7 +658,8 @@ class StarSim(object):
 
     def results(self):
         """The time series of generate_timeseries in a dict (only those computed): 'time', 'ff_quiet', 'ff_sp', 'ff_fc',
-        'ff_pl' [%], 'flux' (photometry), 'spec' (spectroscopy, n_times x n_wavelengths), 'ccf' (n_times x n_rv) and
+        'ff_pl' [%], 'flux' (photometry), 'spec' (spectroscopy, n_times x n_wavelengths; with an instrument with
+        orders, the dict {order: {'wav', 'flux', 'blaze'}} of spec_var), 'ccf' (n_times x n_rv) and
         'ccf_rv' [m/s], 'rv', 'fwhm', 'bis', 'contrast', 'rv_kepler' (ccf)."""
         if getattr(self, 'ff_quiet', None) is None:
             raise RuntimeError('no results yet: run generate_timeseries() first')
@@ -607,7 +670,7 @@ class StarSim(object):
                           ('rv_kepler', 'rv_kepler')):
             value = getattr(self, attr, None)
             if value is not None:
-                out[key] = np.asarray(value)
+                out[key] = value if isinstance(value, dict) else np.asarray(value)
         return out
 
     def save_results(self, path, fmt='npz', ccf=True, spec=True):
@@ -615,7 +678,9 @@ class StarSim(object):
         fmt='npz' : one file path(.npz) with all the arrays (np.load(path) gives them back).
         fmt='txt' : a folder path with timeseries.txt (one row per epoch: time, ff_quiet, ff_sp, ff_fc, ff_pl and flux,
                     rv, fwhm, bis, contrast when computed; the names in the header), ccf.txt (one row per epoch) and
-                    ccf_rv.txt (the velocities), spec.npy (spectra).
+                    ccf_rv.txt (the velocities), spec.npy (spectra; with an instrument with orders, spec_orders.npz).
+        With an instrument with orders, the spectra of order k are saved as spec_order<k>_wav, spec_order<k>_flux and
+        spec_order<k>_blaze (npz).
         ccf, spec : False -> the CCF / the spectra are not saved (the other time series are).
         Returns the path written."""
         res = self.results()
@@ -624,12 +689,14 @@ class StarSim(object):
             res.pop('ccf_rv', None)
         if not spec:
             res.pop('spec', None)
+        orders = res.pop('spec') if isinstance(res.get('spec'), dict) else None
+        orders = {} if orders is None else {'spec_order%d_%s' % (k, q): v for k, d in orders.items() for q, v in d.items()}
         path = os.fspath(path)
         if fmt == 'npz':
             if not path.endswith('.npz'):
                 path += '.npz'
             os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-            np.savez(path, **res)
+            np.savez(path, **res, **orders)
         elif fmt == 'txt':
             os.makedirs(path, exist_ok=True)
             cols = [k for k in ('time', 'ff_quiet', 'ff_sp', 'ff_fc', 'ff_pl', 'flux', 'rv', 'fwhm', 'bis', 'contrast',
@@ -641,6 +708,8 @@ class StarSim(object):
                 np.savetxt(os.path.join(path, 'ccf_rv.txt'), res['ccf_rv'], header='velocities [m/s]')
             if 'spec' in res:
                 np.save(os.path.join(path, 'spec.npy'), res['spec'])
+            if orders:
+                np.savez(os.path.join(path, 'spec_orders.npz'), **orders)
         else:
             raise ValueError("fmt must be 'npz' or 'txt', got %r" % (fmt,))
         return path
@@ -652,7 +721,8 @@ def simulate_in_chunks(time, chunk_size=500, ccf_params=True, verbose=False, **s
     factors of the cells of the chunk; the CCFs and spectra of the chunk). starsim_kwargs: the arguments of StarSim
     except `time` (N_rings, inclination, rotation_period, grids, active_regions_mask or active_regions_map, mode, ...).
     Returns a dict with the time series of the modes computed: 'time', 'ff_quiet', 'ff_sp', 'ff_fc', 'ff_pl', and
-    'flux_var' (photometry), 'spec_var' (spectroscopy), 'ccf_var', 'ccf_rv' and, with ccf_params, 'rv_var', 'fwhm_var',
+    'flux_var' (photometry), 'spec_var' (spectroscopy; with an instrument with orders, {order: {'wav', 'flux',
+    'blaze'}} with the fluxes of all the chunks), 'ccf_var', 'ccf_rv' and, with ccf_params, 'rv_var', 'fwhm_var',
     'bis_var', 'contrast_var', 'rv_kepler' (ccf)."""
     time = _checks.array1d('time', time)
     chunk_size = int(_checks.number('chunk_size', chunk_size, integer=True, low=1))
@@ -664,12 +734,15 @@ def simulate_in_chunks(time, chunk_size=500, ccf_params=True, verbose=False, **s
         ss = StarSim(time[i:i + chunk_size], **starsim_kwargs)
         ss.generate_timeseries(ccf_params=ccf_params, verbose=verbose)
         for k in keys:
-            if getattr(ss, k, None) is not None:
-                parts[k].append(np.asarray(getattr(ss, k)))
+            value = getattr(ss, k, None)
+            if value is not None:
+                parts[k].append(value if isinstance(value, dict) else np.asarray(value))
         if getattr(ss, 'ccf_rv', None) is not None:
             out['ccf_rv'] = ss.ccf_rv
         del ss
     for k, v in parts.items():
-        if v:
+        if v and isinstance(v[0], dict):                  # spectra of the orders (instrument)
+            out[k] = {o: dict(d, flux=np.concatenate([p[o]['flux'] for p in v], axis=0)) for o, d in v[0].items()}
+        elif v:
             out[k] = np.concatenate(v, axis=0)
     return out

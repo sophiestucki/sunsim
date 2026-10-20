@@ -8,6 +8,7 @@ so all the blocks write in the same folders without clash. The days already done
 
   python identify_days.py --data SDO_DATA --out FOLDER --start 2015-07-18 --end 2024-01-29 --size 4096 --n-rings 60 \
          --noise-th 8 --I-th 0.55 0.6 ... --A-th 1 10 ... --block 3 --n-blocks 40
+  python identify_days.py ... --faculae fraction --B-sat 50 100 ...       (facular fractions, no area threshold)
 
 The sets are all the combinations of the thresholds given (sunsim.sdo.parameter_sets). After all the blocks, one run of
 python -m sunsim.sdo with the same thresholds over the whole period does the days still missing and writes
@@ -32,14 +33,15 @@ def main(argv=None):
     p.add_argument('--n-rings', type=int, nargs='+', required=True)
     for k, default in (('noise-th', 8.0), ('B-th', 24.0), ('I-th', 0.89), ('A-th', 20.0), ('mu-area', 0.1)):
         p.add_argument('--' + k, type=float, nargs='+', default=[default])
-    p.add_argument('--faculae', nargs='+', default=['plage'], choices=['plage', 'plage+network'])
+    p.add_argument('--faculae', nargs='+', default=['plage'], choices=['plage', 'plage+network', 'fraction'])
+    p.add_argument('--B-sat', type=float, nargs='+', default=[100.0], help="with --faculae fraction [G]")
     p.add_argument('--block', type=int, required=True, help='index of this block (0 ... n_blocks - 1)')
     p.add_argument('--n-blocks', type=int, required=True)
     p.add_argument('--workers', type=int, default=1, help='processes working on different days')
     a = p.parse_args(argv)
 
     from sunsim import sdo
-    sets = sdo.parameter_sets(a.noise_th, a.B_th, a.I_th, a.A_th, a.mu_area, a.faculae)
+    sets = sdo.parameter_sets(a.noise_th, a.B_th, a.I_th, a.A_th, a.mu_area, a.faculae, a.B_sat)
     folders = [(os.path.join(a.out, sdo.set_label(s)), s) for s in sets]
     for folder, _ in folders:
         for sub in ['days'] + ['cells_N%d' % n for n in a.n_rings]:

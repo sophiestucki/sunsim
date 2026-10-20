@@ -127,8 +127,10 @@ class active_region_mask(object):
         """One map as a 2D array (npy, or text with spaces / tabs / commas between the values)."""
         if path.endswith('.npy'):
             return self._native(np.load(path))
-        if path.endswith('.npz'):                       # bit-packed mask
+        if path.endswith('.npz'):                       # bit-packed mask, or facular fractions (sdo, faculae='fraction')
             with np.load(path) as d:
+                if 'fraction' in d:
+                    return d['fraction']
                 shape = tuple(int(v) for v in d['shape'])
                 return np.unpackbits(d['packed'], count=shape[0] * shape[1]).reshape(shape)
         npy = path[:-4] + '.npy'

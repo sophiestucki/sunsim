@@ -8,6 +8,8 @@ Modules
     simulation           StarSim: the simulation (geometry, time series, CCF parameters)
     flux_grid            flux_grid: flux (photometry) or spectrum (spectroscopy) of every cell for one kind of surface
     ccf_grid             CCF_grid: CCF of every ring for one kind of surface, and the bisector treatment
+    instrument           Instrument: resolution, orders (wavelengths, blaze) and efficiency of a spectrograph, for the
+                         CCFs order by order (CCF_grid) and the spectra order by order (StarSim, spectroscopy)
     active_region        active_region: a circular spot or facula
     active_region_mask   active_region_mask: spots and faculae from 2D maps of the disc; max_rings, pixels_per_cell
     planet               planet: a transiting planet
@@ -31,6 +33,7 @@ __version__ = '1.0.0'
 from .simulation import StarSim, SOLAR_DIFFERENTIAL_ROTATION, simulate_in_chunks
 from .flux_grid import flux_grid
 from .ccf_grid import CCF_grid, bisector_fit, dumusque_bisector, cifist_bisector
+from .instrument import Instrument
 from .active_region import active_region
 from .active_region_mask import active_region_mask, precomputed_filling_factors, max_rings, pixels_per_cell
 from .planet import planet
@@ -44,11 +47,11 @@ from .old_config import simulate_old_config, read_old_config, read_old_spotmap
 from .local_paths import local_path
 from . import nbspectra                 # the Numba kernels (also exported by `from sunsim import *`)
 
-#data installed with the package: files of the HARPS-N example (CCFs order by order)
+#data installed with the package: orders and blaze of HARPS, efficiency of HARPS-N (Instrument.harps(), harpsn_example())
 DATA_DIR = Path(__file__).resolve().parent / 'data'
 INSTRUMENTS_DIR = DATA_DIR / 'instruments'
 
-__all__ = ['StarSim', 'SOLAR_DIFFERENTIAL_ROTATION', 'simulate_in_chunks', 'flux_grid', 'CCF_grid', 'bisector_fit', 'dumusque_bisector', 'cifist_bisector',
+__all__ = ['StarSim', 'SOLAR_DIFFERENTIAL_ROTATION', 'simulate_in_chunks', 'flux_grid', 'CCF_grid', 'Instrument', 'bisector_fit', 'dumusque_bisector', 'cifist_bisector',
            'active_region', 'active_region_mask', 'precomputed_filling_factors', 'max_rings', 'pixels_per_cell', 'planet',
            'solar_differential_rotation', 'polynomial_differential_rotation',
            'black_body', 'vacuum2air', 'air2vacuum', 'facula_dT', 'limb_brightening_factor', 'add_limb_brightening',

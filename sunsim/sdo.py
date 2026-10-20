@@ -13,8 +13,10 @@ network, following Yeo et al. (2013) and Sen et al. (2023):
      pixels are bright features;
   5. plage and network: the connected groups of bright pixels larger than A_th micro-hemispheres (projected at mu = 0.1,
      so that no plage at the limb is missed) are plage, the smaller ones network.
+     Or, with faculae='fraction' (no area threshold): every bright pixel is a fraction min(|B| / mu / B_sat, 1) facula
+     and the rest quiet Sun, as SATIRE-S (B_sat = 100 G by default): the facula map is this fraction (facula_fraction).
 The maps written for SunSim are the spot map (spots) and the facula map (plage; with faculae='plage+network' the network
-too), one pair per epoch, cut to the square of the disc. HMI stores the images turned by 180 deg (CROTA2 = 180): the
+too; with faculae='fraction' the facular fraction of every pixel), one pair per epoch, cut to the square of the disc. HMI stores the images turned by 180 deg (CROTA2 = 180): the
 maps are turned back (both axes flipped), so that row 0 is the south of the disc and the rotation moves the regions
 from left to right, the convention of the maps of the old StarSim. Read them with
 active_region_mask(folder, origin='lower') (simulate_old_config does it for the 2D maps of an old configuration).
@@ -61,7 +63,8 @@ CONTINUUM_PATTERN = 'hmi.ic_nolimbdark_720s.{date}_*continuum.fits'
 MAGNETOGRAM_PATTERN = 'hmi.m_45s.{date}_*magnetogram.fits'
 FULL_SIZE = 4096                    # pixels of the HMI images
 
-DEFAULTS = dict(noise_th=8.0, B_th=24.0, I_th=0.89, A_th=20.0, mu_area=0.1)
+DEFAULTS = dict(noise_th=8.0, B_th=24.0, I_th=0.89, A_th=20.0, mu_area=0.1, B_sat=100.0)
+FACULAE = ('plage', 'plage+network', 'fraction')
 
 
 def _sunpy():
@@ -151,6 +154,19 @@ def split_plage_network(bright, area_th_pixels):
     big = np.concatenate(([False], sizes > area_th_pixels))
     plage = big[labels]
     return plage, bright & ~plage, int(np.sum(sizes > area_th_pixels))
+
+
+def facula_fraction(blos, mu, bright, B_sat=DEFAULTS['B_sat']):
+    """Fraction of every pixel covered by faculae, without area threshold (faculae='fraction'): min(|B| / mu / B_sat, 1)
+    on the bright pixels (the field corrected for foreshortening over the field of a pixel fully covered by faculae;
+    the rest of the pixel is quiet Sun), 0 on the others. Returns a float32 array of the shape of bright."""
+    bright = np.asarray(bright, dtype=bool)
+    if not float(B_sat) > 0:
+        raise ValueError('B_sat must be > 0, got %r' % (B_sat,))
+    f = np.zeros(bright.shape, dtype=np.float32)
+    idx = np.nonzero(bright)                             # a few % of the disc: no image of floats besides f
+    f[idx] = np.minimum(np.abs(np.asarray(blos)[idx]) / (np.asarray(mu)[idx] * float(B_sat)), 1.0)
+    return f
 
 
 def count_spots(spot, sigma=2.0, threshold=0.2):
@@ -249,7 +265,8 @@ def deprojected_area_uhem(smap, mask):
 
 
 def identify_day(cont_map, los_map, size=512, noise_th=DEFAULTS['noise_th'], B_th=DEFAULTS['B_th'],
-                 I_th=DEFAULTS['I_th'], A_th=DEFAULTS['A_th'], mu_area=DEFAULTS['mu_area'], faculae='plage'):
+                 I_th=DEFAULTS['I_th'], A_th=DEFAULTS['A_th'], mu_area=DEFAULTS['mu_area'], faculae='plage',
+                 B_sat=DEFAULTS['B_sat']):
     """Spots, plage and network of one epoch (module docstring), from the sunpy maps of the continuum and of the
     magnetogram.
 
@@ -257,23 +274,30 @@ def identify_day(cont_map, los_map, size=512, noise_th=DEFAULTS['noise_th'], B_t
     noise_th, B_th, I_th, A_th : thresholds (classify_pixels, split_plage_network) [G, G, -, micro-hemispheres]
     mu_area  : mu at which A_th is projected to pixels (area_threshold_pixels; 0.1 by default, the smallest area: at 512 px
                this is < 1 pixel, so every bright group is plage; mu_area = 1 gives the area at the disc centre)
-    faculae  : what the facula map contains: 'plage' (default) or 'plage+network'
+    faculae  : what the facula map contains: 'plage' (default), 'plage+network', or 'fraction' (every bright pixel is
+               a fraction min(|B| / mu / B_sat, 1) facula, facula_fraction; A_th and mu_area are not used)
+    B_sat    : with faculae='fraction', |B| / mu of a pixel fully covered by faculae [G]
     Returns a dict: 'spot_map', 'facula_map' (float32 arrays cut to the disc, row 0 = south of the disc: read them with
-    origin='lower'; 1 = covered, 0 = quiet, NaN outside the disc: the maps for SunSim), 'plage', 'network', 'spot',
-    'facula', 'disc' (boolean, same frame), 'ff_sp',
-    'ff_fc', 'ff_nt' (fractions of the disc [%], projected), 'n_spots', 'n_plages', 'I_quiet', 'noise_th' (the threshold
+    origin='lower'; 1 = covered, 0 = quiet (with faculae='fraction': the facular fraction), NaN outside the disc: the
+    maps for SunSim), 'plage', 'network', 'spot', 'facula', 'bright', 'disc' (boolean, same frame; with
+    faculae='fraction', 'plage' and 'facula' are all the bright pixels, 'network' is empty, and 'facula_fraction' is the
+    float32 fraction of every pixel), 'ff_sp', 'ff_fc', 'ff_nt' (fractions of the disc [%], projected; ff_fc is the sum
+    of the fractions, ff_nt = 0 with faculae='fraction'), 'n_spots', 'n_plages', 'I_quiet', 'noise_th' (the threshold
     used), 'area_th_pixels', 'date', and 'cont_map', 'los_map' (the resampled sunpy maps)."""
-    _check_thresholds(noise_th, B_th, I_th, A_th, faculae)
+    _check_thresholds(noise_th, B_th, I_th, A_th, faculae, B_sat)
     cont_map, los_map = _resample(cont_map, los_map, size)
-    return _identify_resampled(cont_map, los_map, mu_of_map(los_map), noise_th, B_th, I_th, A_th, mu_area, faculae)
+    return _identify_resampled(cont_map, los_map, mu_of_map(los_map), noise_th, B_th, I_th, A_th, mu_area, faculae,
+                               B_sat)
 
 
-def _check_thresholds(noise_th, B_th, I_th, A_th, faculae):
-    if faculae not in ('plage', 'plage+network'):
-        raise ValueError("faculae must be 'plage' or 'plage+network', got %r" % (faculae,))
+def _check_thresholds(noise_th, B_th, I_th, A_th, faculae, B_sat=DEFAULTS['B_sat']):
+    if faculae not in FACULAE:
+        raise ValueError("faculae must be 'plage', 'plage+network' or 'fraction', got %r" % (faculae,))
     for name, value in (('noise_th', noise_th), ('B_th', B_th), ('I_th', I_th), ('A_th', A_th)):
         if not np.isfinite(value) or value < 0:
             raise ValueError('%s must be a number >= 0, got %r' % (name, value))
+    if not (np.isfinite(B_sat) and B_sat > 0):
+        raise ValueError('B_sat must be a number > 0, got %r' % (B_sat,))
 
 
 def _resample(cont_map, los_map, size):
@@ -296,15 +320,30 @@ def _resample(cont_map, los_map, size):
     return cont_map, los_map
 
 
-def _identify_resampled(cont_map, los_map, mu, noise_th, B_th, I_th, A_th, mu_area, faculae):
+def _classify(cont_map, los_map, mu, noise_th, B_th, I_th):
+    """classify_pixels of maps already resampled (noise_th given at 4096 px)."""
+    noise = noise_threshold_for(cont_map.data.shape[0], noise_th)
+    return dict(classify_pixels(cont_map.data, los_map.data, mu, noise_th=noise, B_th=B_th, I_th=I_th), noise_th=noise)
+
+
+def _identify_resampled(cont_map, los_map, mu, noise_th, B_th, I_th, A_th, mu_area, faculae, B_sat=DEFAULTS['B_sat'],
+                        classified=None):
     """identify_day on maps already resampled, with their mu (mu_of_map): the part that depends on the thresholds
-    (make_sdo_sweep reads, resamples and computes mu once per day for all the sets of thresholds)."""
-    n = cont_map.data.shape[0]
-    noise = noise_threshold_for(n, noise_th)
-    c = classify_pixels(cont_map.data, los_map.data, mu, noise_th=noise, B_th=B_th, I_th=I_th)
-    area_px = area_threshold_pixels(los_map, A_th, mu_area)
-    plage, network, n_plages = split_plage_network(c['bright'], area_px)
-    n_spots = count_spots(c['spot'])[0]
+    (make_sdo_sweep reads, resamples and computes mu once per day for all the sets of thresholds).
+    classified: _classify of the same maps and (noise_th, B_th, I_th), to share it between sets that differ only in
+    A_th, mu_area, faculae or B_sat (computed here if None)."""
+    c = _classify(cont_map, los_map, mu, noise_th, B_th, I_th) if classified is None else classified
+    noise = c['noise_th']
+    fraction = None
+    if faculae == 'fraction':
+        fraction = facula_fraction(los_map.data, mu, c['bright'], B_sat)
+        area_px, plage, network, n_plages = float('nan'), c['bright'], np.zeros_like(c['bright']), 0
+    else:
+        area_px = area_threshold_pixels(los_map, A_th, mu_area)
+        plage, network, n_plages = split_plage_network(c['bright'], area_px)
+    if 'n_spots' not in c:                               # the spots depend only on the classification: once
+        c['n_spots'] = count_spots(c['spot'])[0]
+    n_spots = c['n_spots']
 
     lo, hi = disc_square(cont_map.data)
 
@@ -315,17 +354,24 @@ def _identify_resampled(cont_map, los_map, mu, noise_th, B_th, I_th, A_th, mu_ar
 
     disc = frame(c['disc'])
     fac = plage | network if faculae == 'plage+network' else plage
+    if fraction is not None:
+        fraction = frame(fraction)                        # the frame of the maps, as the masks below
     maps = {}
-    for key, mask in (('spot_map', c['spot']), ('facula_map', fac)):
-        m = frame(mask).astype(np.float32)
+    for key, mask in (('spot_map', frame(c['spot'])), ('facula_map', frame(fac) if fraction is None else fraction)):
+        m = mask.astype(np.float32)
         m[~disc] = np.nan
         maps[key] = m
     n_disc = max(int(np.sum(disc)), 1)
-    return dict(maps, plage=frame(plage), network=frame(network), spot=frame(c['spot']), facula=frame(fac), disc=disc,
-                ff_sp=100.0 * np.sum(frame(c['spot'])) / n_disc, ff_fc=100.0 * np.sum(frame(fac)) / n_disc,
-                ff_nt=100.0 * np.sum(frame(network)) / n_disc, n_spots=n_spots, n_plages=n_plages,
-                I_quiet=c['I_quiet'], noise_th=noise, area_th_pixels=area_px, date=str(cont_map.date),
-                cont_map=cont_map, los_map=los_map)
+    out = dict(maps, plage=frame(plage), network=frame(network), spot=frame(c['spot']), facula=frame(fac),
+               bright=frame(c['bright']), disc=disc,
+               ff_sp=100.0 * np.sum(frame(c['spot'])) / n_disc,
+               ff_fc=100.0 * (np.sum(frame(fac)) if fraction is None else np.sum(fraction, dtype=np.float64)) / n_disc,
+               ff_nt=100.0 * np.sum(frame(network)) / n_disc, n_spots=n_spots, n_plages=n_plages,
+               I_quiet=c['I_quiet'], noise_th=noise, area_th_pixels=area_px, date=str(cont_map.date),
+               cont_map=cont_map, los_map=los_map)
+    if fraction is not None:
+        out['facula_fraction'] = fraction
+    return out
 
 
 _PROJECTIONS = {}             # (n_rows, n_cols, n_rings) -> (cell of every pixel, pixels of every cell)
@@ -350,12 +396,17 @@ def cell_projection(shape, n_rings):
 def cell_filling_factors(day, n_rings, spots_over_faculae=True):
     """Spot and facula filling factors of every cell of a SunSim grid of n_rings rings, from one day (identify_day):
     the same projection of the pixels as active_region_mask(folder, origin='lower') (computed once for every image size)
-    and the same mean over the pixels of every cell (spots over faculae in every pixel). Returns two float32 arrays
-    (n_cells,), what StarSim needs from the maps: the full maps do not have to be written."""
+    and the same mean over the pixels of every cell (spots over faculae in every pixel; with faculae='fraction' the
+    mean of the facular fractions). Returns two float32 arrays (n_cells,), what StarSim needs from the maps: the full
+    maps do not have to be written."""
     from . import nbspectra
     cells, npix = cell_projection(day['spot'].shape, n_rings)
-    sp = np.ascontiguousarray(day['spot']).view(np.uint8).ravel()
-    fc = np.ascontiguousarray(day['facula']).view(np.uint8).ravel()
+    if day.get('facula_fraction') is None:
+        sp = np.ascontiguousarray(day['spot']).view(np.uint8).ravel()
+        fc = np.ascontiguousarray(day['facula']).view(np.uint8).ravel()
+    else:
+        sp = np.ascontiguousarray(day['spot'], dtype=np.float32).ravel()
+        fc = np.ascontiguousarray(day['facula_fraction'], dtype=np.float32).ravel()
     ff_sp, ff_fc = nbspectra.maps_to_cells_nb(cells, sp, fc, npix, bool(spots_over_faculae))
     return ff_sp.astype(np.float32), ff_fc.astype(np.float32)
 
@@ -402,31 +453,42 @@ def _hmi_index(folder):
     return {d: (os.path.join(str(folder), cont[d]), os.path.join(str(folder), mag[d])) for d in cont if d in mag}
 
 
-THRESHOLD_KEYS = ('noise_th', 'B_th', 'I_th', 'A_th', 'mu_area', 'faculae')
+THRESHOLD_KEYS = ('noise_th', 'B_th', 'I_th', 'A_th', 'mu_area', 'faculae', 'B_sat')
+UNUSED_KEYS = {'fraction': ('A_th', 'mu_area')}              # thresholds a kind of faculae does not use (else B_sat)
 
 
 def parameter_sets(noise_th=DEFAULTS['noise_th'], B_th=DEFAULTS['B_th'], I_th=DEFAULTS['I_th'], A_th=DEFAULTS['A_th'],
-                   mu_area=DEFAULTS['mu_area'], faculae='plage'):
+                   mu_area=DEFAULTS['mu_area'], faculae='plage', B_sat=DEFAULTS['B_sat']):
     """All the combinations of the thresholds (each a value or a list of values): a list of dicts with the keys of
-    THRESHOLD_KEYS, in the order of itertools.product."""
+    THRESHOLD_KEYS, for every kind of faculae in the order of itertools.product. The thresholds a kind of faculae does
+    not use (B_sat for 'plage' and 'plage+network', A_th and mu_area for 'fraction') take their first value only, so
+    that e.g. faculae=['plage', 'fraction'] with 3 A_th and 4 B_sat gives 3 + 4 sets (times the other values)."""
     import itertools
-    values = []
-    for key, v in zip(THRESHOLD_KEYS, (noise_th, B_th, I_th, A_th, mu_area, faculae)):
+    values = {}
+    for key, v in zip(THRESHOLD_KEYS, (noise_th, B_th, I_th, A_th, mu_area, faculae, B_sat)):
         v = [v] if isinstance(v, (str, int, float, np.integer, np.floating)) else list(v)
         if not v:
             raise ValueError('%s: give at least one value' % key)
-        values.append([x if key == 'faculae' else float(x) for x in v])
-    sets = [dict(zip(THRESHOLD_KEYS, combo)) for combo in itertools.product(*values)]
+        values[key] = [x if key == 'faculae' else float(x) for x in v]
+    sets = []
+    for fac in values['faculae']:
+        unused = UNUSED_KEYS.get(fac, ('B_sat',))
+        lists = [[fac] if k == 'faculae' else values[k][:1] if k in unused else values[k] for k in THRESHOLD_KEYS]
+        sets += [dict(zip(THRESHOLD_KEYS, combo)) for combo in itertools.product(*lists)]
     for p in sets:
-        _check_thresholds(p['noise_th'], p['B_th'], p['I_th'], p['A_th'], p['faculae'])
+        if p['faculae'] not in FACULAE:
+            raise ValueError("faculae must be 'plage', 'plage+network' or 'fraction', got %r" % (p['faculae'],))
+        _check_thresholds(p['noise_th'], p['B_th'], p['I_th'], p['A_th'], p['faculae'], p['B_sat'])
     return sets
 
 
 def set_label(params):
     """Name of the folder of a set of thresholds in make_sdo_sweep, e.g. noise8_B24_I0.89_A20_mu0.1 (+ '_network' with
-    faculae='plage+network')."""
+    faculae='plage+network'), or noise8_B24_I0.89_Bsat100_fraction with faculae='fraction'."""
     p = dict(DEFAULTS, faculae='plage')
     p.update(params)
+    if p['faculae'] == 'fraction':
+        return 'noise%g_B%g_I%g_Bsat%g_fraction' % (p['noise_th'], p['B_th'], p['I_th'], p['B_sat'])
     return ('noise%g_B%g_I%g_A%g_mu%g' % (p['noise_th'], p['B_th'], p['I_th'], p['A_th'], p['mu_area'])
             + ('_network' if p['faculae'] == 'plage+network' else ''))
 
@@ -464,14 +526,22 @@ def _process_day(task):
     mu = mu_of_map(los_map)
     label = _time_label(t)
     rows = []
+    classified, key_c = None, None
     for out_folder, params in sets:
-        res = _identify_resampled(cont_map, los_map, mu, **params)
+        k = (params['noise_th'], params['B_th'], params['I_th'])
+        if k != key_c:                                   # the sets are in the order of parameter_sets: consecutive
+            classified = None                            # sets share the classification of their (noise, B, I)
+            classified, key_c = _classify(cont_map, los_map, mu, *k), k
+        res = _identify_resampled(cont_map, los_map, mu, classified=classified, **params)
         for kind, key, mask in (('spot', 'spot_map', 'spot'), ('faculae', 'facula_map', 'facula')):
             path = os.path.join(out_folder, '%s_map_%s' % (kind, label))
+            arr = res['facula_fraction'] if kind == 'faculae' and 'facula_fraction' in res else res[mask]
             if fmt == 'npy':
-                np.save(path + '.npy', res[mask].view(np.uint8))
-            elif fmt == 'npz':
-                np.savez_compressed(path + '.npz', packed=np.packbits(res[mask]), shape=np.array(res[mask].shape))
+                np.save(path + '.npy', arr.view(np.uint8) if arr.dtype == np.bool_ else arr)
+            elif fmt == 'npz' and arr.dtype == np.bool_:
+                np.savez_compressed(path + '.npz', packed=np.packbits(arr), shape=np.array(arr.shape))
+            elif fmt == 'npz':                           # facular fractions: mostly 0, compressed well
+                np.savez_compressed(path + '.npz', fraction=arr)
             elif fmt == 'txt':
                 np.savetxt(path + '.txt', res[key])
         for n in n_rings:
@@ -584,9 +654,11 @@ def _run_sets(data_folder, sets, start, end, step, size, epoch, fmt, n_rings, wo
                      ff_fc=np.array([f[1] for f in ff], dtype=np.float32))
         with open(os.path.join(folder, 'parameters.txt'), 'w') as f:
             f.write('data_folder = %s\nstart = %s\nend = %s\nstep = %d\nsize = %s\nnoise_th = %g (4096 px)\nB_th = %g\n'
-                    'I_th = %g\nA_th = %g\nmu_area = %g\nfaculae = %s\nepoch = %s\nfmt = %s\nn_rings = %s\nskipped = %s\n'
+                    'I_th = %g\nA_th = %g\nmu_area = %g\nfaculae = %s\nB_sat = %g\nepoch = %s\nfmt = %s\nn_rings = %s\n'
+                    'skipped = %s\n'
                     % (data_folder, t0.date(), t1.date(), int(step), size, params['noise_th'], params['B_th'],
-                       params['I_th'], params['A_th'], params['mu_area'], params['faculae'], epoch, fmt,
+                       params['I_th'], params['A_th'], params['mu_area'], params['faculae'],
+                       params.get('B_sat', DEFAULTS['B_sat']), epoch, fmt,
                        ' '.join(map(str, n_rings)) or '-', ', '.join(sorted(set(skipped))) or '-'))
         results.append({'folder': folder, 'params': params, 'times': np.array([r['t'] for r in rows], dtype=float),
                         'dates': [r['date'] for r in rows], 'ff_sp': np.array([r['ff_sp'] for r in rows]),
@@ -641,14 +713,15 @@ def _renumber(folder, days, fmt, n_rings):
 def make_sdo_maps(data_folder, out_folder, start, end, step=1, size=512, noise_th=DEFAULTS['noise_th'],
                   B_th=DEFAULTS['B_th'], I_th=DEFAULTS['I_th'], A_th=DEFAULTS['A_th'], mu_area=DEFAULTS['mu_area'],
                   faculae='plage', epoch='days', fmt='npy', n_rings=None, workers=1, resume=True, download=False,
-                  email=None, verbose=True):
+                  email=None, verbose=True, B_sat=DEFAULTS['B_sat']):
     """Spot and facula maps of every step-th day from start to end (excluded), from the HMI images of data_folder,
     written in out_folder for active_region_mask(out_folder, origin='lower'). For several values of the thresholds at
     once (every day read once): make_sdo_sweep.
 
     fmt      : how the maps are written: 'npy' (default: uint8 masks, small and fast to read), 'npz' (bit-packed and
                compressed: a few tens of kB per map even at 4096 px, read by active_region_mask too), 'txt' (float,
-               NaN outside the disc, as the old StarSim reads them), or None (no maps: only n_rings).
+               NaN outside the disc, as the old StarSim reads them), or None (no maps: only n_rings). With
+               faculae='fraction' the facula maps are float32 fractions (npy, or compressed npz).
     n_rings  : None, a number of rings or a list: the spot and facula filling factors of every cell of these SunSim grids
                are computed right after the identification (cell_filling_factors) and written in
                cells_N<n>/ff_<t>.npy, then gathered in filling_factors_N<n>.npz. That is all StarSim needs
@@ -668,7 +741,7 @@ def make_sdo_maps(data_folder, out_folder, start, end, step=1, size=512, noise_t
     days of out_folder in [start, end)) and parameters.txt (the arguments).
     Returns a dict: 'times', 'dates', 'ff_sp', 'ff_fc', 'ff_nt', 'n_spots', 'n_plages' (arrays), 'skipped' (dates),
     'folder' and 'params' (the thresholds)."""
-    sets = parameter_sets(noise_th, B_th, I_th, A_th, mu_area, faculae)
+    sets = parameter_sets(noise_th, B_th, I_th, A_th, mu_area, faculae, B_sat)
     if len(sets) > 1:
         raise ValueError('make_sdo_maps takes one value of every threshold; for several values use make_sdo_sweep')
     return _run_sets(data_folder, [(out_folder, sets[0])], start, end, step, size, epoch, fmt, n_rings, workers,
@@ -678,7 +751,7 @@ def make_sdo_maps(data_folder, out_folder, start, end, step=1, size=512, noise_t
 def make_sdo_sweep(data_folder, out_folder, start, end, step=1, size=512, noise_th=DEFAULTS['noise_th'],
                    B_th=DEFAULTS['B_th'], I_th=DEFAULTS['I_th'], A_th=DEFAULTS['A_th'], mu_area=DEFAULTS['mu_area'],
                    faculae='plage', epoch='days', fmt=None, n_rings=None, workers=1, resume=True, download=False,
-                   email=None, verbose=True):
+                   email=None, verbose=True, B_sat=DEFAULTS['B_sat']):
     """make_sdo_maps for all the combinations of the thresholds (each a value or a list, parameter_sets), every set in
     its own folder out_folder/<set_label> (e.g. noise8_B24_I0.89_A20_mu0.1). Every day is read, resampled and its mu
     computed once for all the sets (at 4096 px most of the time of a day), then classified for every set.
@@ -687,7 +760,7 @@ def make_sdo_sweep(data_folder, out_folder, start, end, step=1, size=512, noise_
     Simulate the sets with simulate_sdo_sets (the grids are computed once for all of them).
     Also writes out_folder/sets.csv (the folder and the thresholds of every set made in out_folder).
     Returns {label: result of make_sdo_maps}."""
-    sets = parameter_sets(noise_th, B_th, I_th, A_th, mu_area, faculae)
+    sets = parameter_sets(noise_th, B_th, I_th, A_th, mu_area, faculae, B_sat)
     labels = [set_label(p) for p in sets]
     if len(set(labels)) != len(labels):
         raise ValueError('the same set of thresholds is given twice: %s' % labels)
@@ -698,12 +771,14 @@ def make_sdo_sweep(data_folder, out_folder, start, end, step=1, size=512, noise_
     known = {}
     if os.path.exists(path):
         for line in open(path).read().splitlines()[1:]:
-            known[line.split(',')[0]] = line
+            if line:
+                known[line.split(',')[0]] = line + ',' * (7 - line.count(','))     # older files: no B_sat column
     for lb, p in zip(labels, sets):
-        known[lb] = '%s,%g,%g,%g,%g,%g,%s' % (lb, p['noise_th'], p['B_th'], p['I_th'], p['A_th'], p['mu_area'],
-                                              p['faculae'])
+        known[lb] = '%s,%g,%g,%g,%g,%g,%s,%g' % (lb, p['noise_th'], p['B_th'], p['I_th'], p['A_th'], p['mu_area'],
+                                                 p['faculae'], p['B_sat'])
     with open(path, 'w') as f:
-        f.write('label,noise_th,B_th,I_th,A_th,mu_area,faculae\n' + '\n'.join(known[k] for k in sorted(known)) + '\n')
+        f.write('label,noise_th,B_th,I_th,A_th,mu_area,faculae,B_sat\n' + '\n'.join(known[k] for k in sorted(known))
+                + '\n')
     return dict(zip(labels, results))
 
 
@@ -943,16 +1018,29 @@ def plot_hmi(cont_map, los_map, figsize=(11, 5)):
 
 
 def plot_identification(day, ax=None, title=None):
-    """The classification of one day (identify_day): quiet Sun, spots, plage (faculae), network; solar north up."""
+    """The classification of one day (identify_day): quiet Sun, spots, plage (faculae), network; solar north up. With
+    faculae='fraction': quiet Sun, spots and the facular fraction of the bright pixels."""
     import matplotlib.pyplot as plt
     from matplotlib.colors import ListedColormap
     img = np.full(day['disc'].shape, np.nan)
     img[day['disc']] = 0
+    if ax is None:
+        _, ax = plt.subplots(figsize=(6, 5))
+    if day.get('facula_fraction') is not None:
+        img[day['spot']] = 1
+        cmap = ListedColormap(['#f2e6c9', '#2b1d0e'])
+        cmap.set_bad('white')
+        ax.imshow(img, cmap=cmap, vmin=-0.5, vmax=1.5, origin='lower', interpolation='nearest')
+        frac = np.ma.masked_where(~day['bright'], day['facula_fraction'])
+        im = ax.imshow(frac, cmap='YlOrRd', vmin=0, vmax=1, origin='lower', interpolation='nearest')
+        plt.colorbar(im, ax=ax, fraction=0.046, label='facular fraction (spots: dark)')
+        ax.set_title(title or '%s: ff_sp = %.2f %%, ff_fc = %.2f %%' % (day['date'][:10], day['ff_sp'], day['ff_fc']),
+                     fontsize=10)
+        ax.set_axis_off()
+        return ax
     img[day['network']] = 3
     img[day['plage']] = 2
     img[day['spot']] = 1
-    if ax is None:
-        _, ax = plt.subplots(figsize=(6, 5))
     cmap = ListedColormap(['#f2e6c9', '#2b1d0e', '#e8743b', '#7fb3d5'])
     cmap.set_bad('white')
     im = ax.imshow(img, cmap=cmap, vmin=-0.5, vmax=3.5, origin='lower', interpolation='nearest')      # north up
@@ -987,8 +1075,11 @@ def _parser():
                    help='plage: groups larger than A_th micro-hemispheres (default 20)' + multi)
     p.add_argument('--mu-area', type=float, nargs='+', default=[DEFAULTS['mu_area']],
                    help='mu at which A_th is projected (default 0.1)' + multi)
-    p.add_argument('--faculae', choices=['plage', 'plage+network'], nargs='+', default=['plage'],
-                   help='content of the facula maps' + multi)
+    p.add_argument('--faculae', choices=list(FACULAE), nargs='+', default=['plage'],
+                   help='content of the facula maps; fraction: every bright pixel is min(|B|/mu/B_sat, 1) facula, '
+                        'no area threshold' + multi)
+    p.add_argument('--B-sat', type=float, nargs='+', default=[DEFAULTS['B_sat']],
+                   help="with --faculae fraction: |B|/mu of a pixel fully covered by faculae [G] (default 100)" + multi)
     p.add_argument('--epoch', choices=['days', 'index'], default='days', help='{t} of the map files (default: days since start)')
     p.add_argument('--format', choices=['npy', 'npz', 'txt', 'none'], default=None,
                    help='file format of the maps: npy (default with one set), npz (bit-packed, compressed), txt, '
@@ -1035,7 +1126,7 @@ def main(argv=None):
     missing = ['--' + k for k in needed if getattr(args, k) is None]
     if missing:
         parser.error('the following arguments are required: %s' % ', '.join(missing))
-    sets = parameter_sets(args.noise_th, args.B_th, args.I_th, args.A_th, args.mu_area, args.faculae)
+    sets = parameter_sets(args.noise_th, args.B_th, args.I_th, args.A_th, args.mu_area, args.faculae, args.B_sat)
     sweep = len(sets) > 1
     n_rings = list(args.n_rings or [])
     if args.conf:
@@ -1048,7 +1139,7 @@ def main(argv=None):
     kw = dict(step=args.step, size=args.size, epoch=args.epoch, fmt=fmt, n_rings=n_rings or None, workers=args.workers,
               resume=not args.no_resume, download=args.download, email=args.email, verbose=not args.quiet)
     th = dict(noise_th=args.noise_th, B_th=args.B_th, I_th=args.I_th, A_th=args.A_th, mu_area=args.mu_area,
-              faculae=args.faculae)
+              faculae=args.faculae, B_sat=args.B_sat)
     if args.simulate_only:
         if not args.conf:
             raise SystemExit('--simulate-only needs --conf')

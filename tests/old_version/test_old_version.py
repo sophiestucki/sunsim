@@ -195,6 +195,9 @@ KNOWN = {
                          'code with numpy >= 2',
     'planet coverage': "old bug not reproduced (reproduce_old_bugs=False): the old code covered the cells with a linear "
                        "ramp, too deep for planets smaller than a cell; SunSim the exact area (planet_coverage='area')",
+    'bis heights': "old BIS not reproduced (reproduce_old_bugs=False): the old code averaged the bisector over its 50 "
+                   "heights inside 10-40 % and 60-90 %, whose number changes with the CCF (jumps of ~0.6 m/s); SunSim "
+                   "the bisector at fixed heights (bis_heights='fixed')",
 }
 
 
@@ -217,8 +220,11 @@ def case(name, what, conf=None, regions=SF, times=(0.0, 25.0, 40), observables=O
     replace those of EXACT, known = keys of KNOWN, bugs = reproduce_old_bugs, maps = 'synthetic' 2D maps (see _maps) or
     'sdo_real' (the real SDO maps of SDO_REAL, see _sdo_real_maps), old_patch = run the old code with a runtime patch
     ('efficiency64': the instrument efficiency in float64, as with numpy >= 2; see run_old_starsim.py)."""
+    known = list(known or [])
+    if not bugs and 'bis' in observables:              # the BIS at fixed heights (StarSim bis_heights='fixed')
+        known.append('bis heights')
     return dict(name=name, what=what, conf=conf or {}, regions=regions, times=times, observables=list(observables),
-                tol=dict(EXACT, **(tol or {})), known=list(known or []), bugs=bugs, maps=maps, old_patch=old_patch)
+                tol=dict(EXACT, **(tol or {})), known=known, bugs=bugs, maps=maps, old_patch=old_patch)
 
 
 rng = np.random.default_rng(7)
@@ -352,10 +358,10 @@ CASES = [
     case('phx_offgrid_T_default', 'Teff 5778 K, spot 5378 K with reproduce_old_bugs=False (the Phoenix angles are '
          'always those of the old code)',
          conf={'star': {'temperature_photosphere': 5778.0, 'spot_T_contrast': 400.0, 'facula_T_contrast': 30.0}},
-         bugs=False),
+         bugs=False, tol={'bis': 0.25}),
     case('fixed_muram_limb', 'MURaM below limb_lim with the smallest mu (reproduce_old_bugs=False)',
          conf={'general': {'spectral_library': 'mps'}}, bugs=False, known=['muram limb'],
-         tol={'lc': 1e-4, 'rv': 0.4, 'fwhm': 3.0, 'bis': 0.3, 'contrast': 1.5e-4}),
+         tol={'lc': 1e-4, 'rv': 0.4, 'fwhm': 3.0, 'bis': 1.0, 'contrast': 1.5e-4}),
     case('fixed_limb_constant', 'limb_extrapolation constant with the SunSim limb (reproduce_old_bugs=False)',
          conf={'LD': {'limb_extrapolation': 'constant'}}, bugs=False, known=['constant limb'],
          tol={'lc': 5e-4, 'rv': 3.0, 'fwhm': 12.0, 'bis': 1.0, 'contrast': 1e-3}),
@@ -375,11 +381,11 @@ CASES = [
     case('fixed_planet_coverage', 'transiting planet of phx_planet with the exact coverage (reproduce_old_bugs=False)',
          conf={'planet': {'simulate_planet': 1}}, regions=[spot(90, 150, 8)], times=(0.0, 10.0, 80),
          bugs=False, known=['planet coverage'],
-         tol={'ff_pl': 0.06, 'lc': 7e-4, 'rv': 0.7, 'fwhm': 0.2, 'bis': 0.1, 'contrast': 7e-4}),
+         tol={'ff_pl': 0.06, 'lc': 7e-4, 'rv': 0.7, 'fwhm': 0.2, 'bis': 0.4, 'contrast': 7e-4}),
     case('fixed_small_planet', 'phx_small_planet with the exact coverage (reproduce_old_bugs=False)',
          conf={'planet': {'simulate_planet': 1, 'planet_radius': 0.02}}, regions=[spot(90, 150, 8)],
          times=(4.8, 5.2, 80), bugs=False, known=['planet coverage'],
-         tol={'ff_pl': 0.2, 'lc': 2.5e-3, 'rv': 2.0, 'fwhm': 1.2, 'bis': 0.2, 'contrast': 2.5e-3}),
+         tol={'ff_pl': 0.2, 'lc': 2.5e-3, 'rv': 2.0, 'fwhm': 1.2, 'bis': 0.4, 'contrast': 2.5e-3}),
 ]
 
 

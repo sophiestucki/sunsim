@@ -613,7 +613,8 @@ def plot_sweep_heatmaps(df, value='rv_rms', x='A_th', y='I_th', panel='T_sp', fi
     return fig, axes
 
 
-def plot_sweep_parameters(df, value='rv_rms', parameters=('T_sp', 'noise_th', 'I_th', 'A_th'), unit=None, save=None):
+def plot_sweep_parameters(df, value='rv_rms', parameters=('T_sp', 'noise_th', 'I_th', 'A_th', 'B_sat'), unit=None,
+                          save=None):
     """value against every parameter (all the sets, one point each) with the minimum as a dashed line."""
     import matplotlib.pyplot as plt
     parameters = [p for p in parameters if p in df and df[p].nunique() > 0]
@@ -679,6 +680,8 @@ def _main(argv=None):
     df = load_sweep_stats(a.base)
     df.to_csv(os.path.join(out, 'sweep_stats.csv'), index=False)
     print('%d sets -> %s' % (len(df), os.path.join(out, 'sweep_stats.csv')))
+    # facular threshold of the heatmaps: A_th (area), or B_sat for a sweep of facular fractions (faculae='fraction')
+    fac = 'B_sat' if 'B_sat' in df and ('A_th' not in df or df['A_th'].isna().all()) else 'A_th'
     for value, unit, levels, title in (('rv_rms', 'm/s', a.rv_levels, 'RV - HARPS-N'),
                                        ('sorce_rms', 'ppm', a.tsi_levels, 'TSI - SORCE/TIM'),
                                        ('tsis_rms', 'ppm', a.tsi_levels, 'TSI - TSIS-1/TIM')):
@@ -688,9 +691,9 @@ def _main(argv=None):
         for noise in sorted(df['noise_th'].unique()) if 'noise_th' in df else [None]:
             fixed = {} if noise is None else {'noise_th': noise}
             tag = '' if noise is None else '_noise%g' % noise
-            plot_sweep_heatmaps(df, value, 'A_th', 'I_th', 'T_sp', fixed=fixed, levels=levels, unit=unit, title=title,
-                                save=os.path.join(out, '%s_I_A%s.pdf' % (value, tag)))
-            plot_sweep_heatmaps(df, value, 'T_sp', 'I_th', 'A_th', fixed=fixed, unit=unit, title=title,
+            plot_sweep_heatmaps(df, value, fac, 'I_th', 'T_sp', fixed=fixed, levels=levels, unit=unit, title=title,
+                                save=os.path.join(out, '%s_I_%s%s.pdf' % (value, 'A' if fac == 'A_th' else 'Bsat', tag)))
+            plot_sweep_heatmaps(df, value, 'T_sp', 'I_th', fac, fixed=fixed, unit=unit, title=title,
                                 save=os.path.join(out, '%s_I_T%s.pdf' % (value, tag)))
         plot_sweep_parameters(df, value, unit=unit, save=os.path.join(out, '%s_parameters.pdf' % value))
     return 0

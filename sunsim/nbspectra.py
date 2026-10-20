@@ -18,7 +18,8 @@ Contents
 * filling factors of the cells (regions, planets)          overlap_fraction, generate_ff, generate_ff_core
 * CCF of the cells and cross-correlation with a mask        interpolation_nb, loop_compute_immaculate_nb,
                                                             cross_correlation_mask
-* CCF bisector and gaussian                                 speed_bisector_nb, gaussian2
+* CCF bisector and gaussian                                 speed_bisector_nb, bisector_at_nb, bisector_span_nb,
+                                                            gaussian2
 * continuum of the spectra (polynomial in one pass)         polyval_mapped_nb
 * orbits                                                    true_anomaly_scalar_nb, true_anomaly_nb, ttrans_2_tperi_nb
 * the time series (all epochs in one parallel call)         timeseries_nb
@@ -1622,15 +1623,58 @@ def fit_gaussian_nb(x,y,p0,max_iter=500):
     return p,False
 
 
+@nb.njit(cache=True,error_model='numpy')
+def bisector_at_nb(rv,ccf,cutleft,cutright,heights):
+    '''Bisector of a CCF (a peak) normalised to its maximum, at the given heights: on rv[cutleft:cutright] (the wings
+    found by speed_bisector_nb), the mid-point of the two velocities where the CCF crosses every height (linear
+    interpolation, the same crossings as speed_bisector_nb). The heights must be above the minima of both wings.'''
+    xnew=rv[cutleft:cutright]
+    ynew=ccf[cutleft:cutright]
+    maxrv=rv[np.argmax(ccf)]
+    xbis=np.zeros(len(heights))
+    for i in range(len(heights)):
+        rv1=np.nan
+        rv2=np.nan
+        for j in range(len(ynew)-1):
+            if ynew[j]<heights[i] and ynew[j+1]>heights[i] and xnew[j]<maxrv:
+                rv1=xnew[j]+(xnew[j+1]-xnew[j])*(heights[i]-ynew[j])/(ynew[j+1]-ynew[j])
+            if ynew[j]>heights[i] and ynew[j+1]<heights[i] and xnew[j+1]>maxrv:
+                rv2=xnew[j]+(xnew[j+1]-xnew[j])*(heights[i]-ynew[j])/(ynew[j+1]-ynew[j])
+        xbis[i]=(rv1+rv2)/2.0
+    return xbis
+
+
+BIS_N_HEIGHTS=31   #heights of the bisector in each band of the BIS (fixed_heights): a step of 1% of the height
+
+
+@nb.njit(cache=True,error_model='numpy')
+def bisector_span_nb(rv,ccf,cutleft,cutright,ybis0):
+    '''BIS of a CCF (a peak) normalised to its maximum: mean of the bisector over the heights 10-40% minus its mean over
+    60-90%, with the bisector at BIS_N_HEIGHTS fixed heights in each band (bisector_at_nb). cutleft, cutright, ybis0:
+    the wings and the first height ybis[0] of speed_bisector_nb for this CCF (ybis0 = minccf + 0.1 (1 - minccf), minccf
+    the higher wing minimum). The bottom band starts at 10%, or at minccf + 5% of the depth when the wings are higher
+    (the heights must stay above the wings): fixed for the usual CCFs, and the BIS changes continuously in all cases.'''
+    minccf=(ybis0-0.1)/0.9
+    lo=max(0.1,minccf+0.05*(1.0-minccf))
+    bottom=bisector_at_nb(rv,ccf,cutleft,cutright,np.linspace(lo,0.4,BIS_N_HEIGHTS))
+    top=bisector_at_nb(rv,ccf,cutleft,cutright,np.linspace(0.6,0.9,BIS_N_HEIGHTS))
+    return np.mean(bottom)-np.mean(top)
+
+
 @nb.njit(cache=True,parallel=True)
-def ccf_params_nb(rv,ccfs,cutleft,cutright,vsini):
+def ccf_params_nb(rv,ccfs,cutleft,cutright,vsini,fixed_heights=True):
     """Parameters of every CCF (rows of ccfs), in parallel. Every CCF is shifted to a minimum of ~0, c = ccf - min + 1e-6:
       bisector of c/max(c) (speed_bisector_nb) and BIS = mean(bisector at 10-40% of the height) - mean(at 60-90%);
       gaussian fit of c on rv[cutleft:cutright] (between the wings of the reference CCF), starting from
       (max(c), rv of the maximum + 100 m/s, 1.5 vsini + 1000 m/s, 1e-6): contrast (amplitude), rv (mean) and
       fwhm = 2 sqrt(2 ln 2) |sigma|.
-    Returns rvs, contrast, fwhm, BIS, xbis (n, 50), ybis (n, 50) and failed (bool: the gaussian fit did not converge; the
-    CCF then has the placeholder values rv = 100000 m/s, contrast = 1, fwhm = 2.35 m/s, as with a failed scipy fit)."""
+    BIS: fixed_heights=True (default): the bisector at fixed heights in each band (bisector_span_nb). False (old StarSim):
+      the mean of the 50 heights of speed_bisector_nb that fall in each band. These heights start 10% above the wings of
+      every CCF, so they move with the CCF, and the number of them inside a band changes by one when a height crosses
+      the edge of the band: the BIS jumps (~0.6 m/s for a solar CCF) where it should change continuously.
+    Returns rvs, contrast, fwhm, BIS, xbis (n, 50), ybis (n, 50) (the bisector of speed_bisector_nb) and failed (bool:
+    the gaussian fit did not converge; the CCF then has the placeholder values rv = 100000 m/s, contrast = 1,
+    fwhm = 2.35 m/s, as with a failed scipy fit)."""
     n=ccfs.shape[0]
     rvs=np.zeros(n)
     contrast=np.zeros(n)
@@ -1642,21 +1686,24 @@ def ccf_params_nb(rv,ccfs,cutleft,cutright,vsini):
     xs=rv[cutleft:cutright]
     for i in prange(n):
         c=ccfs[i]-np.min(ccfs[i])+0.000001
-        _,_,xbis,ybis=speed_bisector_nb(rv,c/np.max(c),True)
+        cl,cr,xbis,ybis=speed_bisector_nb(rv,c/np.max(c),True)
         xbis_all[i]=xbis
         ybis_all[i]=ybis
-        s1=0.0
-        n1=0
-        s2=0.0
-        n2=0
-        for k in range(len(ybis)):
-            if ybis[k]>=0.1 and ybis[k]<=0.4:
-                s1+=xbis[k]
-                n1+=1
-            if ybis[k]>=0.6 and ybis[k]<=0.9:
-                s2+=xbis[k]
-                n2+=1
-        BIS[i]=s1/n1-s2/n2
+        if fixed_heights:
+            BIS[i]=bisector_span_nb(rv,c/np.max(c),int(cl),int(cr),ybis[0])
+        else:
+            s1=0.0
+            n1=0
+            s2=0.0
+            n2=0
+            for k in range(len(ybis)):
+                if ybis[k]>=0.1 and ybis[k]<=0.4:
+                    s1+=xbis[k]
+                    n1+=1
+                if ybis[k]>=0.6 and ybis[k]<=0.9:
+                    s2+=xbis[k]
+                    n2+=1
+            BIS[i]=s1/n1-s2/n2
         ys=c[cutleft:cutright]
         k0=np.argmax(ys)
         p0=np.array([ys[k0],xs[k0]+100.0,1.5*vsini+1000.0,0.000001])

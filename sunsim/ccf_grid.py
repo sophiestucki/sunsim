@@ -16,7 +16,6 @@ The CCFs are normalised (nbspectra.cross_correlation_mask), so they do not know 
 darkening and the contrast of the spots / faculae are given by mu_ratio (brightness of every ring relative to the
 quiet disc centre).
 """
-import warnings
 import numpy as np
 
 from . import _checks
@@ -223,10 +222,13 @@ class CCF_grid(object):
                     its spectrum (no mu_ratio needed with spectra at several mu), and the CCFs of the orders are added
                     with the flux of every order.
     instrument    : None -> CCF of the whole spectrum.
-                    'HARPS-N', 'HARPS', 'EXPRESS', 'NEID' or a resolving power R (a number) -> every spectrum is
+                    An instrument.Instrument object (e.g. Instrument.harps()) -> its resolution, orders, efficiency
+                    and orders_medium (blaze_function, instrumental_efficiency and orders_medium must then be left out).
+                    'HARPS-N', 'HARPS', 'EXPRESS', 'NEID' or a resolving power R (a number) -> the same as
+                    Instrument(instrument, blaze_function, instrumental_efficiency, orders_medium). Every spectrum is
                     degraded to the resolution of the instrument (spectrum_utils.add_resol), then:
-                      * without blaze_function: CCF of the whole degraded spectrum (as StarSim v4 with an instrument);
-                      * with blaze_function: resampled on the wavelength grid of every order, multiplied by
+                      * without orders: CCF of the whole degraded spectrum (as StarSim v4 with an instrument);
+                      * with orders: resampled on the wavelength grid of every order, multiplied by
                         blaze*efficiency of the order, CCF of every order, orders summed.
     blaze_function: None, or (wvb, blaze): wavelength grid and blaze of every order, [n_orders][n_pix]
     instrumental_efficiency : None | callable eff(wavelength) | (wavelengths, efficiency) table.
@@ -257,19 +259,25 @@ class CCF_grid(object):
         from .spectrum_utils import vacuum2air, air2vacuum
         to_medium = lambda w, given: np.asarray(w, dtype=np.float64) if given == medium else \
             np.asarray((vacuum2air if medium == 'air' else air2vacuum)(np.asarray(w, dtype=np.float64)))
-        if instrument is not None:
-            from .spectrum_utils import INSTRUMENT_RESOLUTION
-            if isinstance(instrument, str):
-                if instrument not in INSTRUMENT_RESOLUTION:
-                    raise ValueError('unknown instrument %r: give one of %s, or the resolving power R as a number'
-                                     % (instrument, sorted(INSTRUMENT_RESOLUTION)))
-            else:
-                instrument = _checks.number('instrument (resolving power)', instrument, positive=True)
-        if blaze_function is not None and instrument is None:
-            raise ValueError('blaze_function needs the instrument (its resolution): instrument=\'HARPS-N\', ... or R')
-        if instrumental_efficiency is not None and blaze_function is None:
-            raise ValueError('instrumental_efficiency needs blaze_function (the efficiency multiplies the blaze of '
-                             'every order)')
+        from .instrument import Instrument
+        if isinstance(instrument, Instrument):
+            if blaze_function is not None or instrumental_efficiency is not None:
+                raise ValueError('instrument is an Instrument object: its orders and efficiency are used, leave '
+                                 'blaze_function and instrumental_efficiency out')
+            inst = instrument
+            orders_medium = inst.orders_medium
+            blaze_function = (inst.wave_orders, inst.blaze_orders) if inst.has_orders else None
+            instrumental_efficiency = inst.efficiency
+        else:
+            if blaze_function is not None and instrument is None:
+                raise ValueError('blaze_function needs the instrument (its resolution): instrument=\'HARPS-N\', ... or R')
+            if instrumental_efficiency is not None and blaze_function is None:
+                raise ValueError('instrumental_efficiency needs blaze_function (the efficiency multiplies the blaze of '
+                                 'every order)')
+            inst = None if instrument is None else Instrument(instrument, blaze_function, instrumental_efficiency,
+                                                              orders_medium)
+            if inst is not None:
+                instrument = inst.resolution
         #checks of the arguments (the CCF kernels do not check their indices)
         N_rings = _checks.number('N_rings', N_rings, integer=True, low=1)
         _checks.spectra('high_res_flux', high_res_flux, min_mu=1)
@@ -313,6 +321,7 @@ class CCF_grid(object):
         self.normalization = normalization
         self._ccf_norm = 2 if normalization == 'none' else bool(normalization)     # code of cross_correlation_mask
         self.instrument = instrument
+        self._instrument = inst          # instrument.Instrument (None without instrument): resolution, orders, efficiency
         self.blaze_function = blaze_function
         self.instrumental_efficiency = instrumental_efficiency
         self.limb_extrapolation = limb_extrapolation
@@ -340,7 +349,6 @@ class CCF_grid(object):
 
         self._orders = None            # per-order data, built the first time it is needed
         self._orders_in_sum = 1        # number of orders summed in the CCF (instrument), set by _ccf_by_order
-        self._tools = None             # add_resol, imported the first time an instrument is used
         self._ccf_mode = None          # 'rings' (every ring from its spectrum) or 'centre' (disc centre only), set by step 1
         self.ccf_centre = None         # CCF of the disc-centre spectrum ('centre' mode only)
         self.ccf_shape = None          # CCF of every ring before the mu_ratio scaling (its bisector is the ring's one)
@@ -417,57 +425,30 @@ class CCF_grid(object):
         if self.blaze_function is not None:
             return self._ccf_by_order(flux)
         flux = np.asarray(flux, dtype=np.float64)
-        if self.instrument is not None:
-            flux = np.asarray(self._get_tools()(self._wv, flux, self.instrument), dtype=np.float64)
+        if self._instrument is not None:
+            flux = self._instrument.degrade(self._wv, flux)
         return nbspectra.cross_correlation_mask(self.rvs, self._wv, flux, self.wvm, self.fm, self.phoenix_resolution,
                                                 self._ccf_norm)
 
     def _get_orders(self):
-        """Wavelength grid, blaze*efficiency and mask lines of every order (built once)."""
+        """Wavelength grid, blaze*efficiency (Instrument.order_table, in the medium of the CCF) and mask lines of every
+        order that starts below the end of the spectra (built once)."""
         if self._orders is not None:
             return self._orders
-        wvb, blaze = self.blaze_function
-        eff = self.instrumental_efficiency
         orders = []
-        for j in range(len(blaze)):
-            wj = self._to_medium(wvb[j], self.orders_medium)        # in the medium of the CCF
-            bj = np.asarray(blaze[j], dtype=np.float64)
-            if len(wj) != len(bj):
-                raise ValueError("order %d: wavelength and blaze have different lengths" % j)
-            if not wj[0] < self._wv[-1]:                 # order starts beyond the end of the spectrum
-                continue
-            if eff is None:
-                ej = 1.0
-            elif callable(eff):
-                ej = np.asarray(eff(wj), dtype=np.float64)
-            else:
-                wl, ef = (np.asarray(x, dtype=np.float64) for x in eff)
-                srt = np.argsort(wl)
-                wl, ef = wl[srt], ef[srt]
-                if wj[0] < wl[0] or wj[-1] > wl[-1]:
-                    warnings.warn("order %d (%.1f-%.1f A) is partly outside the efficiency table (%.1f-%.1f A): "
-                                  "the efficiency is kept constant outside" % (j, wj[0], wj[-1], wl[0], wl[-1]))
-                ej = np.interp(wj, wl, ef)
+        for o in self._instrument.order_table(self.medium, self._wv[-1]):
+            wj = o['wav']
             mask = (self.wvm >= wj[0]) & (self.wvm <= wj[-1])
-            orders.append({'wav': wj, 'edges': bin_edges(wj), 'b': bj * ej, 'wvm': self.wvm[mask],
-                           'fm': self.fm[mask]})
+            orders.append({'wav': wj, 'edges': o['edges'], 'b': o['b'], 'wvm': self.wvm[mask], 'fm': self.fm[mask]})
         self._orders = orders
         return orders
-
-    def _get_tools(self):
-        """add_resol (imported only when an instrument is used: scipy and astropy.convolution)."""
-        if self._tools is None:
-            from . import spectrum_utils
-            self._tools = spectrum_utils.add_resol
-        return self._tools
 
     def _ccf_by_order(self, flux):
         """Degrade -> resample on every order -> multiply by blaze*efficiency -> CCF of the order -> sum of the orders.
         The resampling conserves the flux (nbspectra.flux_conserving_resample_nb: the numbers of
         specutils.FluxConservingResampler, which the old StarSim used); the parts of an order beyond the spectrum are
         NaN and their CCF is left out of the sum (nansum)."""
-        add_resol = self._get_tools()
-        convolved_flux = np.asarray(add_resol(self._wv, flux, self.instrument), dtype=np.float64)
+        convolved_flux = self._instrument.degrade(self._wv, flux)
         edges = nbspectra.bin_edges_nb(self._wv)
         orders = self._get_orders()
         ccf_orders = np.zeros([len(orders), len(self.rvs)])

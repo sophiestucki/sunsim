@@ -108,6 +108,10 @@ The old code reproduced is the version of the path 'old_starsim' of the tests (s
   planet, so a cell whose centre is under the planet was about half covered whatever its radius: planets smaller than
   a cell were much too deep (x8 for 0.01 Rstar with 15 rings, x2 for 0.03 Rstar, +9 % for 0.1 Rstar); here the exact
   area of the planet in every cell (StarSim planet_coverage='area'; 'ramp' with reproduce_old_bugs).
+* BIS: the old code averaged the bisector over its 50 heights that fall in 10-40 % and 60-90 % of the height; these
+  heights start 10 % above the wings of every CCF, so the number of them inside a band changes with the CCF and the
+  BIS jumps (~0.6 m/s for a solar CCF); here the bisector at fixed heights in each band (StarSim bis_heights='fixed';
+  'old' with reproduce_old_bugs).
 * instrument = HARPS-N: the old code evaluated its efficiency polynomial (degree 10 in the wavelength in A) on the
   float32 wavelengths of the orders. With numpy 1.x the arithmetic stays in float32 and the powers of ~5000 A lose all
   their precision: the efficiency went from -1800 to +800 instead of 14-90 % (negative on a third of the pixels), so
@@ -1069,6 +1073,7 @@ def simulate_old_config(conf_file, times=None, observables=('lc',), spot_map=Non
         ss = StarSim(times, N, inclination=inclination, rotation_period=cfg['rotation_period'], differential_rotation=diff_rot,
                      stellar_radius=cfg['radius'], active_regions_map=regions, active_regions_mask=mask, planet=planets,
                      mode=modes, planet_coverage='ramp' if cfg['_old_bugs'] else 'area',
+                     bis_heights='old' if cfg['_old_bugs'] else 'fixed',
                      quiet_velocity=quiet_velocity if do_rv else None, **grids)
         if do_rv:
             # the old code Doppler-shifts the cells with the rigid rotation velocity (also with differential rotation)
