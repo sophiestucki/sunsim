@@ -50,6 +50,8 @@ KEYS = {
     'ref_rv_10_years':  'RV of the 10-year run of the old StarSim (analysis/sdo_old_vs_new_harpsn.py, optional)',
     'ref_days_10_years': 'its days_list.txt (days since 2015-07-18)',
     'sweep_results':    'results of the PIC sweep (PIC/opt_sweep.ipynb): the folder of the sets',
+    'supergranulation_results': 'folder of PIC/supergranulation.py (days/, results/), for '
+                        'analysis/supergranulation_pic_2021_quality.ipynb',
     'poet_data':        'data of the PoET notebooks (spectra, outputs, figures)',
     'personal_data':    'other input files of the analysis notebooks (e.g. masks made by hand)',
 }

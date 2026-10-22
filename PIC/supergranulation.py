@@ -24,6 +24,15 @@ Folder DIR:
   days/<date>/done.json       the day is complete (numbers of exposures, epochs, frames, failures)
   results/                    exposures.csv, per_day.csv, intra_day_summary.csv, daily_means.csv, daily_stats.csv,
                               full_stats.csv, figures/ (days/<date>.png, daily_*.png, per_day_r.png, full_correlation.png)
+                              (--results NAME: another folder, e.g. for collect with --min-obs-quality; then also
+                              removed_exposures.csv, the exposures left out by the quality cut)
+
+Quality of the exposures (collect --harpsn FILE --min-obs-quality Q): the flags of the release are matched to every
+exposure (by the start of the exposure in file_root): data_quality (0/1: the exposures with 0 are always left out) and
+obs_quality (0-1, the quality of the sky during the exposure: the release has only exposures with obs_quality >= 0.9);
+the exposures with obs_quality < Q are left out of the comparison (the HMI calibration uses all the epochs).
+--min-day-exp N: then also the days with fewer than N exposures left (all their exposures). The airmass of every
+exposure (release) is in exposures.csv.
 
 Needs sunsim with the sdo extras (sunpy, drms) and internet access to jsoc.stanford.edu (no JSOC account).
 """
@@ -208,6 +217,25 @@ def fit_line(x, y):
     return np.corrcoef(x, y)[0, 1], slope, err
 
 
+def exposure_quality(ex, harpsn):
+    """data_quality, obs_quality and airmass of the release (csv harpsn) for every exposure of ex (load_days), matched by
+    the start of the exposure (file_root, to the second). NaN for an exposure that is not in the file."""
+    import pandas as pd
+    from astropy.time import Time
+    d = pd.read_csv(harpsn, usecols=['file_root', 'data_quality', 'obs_quality', 'airmass'])
+    iso = d['file_root'].astype(str).str.extract(r'(\d{4}-\d\d-\d\dT\d\d)-(\d\d)-(\d\d(?:\.\d+)?)')
+    ok = ~iso.isna().any(axis=1)
+    d, iso = d[ok], iso[ok]
+    jd = Time(list(iso[0] + ':' + iso[1] + ':' + iso[2]), format='isot', scale='utc').jd
+    row = dict(zip(np.round(jd * 86400).astype(np.int64), range(len(d))))
+    idx = np.array([row.get(k, -1) for k in np.round(np.asarray(ex['jd_start']) * 86400).astype(np.int64)])
+    out = {}
+    for k in ('data_quality', 'obs_quality', 'airmass'):
+        v = np.asarray(d[k], dtype=np.float64)
+        out[k] = np.where(idx >= 0, v[np.maximum(idx, 0)], np.nan)
+    return out
+
+
 def load_days(out, n_rings):
     """The products of the complete days: exposures (dict of arrays, one row per exposure with an epoch), epochs (dict
     of arrays), the 45 s frames of every day."""
@@ -260,10 +288,39 @@ def run_collect(a):
     from sunsim import nbspectra, observations as obs, simulate_old_config, precomputed_filling_factors
     from sunsim import supergranulation as sg
 
-    res_dir = os.path.join(a.out, 'results')
+    res_dir = os.path.join(a.out, getattr(a, 'results', 'results'))
     fig_dir = os.path.join(res_dir, 'figures')
+    figures = getattr(a, 'figures', True)
     os.makedirs(os.path.join(fig_dir, 'days'), exist_ok=True)
     ex, ep, frames = load_days(a.out, a.n_rings)
+    if getattr(a, 'harpsn', None):
+        # quality flags of the release: data_quality = 1 always, obs_quality >= min_obs_quality if it is given
+        qf = exposure_quality(ex, a.harpsn)
+        ex.update(qf)
+        keep = qf['data_quality'] == 1
+        if getattr(a, 'min_obs_quality', None) is not None:
+            keep &= qf['obs_quality'] >= a.min_obs_quality
+        _log('quality: %d of %d exposures left out (data_quality != 1: %d, not in the release: %d, obs_quality < %s: %d)'
+             % ((~keep).sum(), len(keep), np.sum(qf['data_quality'] == 0), np.sum(np.isnan(qf['data_quality'])),
+                getattr(a, 'min_obs_quality', None), np.sum(qf['obs_quality'] < (getattr(a, 'min_obs_quality', None) or -1))))
+        reason = np.where(keep, '', 'quality').astype(object)
+        if getattr(a, 'min_day_exp', 0):
+            # then the days with fewer than min_day_exp exposures left
+            days, n_left = np.unique(ex['day'][keep], return_counts=True)
+            few = np.isin(ex['day'], days[n_left < a.min_day_exp]) & keep
+            _log('days with fewer than %d exposures left: %d (%d exposures)'
+                 % (a.min_day_exp, len(np.unique(ex['day'][few])), few.sum()))
+            reason[few] = 'day with < %d exposures' % a.min_day_exp
+            keep &= ~few
+        pd.DataFrame({'day': ex['day'][~keep], 'jd_utc': ex['jd'][~keep], 'data_quality': qf['data_quality'][~keep],
+                      'obs_quality': qf['obs_quality'][~keep], 'airmass': qf['airmass'][~keep],
+                      'reason': reason[~keep]}).to_csv(os.path.join(res_dir, 'removed_exposures.csv'), index=False)
+        ex = {k: v[keep] for k, v in ex.items()}
+        if not keep.any():
+            raise ValueError('no exposures left after the quality cuts (min_obs_quality = %s, min_day_exp = %s; obs_quality '
+                             'of the exposures: %.4f to %.4f)' % (getattr(a, 'min_obs_quality', None),
+                                                                  getattr(a, 'min_day_exp', 0), np.nanmin(qf['obs_quality']),
+                                                                  np.nanmax(qf['obs_quality'])))
     jd_start = obs.jd_of_date(a.start)
     ex['t'] = ex['jd'] - jd_start
     n_days = len(np.unique(ex['day']))
@@ -324,6 +381,9 @@ def run_collect(a):
 
     table = pd.DataFrame({'day': ex['day'], 'jd_utc': ex['jd'], 't': t, 'sdo_t_rec': ex['exp_trec'], 'dt_sdo_s': ex['exp_dt'],
                           'pmodes': ok45})
+    for k in ('obs_quality', 'airmass'):
+        if k in ex:
+            table[k] = ex[k]
     for q in QUANTITIES:
         table[q + '_obs'], table[q + '_err'] = ob[q], err[q]
         for name in MODELS:
@@ -346,7 +406,7 @@ def run_collect(a):
                 rows.append({'day': d, 'n': c['n'], 'n_pmodes': int(ok45[m].sum()), 'quantity': q, 'model': name,
                              'RMS obs': c['rms_obs'], 'RMS obs - sim': c['rms'], 'r': r, 'slope': k,
                              'slope_err': k_err, 'sim std': np.std(c['sim'])})
-        if m.sum() >= a.min_exp:
+        if figures and m.sum() >= a.min_exp:
             plot_day(plt, d, cd, os.path.join(fig_dir, 'days', '%s.png' % d))
     per_day = pd.DataFrame(rows)
     per_day.to_csv(os.path.join(res_dir, 'per_day.csv'), index=False)
@@ -372,7 +432,8 @@ def run_collect(a):
     summ = pd.DataFrame(summ)
     summ.to_csv(os.path.join(res_dir, 'intra_day_summary.csv'), index=False)
     print(summ.round(3).to_string(), flush=True)
-    plot_per_day_r(plt, per_day[per_day['n'] >= a.min_exp], os.path.join(fig_dir, 'per_day_r.png'))
+    if figures:
+        plot_per_day_r(plt, per_day[per_day['n'] >= a.min_exp], os.path.join(fig_dir, 'per_day_r.png'))
 
     # ---- daily averages over the period: maps against maps + dopplergram (one offset per instrumental period)
     cuts = obs.load_interventions(a.interventions, a.start) if a.interventions else None
@@ -406,8 +467,9 @@ def run_collect(a):
     daily_stats = pd.DataFrame(rows)
     daily_stats.to_csv(os.path.join(res_dir, 'daily_stats.csv'), index=False)
     print(daily_stats.round(3).to_string(), flush=True)
-    plot_daily(plt, cmp_daily, a.start, os.path.join(fig_dir, 'daily_timeseries.png'))
-    plot_daily_correlation(plt, cmp_daily, os.path.join(fig_dir, 'daily_correlation_rv.png'))
+    if figures:
+        plot_daily(plt, cmp_daily, a.start, os.path.join(fig_dir, 'daily_timeseries.png'))
+        plot_daily_correlation(plt, cmp_daily, os.path.join(fig_dir, 'daily_correlation_rv.png'))
 
     # ---- the full dataset: every exposure of the period (medians removed, one offset per instrumental period)
     hf = {'t': t}
@@ -427,7 +489,8 @@ def run_collect(a):
     full_stats = pd.DataFrame(rows)
     full_stats.to_csv(os.path.join(res_dir, 'full_stats.csv'), index=False)
     print(full_stats.round(3).to_string(), flush=True)
-    plot_full_correlation(plt, cmp_full, os.path.join(fig_dir, 'full_correlation.png'))
+    if figures:
+        plot_full_correlation(plt, cmp_full, os.path.join(fig_dir, 'full_correlation.png'))
     _log('results in %s' % res_dir)
     return 0
 
@@ -609,6 +672,13 @@ def main(argv=None):
     c.add_argument('--vr-degree', type=int, default=2, help='polynomial of OBS_VR removed from the disc velocity')
     c.add_argument('--ref-window', type=float, default=1800.0)
     c.add_argument('--min-exp', type=int, default=5, help='days with fewer exposures: not in the statistics')
+    c.add_argument('--harpsn', default=None, help='csv of the release: its quality flags (data_quality = 1 kept)')
+    c.add_argument('--min-obs-quality', type=float, default=None,
+                   help='with --harpsn: only the exposures with obs_quality >= this (e.g. 0.99)')
+    c.add_argument('--min-day-exp', type=int, default=0,
+                   help='with --harpsn: then also the days with fewer exposures left than this (e.g. 50)')
+    c.add_argument('--results', default='results', help='folder of the results, in --out (default results)')
+    c.add_argument('--no-figures', dest='figures', action='store_false', help='only the tables')
 
     a = p.parse_args(argv)
     return run_day(a) if a.step == 'day' else run_collect(a)
