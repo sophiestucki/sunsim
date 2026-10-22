@@ -1,0 +1,21 @@
+# Condor submit file, step 2 of sweep_720.dag: identification at 4096 px with the 720 s magnetograms in 80 blocks of
+# days (N_BLOCKS of settings_720.sh: keep the two equal), all the sets of thresholds of the parameter file of $(kind)
+# at once. kind (plage or fraction) comes from the VARS of the DAG.
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/identify_720.sh
+
+# $1 = kind, $2 = workers (days at the same time in the job: ~3-4 GB of memory each at 4096 px), $3 = block
+Arguments = "$(kind) 4 $(Process)"
+
+RequestCpus   = 4
+RequestMemory = 20GB
+RequestDisk   = 1GB
+
+Log    = logs/identify_720_$(kind)_$(Process).log
+Output = logs/identify_720_$(kind)_$(Process).out
+Error  = logs/identify_720_$(kind)_$(Process).err
+
+stream_output = True
+stream_error  = True
+
+Queue 80

@@ -9,6 +9,7 @@ so all the blocks write in the same folders without clash. The days already done
   python identify_days.py --data SDO_DATA --out FOLDER --start 2015-07-18 --end 2024-01-29 --size 4096 --n-rings 60 \
          --noise-th 8 --I-th 0.55 0.6 ... --A-th 1 10 ... --block 3 --n-blocks 40
   python identify_days.py ... --faculae fraction --B-sat 50 100 ...       (facular fractions, no area threshold)
+  python identify_days.py ... --magnetogram 720s                           (hmi.M_720s instead of hmi.M_45s)
 
 The sets are all the combinations of the thresholds given (sunsim.sdo.parameter_sets). After all the blocks, one run of
 python -m sunsim.sdo with the same thresholds over the whole period does the days still missing and writes
@@ -35,6 +36,7 @@ def main(argv=None):
         p.add_argument('--' + k, type=float, nargs='+', default=[default])
     p.add_argument('--faculae', nargs='+', default=['plage'], choices=['plage', 'plage+network', 'fraction'])
     p.add_argument('--B-sat', type=float, nargs='+', default=[100.0], help="with --faculae fraction [G]")
+    p.add_argument('--magnetogram', choices=['45s', '720s'], default='45s', help='hmi.M_45s (default) or hmi.M_720s')
     p.add_argument('--block', type=int, required=True, help='index of this block (0 ... n_blocks - 1)')
     p.add_argument('--n-blocks', type=int, required=True)
     p.add_argument('--workers', type=int, default=1, help='processes working on different days')
@@ -48,7 +50,7 @@ def main(argv=None):
             os.makedirs(os.path.join(folder, sub), exist_ok=True)
 
     t0, t1 = datetime.strptime(a.start, '%Y-%m-%d'), datetime.strptime(a.end, '%Y-%m-%d')
-    index = sdo._hmi_index(a.data)
+    index = sdo._hmi_index(a.data, a.magnetogram)
     days = []
     day = t0
     while day < t1:

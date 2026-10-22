@@ -2,11 +2,11 @@
 sdo: maps of spots and faculae of the Sun from SDO/HMI images, for StarSim(..., active_regions_mask=...).
 
 From two HMI images of the same epoch, the continuum intensity without limb darkening (hmi.Ic_noLimbDark_720s) and the
-line-of-sight magnetogram (hmi.M_45s), every pixel of the disc is classified as quiet Sun, spot, facula (plage) or
-network, following Yeo et al. (2013) and Sen et al. (2023):
+line-of-sight magnetogram (hmi.M_45s, or hmi.M_720s with magnetogram='720s': ~2 x less noise), every pixel of the disc
+is classified as quiet Sun, spot, facula (plage) or network, following Yeo et al. (2013) and Sen et al. (2023):
 
-  1. noise: |B| below noise_th (8 G for 4096 x 4096 images; scaled by N / 4096 for images resampled to N x N pixels, as
-     the noise of the mean of k x k pixels decreases as 1/k) is set to 0;
+  1. noise: |B| below noise_th (8 G for 4096 x 4096 M_45s images; scaled by N / 4096 for images resampled to N x N
+     pixels, as the noise of the mean of k x k pixels decreases as 1/k) is set to 0;
   2. foreshortening: B / mu, mu = cos(heliocentric angle);
   3. active pixels: |B| / mu > B_th / mu (B_th = 24 G);
   4. spots: active pixels darker than I_th times the mean intensity of the quiet Sun (I_th = 0.89); the other active
@@ -61,6 +61,10 @@ MAGNETOGRAM_SERIES = 'hmi.M_45s'
 #file names of the JSOC series (the date, then any time of the day)
 CONTINUUM_PATTERN = 'hmi.ic_nolimbdark_720s.{date}_*continuum.fits'
 MAGNETOGRAM_PATTERN = 'hmi.m_45s.{date}_*magnetogram.fits'
+#magnetogram= -> (series, file names): the 45 s magnetograms (noise ~10 G at the disc centre, 13 G near the limb) or
+#the 720 s ones (~5 G and 6 G), same T_REC as the 720 s continuum
+MAGNETOGRAMS = {'45s': (MAGNETOGRAM_SERIES, MAGNETOGRAM_PATTERN),
+                '720s': ('hmi.M_720s', 'hmi.m_720s.{date}_*magnetogram.fits')}
 FULL_SIZE = 4096                    # pixels of the HMI images
 
 DEFAULTS = dict(noise_th=8.0, B_th=24.0, I_th=0.89, A_th=20.0, mu_area=0.1, B_sat=100.0)
@@ -197,21 +201,28 @@ def disc_square(intensity):
 # =============================================================================================
 # one epoch with sunpy maps
 # =============================================================================================
-def find_hmi_files(folder, date):
+def _magnetogram(magnetogram):
+    """(series, file pattern) of magnetogram ('45s' or '720s')."""
+    if magnetogram not in MAGNETOGRAMS:
+        raise ValueError("magnetogram must be one of %s, got %r" % (', '.join(map(repr, MAGNETOGRAMS)), magnetogram))
+    return MAGNETOGRAMS[magnetogram]
+
+
+def find_hmi_files(folder, date, magnetogram='45s'):
     """(continuum file, magnetogram file) of one day in folder (first file of the day of each series), or None if one
     of the two is missing. File names of the JSOC exports, e.g. hmi.ic_nolimbdark_720s.20170701_000000_TAI.3.continuum.fits
-    and hmi.m_45s.20170701_000045_TAI.2.magnetogram.fits."""
+    and hmi.m_45s.20170701_000045_TAI.2.magnetogram.fits (magnetogram='720s': hmi.m_720s.20170701_000000_TAI.3...)."""
     d = _date(date).strftime('%Y%m%d')
     cont = sorted(glob.glob(os.path.join(str(folder), CONTINUUM_PATTERN.format(date=d))))
-    mag = sorted(glob.glob(os.path.join(str(folder), MAGNETOGRAM_PATTERN.format(date=d))))
+    mag = sorted(glob.glob(os.path.join(str(folder), _magnetogram(magnetogram)[1].format(date=d))))
     if not cont or not mag:
         return None
     return cont[0], mag[0]
 
 
-def read_hmi_day(folder, date):
+def read_hmi_day(folder, date, magnetogram='45s'):
     """Continuum and magnetogram maps (sunpy) of one day. FileNotFoundError if one of them is missing."""
-    files = find_hmi_files(folder, date)
+    files = find_hmi_files(folder, date, magnetogram)
     if files is None:
         raise FileNotFoundError('no continuum and magnetogram files of %s in %s' % (_date(date).date(), folder))
     smap = _sunpy()
@@ -414,10 +425,11 @@ def cell_filling_factors(day, n_rings, spots_over_faculae=True):
 # =============================================================================================
 # many epochs: download, maps, simulation
 # =============================================================================================
-def download_hmi(start, end, folder, email, step=1, window_seconds=30):
+def download_hmi(start, end, folder, email, step=1, window_seconds=30, magnetogram='45s'):
     """Downloads from JSOC (sunpy.net.Fido) the continuum and the magnetogram of every step-th day from start to end
     (excluded), the first images after 00:00 TAI (window of window_seconds), into folder. email: an address registered
     at JSOC (http://jsoc.stanford.edu/ajax/register_email.html). Returns the list of the files downloaded."""
+    mag_series = _magnetogram(magnetogram)[0]
     t0, t1 = _date(start, 'start'), _date(end, 'end')
     if not t1 > t0:
         raise ValueError('end (%s) must be after start (%s)' % (t1.date(), t0.date()))
@@ -430,8 +442,8 @@ def download_hmi(start, end, folder, email, step=1, window_seconds=30):
     day = t0
     while day < t1:
         tr = a.Time(day, day + timedelta(seconds=window_seconds))
-        for series in (CONTINUUM_SERIES, MAGNETOGRAM_SERIES):
-            if find_hmi_files(folder, day) is not None:
+        for series in (CONTINUUM_SERIES, mag_series):
+            if find_hmi_files(folder, day, magnetogram) is not None:
                 break                                    # already there
             res = Fido.search(tr, a.jsoc.Series(series), a.jsoc.Notify(email))
             files += list(Fido.fetch(res, path=os.path.join(str(folder), '{file}')))
@@ -439,16 +451,77 @@ def download_hmi(start, end, folder, email, step=1, window_seconds=30):
     return files
 
 
-def _hmi_index(folder):
+def fetch_magnetograms(folder, start, end, magnetogram='720s', block=0, n_blocks=1, verbose=True):
+    """Downloads into folder the magnetogram of the same T_REC as every continuum image of folder from start to end
+    (excluded) that has none yet, from the JSOC storage (supergranulation.fetch_record: drms, no export request, so no
+    email), with the keywords of the record written in its header (so that read_hmi_day and _hmi_index read it as an
+    exported file): e.g. hmi.m_720s.20190102_120000_TAI.magnetogram.fits for
+    hmi.ic_nolimbdark_720s.20190102_120000_TAI.3.continuum.fits. The image stays as JSOC stores it (Rice-compressed
+    integers, ~14 MB at 4096 px).
+    block, n_blocks : only the block-th of n_blocks parts of the days (several jobs at the same time)
+    Returns (files written, dates that failed); the dates without a record at JSOC are only printed (as the days
+    without images, they are skipped by the identification)."""
+    import fnmatch
+    from astropy.io import fits
+    from . import supergranulation as sg
+    series = _magnetogram(magnetogram)[0]
+    t0, t1 = _date(start, 'start'), _date(end, 'end')
+    cont = {}
+    for n in sorted(os.listdir(str(folder))):
+        if fnmatch.fnmatch(n, CONTINUUM_PATTERN.format(date='*')):
+            cont.setdefault(n.split('.')[2][:8], n)
+    have = _hmi_index(folder, magnetogram)
+    days = [d for d in sorted(cont) if t0 <= datetime.strptime(d, '%Y%m%d') < t1]
+    mine = [days[k] for k in np.array_split(np.arange(len(days)), int(n_blocks))[int(block)]]
+    todo = [d for d in mine if d not in have]
+    if verbose:
+        print('%s: %d days with a continuum image in block %d / %d, %d to download'
+              % (series, len(mine), block, n_blocks, len(todo)), flush=True)
+    client = sg._client()
+    written, failed = [], []
+    for k, d in enumerate(todo, 1):
+        stamp = cont[d].split('.')[2]                    # 20190102_120000_TAI
+        t_rec = '%s.%s.%s_%s:%s:%s_TAI' % (stamp[:4], stamp[4:6], stamp[6:8], stamp[9:11], stamp[11:13], stamp[13:15])
+        path = os.path.join(str(folder), '%s.%s.magnetogram.fits' % (series.lower(), stamp))
+        try:
+            raw, keywords = sg.fetch_record(series, t_rec, 'magnetogram', folder, client=client)
+            with fits.open(raw, mode='update') as h:
+                header = h[-1].header
+                for key, v in keywords.items():
+                    name = key.replace('__', '-')
+                    if len(name) > 8 or name in header or name in ('COMMENT', 'HISTORY') or v is None:
+                        continue
+                    if isinstance(v, (float, np.floating)) and not np.isfinite(v):
+                        continue
+                    v = v.item() if isinstance(v, np.generic) else v
+                    try:
+                        header[name] = v if isinstance(v, (int, float, str)) else str(v)
+                    except ValueError:
+                        continue
+            os.replace(raw, path)
+            written.append(path)
+            if verbose:
+                print('[%d/%d] %s' % (k, len(todo), os.path.basename(path)), flush=True)
+        except FileNotFoundError as e:
+            print('%s: %s, no magnetogram' % (d, e), flush=True)
+        except Exception as e:
+            failed.append(d)
+            print('%s: %s, not downloaded' % (d, str(e).splitlines()[0][:150] if str(e) else type(e).__name__),
+                  flush=True)
+    return written, failed
+
+
+def _hmi_index(folder, magnetogram='45s'):
     """{YYYYMMDD: (continuum file, magnetogram file)} of a folder, from one listing (the first file of the day of
     each series): fast for thousands of days."""
     import fnmatch
+    mag_pattern = _magnetogram(magnetogram)[1].format(date='*')
     names = sorted(os.listdir(str(folder)))
     cont, mag = {}, {}
     for n in names:
         if fnmatch.fnmatch(n, CONTINUUM_PATTERN.format(date='*')):
             cont.setdefault(n.split('.')[2][:8], n)
-        elif fnmatch.fnmatch(n, MAGNETOGRAM_PATTERN.format(date='*')):
+        elif fnmatch.fnmatch(n, mag_pattern):
             mag.setdefault(n.split('.')[2][:8], n)
     return {d: (os.path.join(str(folder), cont[d]), os.path.join(str(folder), mag[d])) for d in cont if d in mag}
 
@@ -557,7 +630,7 @@ def _process_day(task):
 
 
 def _run_sets(data_folder, sets, start, end, step, size, epoch, fmt, n_rings, workers, resume, download, email,
-              verbose):
+              verbose, magnetogram='45s'):
     """make_sdo_maps for several sets of thresholds, sets = [(out_folder, params)], every day read once.
     Returns the list of the results (dicts of make_sdo_maps), in the order of sets."""
     import json
@@ -577,17 +650,18 @@ def _run_sets(data_folder, sets, start, end, step, size, epoch, fmt, n_rings, wo
         raise ValueError('workers must be >= 1, got %r' % (workers,))
     if size is not None and not 16 <= int(size) <= FULL_SIZE:
         raise ValueError('size must be between 16 and %d pixels, got %r' % (FULL_SIZE, size))
+    _magnetogram(magnetogram)
     if not download and not os.path.isdir(str(data_folder)):
         raise FileNotFoundError('the folder of the HMI images does not exist: %s' % data_folder)
     if download:
-        download_hmi(t0, t1, data_folder, email, step=step)
+        download_hmi(t0, t1, data_folder, email, step=step, magnetogram=magnetogram)
     sets = [(str(folder), dict(params)) for folder, params in sets]
     for folder, _ in sets:
         for sub in ['days'] + ['cells_N%d' % n for n in n_rings]:
             os.makedirs(os.path.join(folder, sub), exist_ok=True)
 
     # the days of the period and their files (one listing of the folder), and the sets still to do for every day
-    index = _hmi_index(data_folder)
+    index = _hmi_index(data_folder, magnetogram)
     days, todo, skipped = [], [], []
     day = t0
     while day < t1:
@@ -653,10 +727,11 @@ def _run_sets(data_folder, sets, start, end, step, size, epoch, fmt, n_rings, wo
                      ff_sp=np.array([f[0] for f in ff], dtype=np.float32),
                      ff_fc=np.array([f[1] for f in ff], dtype=np.float32))
         with open(os.path.join(folder, 'parameters.txt'), 'w') as f:
-            f.write('data_folder = %s\nstart = %s\nend = %s\nstep = %d\nsize = %s\nnoise_th = %g (4096 px)\nB_th = %g\n'
-                    'I_th = %g\nA_th = %g\nmu_area = %g\nfaculae = %s\nB_sat = %g\nepoch = %s\nfmt = %s\nn_rings = %s\n'
-                    'skipped = %s\n'
-                    % (data_folder, t0.date(), t1.date(), int(step), size, params['noise_th'], params['B_th'],
+            f.write('data_folder = %s\nmagnetogram = %s\nstart = %s\nend = %s\nstep = %d\nsize = %s\n'
+                    'noise_th = %g (4096 px)\nB_th = %g\nI_th = %g\nA_th = %g\nmu_area = %g\nfaculae = %s\nB_sat = %g\n'
+                    'epoch = %s\nfmt = %s\nn_rings = %s\nskipped = %s\n'
+                    % (data_folder, _magnetogram(magnetogram)[0], t0.date(), t1.date(), int(step), size,
+                       params['noise_th'], params['B_th'],
                        params['I_th'], params['A_th'], params['mu_area'], params['faculae'],
                        params.get('B_sat', DEFAULTS['B_sat']), epoch, fmt,
                        ' '.join(map(str, n_rings)) or '-', ', '.join(sorted(set(skipped))) or '-'))
@@ -713,7 +788,7 @@ def _renumber(folder, days, fmt, n_rings):
 def make_sdo_maps(data_folder, out_folder, start, end, step=1, size=512, noise_th=DEFAULTS['noise_th'],
                   B_th=DEFAULTS['B_th'], I_th=DEFAULTS['I_th'], A_th=DEFAULTS['A_th'], mu_area=DEFAULTS['mu_area'],
                   faculae='plage', epoch='days', fmt='npy', n_rings=None, workers=1, resume=True, download=False,
-                  email=None, verbose=True, B_sat=DEFAULTS['B_sat']):
+                  email=None, verbose=True, B_sat=DEFAULTS['B_sat'], magnetogram='45s'):
     """Spot and facula maps of every step-th day from start to end (excluded), from the HMI images of data_folder,
     written in out_folder for active_region_mask(out_folder, origin='lower'). For several values of the thresholds at
     once (every day read once): make_sdo_sweep.
@@ -735,6 +810,8 @@ def make_sdo_maps(data_folder, out_folder, start, end, step=1, size=512, noise_t
     epoch    : the {t} of the file names: 'days' (days since start, default: the time unit of SunSim) or 'index'
                (0, 1, 2, ... in the order of the days with images, as the previous script)
     download : True -> download the missing days from JSOC first (download_hmi, needs email)
+    magnetogram : '45s' (hmi.M_45s, default) or '720s' (hmi.M_720s: ~2 x less noise; fetch_magnetograms gets the ones
+               of the continuum images of data_folder)
     Other arguments: identify_day (one value each). The days without both images, or whose images cannot be read (tried
     3 times), are skipped (listed in 'skipped' and in parameters.txt).
     Also writes summary.csv (one row per epoch: t, date, ff_sp, ff_fc, ff_nt [% of the disc], n_spots, n_plages; all the
@@ -745,13 +822,13 @@ def make_sdo_maps(data_folder, out_folder, start, end, step=1, size=512, noise_t
     if len(sets) > 1:
         raise ValueError('make_sdo_maps takes one value of every threshold; for several values use make_sdo_sweep')
     return _run_sets(data_folder, [(out_folder, sets[0])], start, end, step, size, epoch, fmt, n_rings, workers,
-                     resume, download, email, verbose)[0]
+                     resume, download, email, verbose, magnetogram)[0]
 
 
 def make_sdo_sweep(data_folder, out_folder, start, end, step=1, size=512, noise_th=DEFAULTS['noise_th'],
                    B_th=DEFAULTS['B_th'], I_th=DEFAULTS['I_th'], A_th=DEFAULTS['A_th'], mu_area=DEFAULTS['mu_area'],
                    faculae='plage', epoch='days', fmt=None, n_rings=None, workers=1, resume=True, download=False,
-                   email=None, verbose=True, B_sat=DEFAULTS['B_sat']):
+                   email=None, verbose=True, B_sat=DEFAULTS['B_sat'], magnetogram='45s'):
     """make_sdo_maps for all the combinations of the thresholds (each a value or a list, parameter_sets), every set in
     its own folder out_folder/<set_label> (e.g. noise8_B24_I0.89_A20_mu0.1). Every day is read, resampled and its mu
     computed once for all the sets (at 4096 px most of the time of a day), then classified for every set.
@@ -765,7 +842,7 @@ def make_sdo_sweep(data_folder, out_folder, start, end, step=1, size=512, noise_
     if len(set(labels)) != len(labels):
         raise ValueError('the same set of thresholds is given twice: %s' % labels)
     results = _run_sets(data_folder, [(os.path.join(str(out_folder), lb), p) for lb, p in zip(labels, sets)], start,
-                        end, step, size, epoch, fmt, n_rings, workers, resume, download, email, verbose)
+                        end, step, size, epoch, fmt, n_rings, workers, resume, download, email, verbose, magnetogram)
     # sets.csv: every set ever made in out_folder (a later sweep can add sets)
     path = os.path.join(str(out_folder), 'sets.csv')
     known = {}
@@ -1088,6 +1165,8 @@ def _parser():
                    help='also write the filling factors of the cells of SunSim grids of these numbers of rings')
     p.add_argument('--workers', type=int, default=1, help='processes working on different days (default 1)')
     p.add_argument('--no-resume', action='store_true', help='do again the days already done in --out')
+    p.add_argument('--magnetogram', choices=list(MAGNETOGRAMS), default='45s',
+                   help='magnetograms of --data: 45s (hmi.M_45s, default) or 720s (hmi.M_720s, ~2 x less noise)')
     p.add_argument('--download', action='store_true', help='download the missing days from JSOC first')
     p.add_argument('--email', default=None, help='JSOC email address (for --download)')
     p.add_argument('--conf', default=None, help='old StarSim configuration (sdo_input = 1): simulate the maps of every set '
@@ -1137,7 +1216,8 @@ def main(argv=None):
     fmt = args.format if args.format is not None else ('none' if sweep and n_rings else 'npy')
     fmt = None if fmt == 'none' else fmt
     kw = dict(step=args.step, size=args.size, epoch=args.epoch, fmt=fmt, n_rings=n_rings or None, workers=args.workers,
-              resume=not args.no_resume, download=args.download, email=args.email, verbose=not args.quiet)
+              resume=not args.no_resume, download=args.download, email=args.email, verbose=not args.quiet,
+              magnetogram=args.magnetogram)
     th = dict(noise_th=args.noise_th, B_th=args.B_th, I_th=args.I_th, A_th=args.A_th, mu_area=args.mu_area,
               faculae=args.faculae, B_sat=args.B_sat)
     if args.simulate_only:

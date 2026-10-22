@@ -1,0 +1,38 @@
+# condor_submit_dag sweep_720.dag : the decade at 4096 px (60 rings) with the 720 s magnetograms (hmi.M_720s), both kinds
+# of faculae, everything in ${BASE}/m720s (settings_720.sh):
+#   plage    : the sets of parameters_720_plage.txt    (noise_th, I_th, A_th, Temp)
+#   fraction : the sets of parameters_720_fraction.txt (noise_th, I_th, B_sat, Temp)
+#   0. the 720 s magnetograms of every continuum image of SDO_DATA, if not there yet (fetch_magnetograms.sub, JSOC)
+#   1. the grids once per T_sp of the two files (build_grids_720.sub; those of the 4096 px sweeps are reused) } at the
+#   2. identification in 80 blocks of days per kind, all its sets at once (identify_720.sub)                  } same time
+#   3. the days still missing and the filling factors of every set (aggregate_720.sub)
+#   4. one simulation per line of the parameter files (run_opt_rv_720_plage.sub, run_opt_rv_720_fraction.sub)
+#   5. table of all the sets and the figures, per kind (collect_stats_720.sub; it runs even if some sets failed)
+JOB download          fetch_magnetograms.sub
+JOB grids             build_grids_720.sub
+JOB ident_plage       identify_720.sub
+JOB ident_fraction    identify_720.sub
+JOB aggregate_plage   aggregate_720.sub
+JOB aggregate_fraction aggregate_720.sub
+JOB sets_plage        run_opt_rv_720_plage.sub
+JOB sets_fraction     run_opt_rv_720_fraction.sub
+JOB collect_plage     collect_stats_720.sub
+JOB collect_fraction  collect_stats_720.sub
+VARS ident_plage        kind="plage"
+VARS ident_fraction     kind="fraction"
+VARS aggregate_plage    kind="plage"
+VARS aggregate_fraction kind="fraction"
+VARS collect_plage      kind="plage"
+VARS collect_fraction   kind="fraction"
+PARENT download CHILD ident_plage ident_fraction
+PARENT ident_plage CHILD aggregate_plage
+PARENT ident_fraction CHILD aggregate_fraction
+PARENT grids aggregate_plage CHILD sets_plage
+PARENT grids aggregate_fraction CHILD sets_fraction
+PARENT sets_plage CHILD collect_plage
+PARENT sets_fraction CHILD collect_fraction
+RETRY download 2
+SCRIPT POST ident_plage    /bin/true
+SCRIPT POST ident_fraction /bin/true
+SCRIPT POST sets_plage     /bin/true
+SCRIPT POST sets_fraction  /bin/true

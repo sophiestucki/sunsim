@@ -1,0 +1,15 @@
+# Condor submit file, step 5 of sweep_720.dag: table and figures of all the sets of $(kind) (after
+# run_opt_rv_720_$(kind).sub). kind (plage or fraction) comes from the VARS of the DAG.
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/collect_stats_720.sh
+Arguments  = "$(kind)"
+
+RequestCpus   = 1
+RequestMemory = 4GB
+RequestDisk   = 1GB
+
+Log    = logs/collect_stats_720_$(kind).log
+Output = logs/collect_stats_720_$(kind).out
+Error  = logs/collect_stats_720_$(kind).err
+
+Queue

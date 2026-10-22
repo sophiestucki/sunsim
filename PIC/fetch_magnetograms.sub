@@ -1,0 +1,22 @@
+# Condor submit file, step 0 of sweep_720.dag: the 720 s magnetograms of the continuum images of SDO_DATA in 30 blocks
+# of days (N_DOWNLOADS of settings_720.sh: keep the two equal; downloads from JSOC: internet needed)
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/fetch_magnetograms.sh
+
+# $1 = block
+Arguments = "$(Process)"
+
+# at most this many blocks at the same time (JSOC serves a limited bandwidth: do not open too many connections)
+max_materialize = 6
+RequestCpus   = 1
+RequestMemory = 2GB
+RequestDisk   = 1GB
+
+Log    = logs/fetch_magnetograms_$(Process).log
+Output = logs/fetch_magnetograms_$(Process).out
+Error  = logs/fetch_magnetograms_$(Process).err
+
+stream_output = True
+stream_error  = True
+
+Queue 30
