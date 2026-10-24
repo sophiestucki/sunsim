@@ -50,6 +50,7 @@ arrays (classify_pixels, split_plage_network, count_spots, mu_from_rho) only nee
 import argparse
 import glob
 import os
+import re
 import sys
 import warnings
 from datetime import datetime, timedelta
@@ -451,6 +452,11 @@ def download_hmi(start, end, folder, email, step=1, window_seconds=30, magnetogr
     return files
 
 
+#keywords of the binary table of a compressed image (and of its scaling), not written from the keywords of a record
+_TABLE_KEYWORDS = re.compile(r'^(SIMPLE|XTENSION|BITPIX|NAXIS\d*|PCOUNT|GCOUNT|TFIELDS|EXTNAME|EXTEND|CHECKSUM|DATASUM|'
+                             r'Z.*|T(TYPE|FORM|UNIT|NULL|SCAL|ZERO|DISP|DIM)\d+|THEAP|BSCALE|BZERO|BLANK|COMMENT|HISTORY)$')
+
+
 def fetch_magnetograms(folder, start, end, magnetogram='720s', block=0, n_blocks=1, verbose=True):
     """Downloads into folder the magnetogram of the same T_REC as every continuum image of folder from start to end
     (excluded) that has none yet, from the JSOC storage (supergranulation.fetch_record: drms, no export request, so no
@@ -485,11 +491,16 @@ def fetch_magnetograms(folder, start, end, magnetogram='720s', block=0, n_blocks
         path = os.path.join(str(folder), '%s.%s.magnetogram.fits' % (series.lower(), stamp))
         try:
             raw, keywords = sg.fetch_record(series, t_rec, 'magnetogram', folder, client=client)
-            with fits.open(raw, mode='update') as h:
+            with fits.open(raw) as h:
+                before = np.asarray(h[-1].data, dtype=np.float32)
+            # the keywords go in the header of the binary table of the compressed image (the image keywords pass
+            # through it): the data are not touched. Editing the header of the image itself makes astropy >= 7
+            # compress the image again, wrongly (|B| 10 x too small, no NaN outside the disc)
+            with fits.open(raw, mode='update', disable_image_compression=True) as h:
                 header = h[-1].header
                 for key, v in keywords.items():
                     name = key.replace('__', '-')
-                    if len(name) > 8 or name in header or name in ('COMMENT', 'HISTORY') or v is None:
+                    if len(name) > 8 or _TABLE_KEYWORDS.match(name) or name in header or v is None:
                         continue
                     if isinstance(v, (float, np.floating)) and not np.isfinite(v):
                         continue
@@ -498,6 +509,11 @@ def fetch_magnetograms(folder, start, end, magnetogram='720s', block=0, n_blocks
                         header[name] = v if isinstance(v, (int, float, str)) else str(v)
                     except ValueError:
                         continue
+            with fits.open(raw) as h:
+                same = np.array_equal(before, np.asarray(h[-1].data, dtype=np.float32), equal_nan=True)
+            if not same:
+                os.remove(raw)
+                raise RuntimeError('the image changed when its keywords were written')
             os.replace(raw, path)
             written.append(path)
             if verbose:

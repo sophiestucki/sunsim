@@ -1,0 +1,15 @@
+# Condor submit file, step 1 of sweep_720_dumusque_mu.dag: the grids (N_RINGS of settings_720.sh, Dumusque bisector
+# times mu) of every Temp of parameters_720_plage.txt and parameters_720_fraction.txt (one job)
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/build_grids_720_dumusque_mu.sh
+Arguments  = "1"
+
+RequestCpus   = 10
+RequestMemory = 16GB
+RequestDisk   = 10GB
+
+Log    = logs/build_grids_720_dumusque_mu.log
+Output = logs/build_grids_720_dumusque_mu.out
+Error  = logs/build_grids_720_dumusque_mu.err
+
+Queue

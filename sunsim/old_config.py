@@ -54,6 +54,8 @@ order with ccf_weight_lines, weights normalised to 1), velocity grid -range..ran
                 the faculae keep their own bisector (MURaM has the convective blueshift). The spot: its bisector is
                 removed if remove_bis_spot = 1 (plus median and add_median_diff if add_median_diff > 0), and the Dumusque
                 bisector times convective_shift is added. Rings weighted by their MURaM brightness.
+  dumusque_mu_scaling = a, b ([star], not in the old code): the Dumusque bisector of a ring is also multiplied by
+                a + b mu (e.g. 0, 1: proportional to mu, zero at the limb; ccf_grid.dumusque_bisector(mu_scaling=...)).
   mps_highres : the MURaM high resolution spectrum is interpolated at the mu of every ring and its CCF is computed in
                 every ring (highres_mu = 1); the spot as in mps. The CCF amplitude of every ring is its brightness.
 Spectroscopy ('spec', the observable of the old compute_forward added by O. Porqueras): spectrum of one cell of every
@@ -196,6 +198,7 @@ OPTION_DEFAULTS = [
     ('general', 'remove_bis_spot', int, 1, 'MURaM: bisector of the spot CCF removed'),
     ('general', 'add_median_diff', float, 0.0, 'no shift of the spot CCF'),
     ('star', 'convective_shift', float, 0.0, 'no bisector added'),
+    ('star', 'dumusque_mu_scaling', str, '', 'the same Dumusque bisector at every mu (old code)'),
     ('star', 'differential_rotation', float, 0.0, 'rigid rotation'),
     ('rv', 'ccf_template', str, 'mask', 'mask'),
     ('rv', 'ccf_weight_lines', int, 0, 'lines not weighted by order'),
@@ -620,9 +623,18 @@ def _old_mask(cfg):
     return np.asarray(wvm, dtype=np.float64), np.asarray(fm / np.sum(fm), dtype=np.float64)
 
 
+def _dumusque(cfg):
+    """Dumusque bisector f(mu) -> p(ccf) of the configuration: dumusque_mu_scaling 'a, b' -> times a + b mu."""
+    raw = cfg['dumusque_mu_scaling'].strip()
+    mu_scaling = tuple(float(v) for v in re.split(r'[\s,]+', raw)) if raw else None
+    if mu_scaling is not None and len(mu_scaling) != 2:
+        raise ValueError('dumusque_mu_scaling must be two numbers a, b (factor a + b mu), got %r' % raw)
+    return dumusque_bisector(bool(cfg['ccf_norm']), mu_scaling=mu_scaling)
+
+
 def _spot_rv_axis(cfg, rv, ccf, mu):
     """Velocity axis of a spot CCF (old: remove_bis_spot, add_median_diff, Dumusque bisector x convective_shift)."""
-    dum = dumusque_bisector(bool(cfg['ccf_norm']))(mu)
+    dum = _dumusque(cfg)(mu)
     add = dum(ccf) * 1000 * cfg['convective_shift']
     if cfg['spectral_library'] == 'phoenix':
         return rv - bisector_fit(rv, ccf, 'cubic')(ccf) + add
@@ -769,7 +781,7 @@ def _ccf_grids(cfg, geometry, has_faculae, report):
             elif surface == 'sp':
                 axes = [_spot_rv_axis(cfg, rv, c, mu) for mu in amu]
             else:
-                axes = [centre_axis + dumusque_bisector(norm)(mu)(c) * 1000 * cs for mu in amu]
+                axes = [centre_axis + _dumusque(cfg)(mu)(c) * 1000 * cs for mu in amu]
         else:                                                           # mps: MURaM keeps its bisector
             if surface == 'sp':
                 axes = [_spot_rv_axis(cfg, rv, c, mu) for mu in amu]
