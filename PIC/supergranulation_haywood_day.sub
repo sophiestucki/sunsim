@@ -1,0 +1,21 @@
+# Condor submit file, step 1: one job per day of supergranulation_haywood_days.txt (downloads from JSOC: internet needed)
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/supergranulation_haywood_day.sh
+
+# $1 = OMP_NUM_THREADS, $2 = day
+Arguments = "1 $(day)"
+
+# at most this many days at the same time (JSOC serves a limited bandwidth: do not open too many connections)
+max_materialize = 6
+RequestCpus   = 10
+RequestMemory = 8GB
+RequestDisk   = 2GB
+
+Log    = logs/sgh_day_$(day).log
+Output = logs/sgh_day_$(day).out
+Error  = logs/sgh_day_$(day).err
+
+stream_output = True
+stream_error  = True
+
+Queue day from supergranulation_haywood_days.txt

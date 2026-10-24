@@ -1,40 +1,40 @@
 #!/usr/bin/env python
 """
-Supergranulation and p modes of every HARPS-N solar exposure from SDO/HMI, for a whole period (the analysis of
-analysis/supergranulation_harpsn_2021.ipynb, on PIC). Two steps:
+Supergranulation of every HARPS-N solar exposure from SDO/HMI 45 s dopplergrams corrected as in Haywood et al. (2016),
+for a whole period (on PIC). Two steps:
 
-  python supergranulation.py day --date 2021-05-05 --out DIR --harpsn FILE [--pmodes] [...]
-      One day (one Condor job): the HMI epochs (720 s) closest to its HARPS-N exposures, identified (spots, faculae)
-      and their dopplergram reduced to the velocity of the quiet photosphere of every cell (supergranulation.process_epoch);
-      with --pmodes also every 45 s dopplergram around the exposures (supergranulation.frame_cell_velocities). The FITS
-      files are deleted right after every epoch / frame (at most `workers` + 1 on disk). A day can be started again:
-      what is done is skipped. --dry-run: only the matching and the size of the downloads.
-  python supergranulation.py collect --out DIR --harpsn FILE --conf CONF [...]
-      All the days: calibration of the HMI velocities over the whole period (rotation scale, north-south gradient, ring
-      profile, polynomial of OBS_VR), p modes of every exposure, simulation of every exposure at its own time (maps;
-      maps + dopplergram; maps + dopplergram + p modes), and the comparison with HARPS-N:
+  python supergranulation_haywood.py day --date 2021-05-05 --out DIR --harpsn FILE [--window 720] [...]
+      One day (one Condor job): the HMI epochs (720 s continuum, 45 s magnetogram) closest to its HARPS-N exposures,
+      identified (spots, faculae, quiet pixels; supergranulation.identify_epoch), and every 45 s dopplergram within
+      window / 2 of the middle of an exposure, corrected for the motion of SDO (eq. 10) and the rotation of the Sun
+      (eq. 13, Table 1) and projected on the cells with the quiet pixels of its closest epoch
+      (supergranulation.frame_cell_sums). The velocity of the Sun relative to the barycentre along the line of sight
+      of every exposure from JPL Horizons (observations.sun_barycentric_rv, eq. 1). The FITS files are deleted right
+      after every epoch / frame. A day can be started again: what is done is skipped. --dry-run: only the matching and
+      the size of the downloads.
+  python supergranulation_haywood.py collect --out DIR --start DATE --conf CONF [...]
+      All the days: the corrected dopplergrams averaged over the window of every exposure (the p modes cancel) and
+      projected (supergranulation.window_average; nothing else removed), simulation of every exposure at its own time
+      (maps; maps + dopplergram), and the comparison with the HARPS-N RV in the rest frame of the Sun, rv_raw (DRS,
+      barycentric) - v_sun (JPL):
         - every day (intra-day: median of the day removed): RMS, Pearson r, slope; one figure per day;
         - the daily averages over the period (one offset per instrumental period): maps against maps + dopplergram;
         - the full dataset: every exposure of the period (one offset per instrumental period): RMS, Pearson r, slope.
 
 Folder DIR:
-  days/<date>/exposures.npz   the exposures of the day and their HMI epoch (T_REC, |dt|)
-  days/<date>/epochs/*.npz    one file per 720 s epoch: cell filling factors and velocities, keywords
-  days/<date>/frames45/*.npz  one file per 45 s frame: mean velocity of every cell
+  days/<date>/exposures.npz   the exposures of the day, their HMI epoch (T_REC, |dt|) and JPL velocity
+  days/<date>/epochs/*.npz    one file per epoch: cell filling factors, keywords
+  days/<date>/frames45/*.npz  one file per 45 s dopplergram: sums of the quiet pixels of every cell, keywords
   days/<date>/done.json       the day is complete (numbers of exposures, epochs, frames, failures)
-  results/                    exposures.csv, per_day.csv, intra_day_summary.csv, daily_means.csv, daily_stats.csv,
-                              full_stats.csv, figures/ (days/<date>.png, daily_*.png, per_day_r.png, full_correlation.png)
-                              (--results NAME: another folder, e.g. for collect with --min-obs-quality; then also
-                              removed_exposures.csv, the exposures left out by the quality cut)
+  results/                    exposures.csv, frames.csv, per_day.csv, intra_day_summary.csv, daily_means.csv,
+                              daily_stats.csv, full_stats.csv, figures/ (days/<date>.png, daily_*.png, per_day_r.png,
+                              full_correlation.png) (--results NAME: another folder; with --min-obs-quality also
+                              removed_exposures.csv)
 
-Quality of the exposures (collect --harpsn FILE --min-obs-quality Q): the flags of the release are matched to every
-exposure (by the start of the exposure in file_root): data_quality (0/1: the exposures with 0 are always left out) and
-obs_quality (0-1, the quality of the sky during the exposure: the release has only exposures with obs_quality >= 0.9);
-the exposures with obs_quality < Q are left out of the comparison (the HMI calibration uses all the epochs).
---min-day-exp N: then also the days with fewer than N exposures left (all their exposures). The airmass of every
-exposure (release) is in exposures.csv.
+Quality of the exposures (collect --harpsn FILE --min-obs-quality Q): as in supergranulation.py of the earlier runs
+(data_quality = 1 always, obs_quality >= Q, --min-day-exp N).
 
-Needs sunsim with the sdo extras (sunpy, drms) and internet access to jsoc.stanford.edu (no JSOC account).
+Needs sunsim with the sdo extras (sunpy, drms) and internet access to jsoc.stanford.edu and ssd.jpl.nasa.gov.
 """
 import argparse
 import json
@@ -48,10 +48,13 @@ import time
 import numpy as np
 
 QUANTITIES = ('rv', 'fwhm', 'bis', 'contrast')
-MODELS = ('maps', 'maps + dopplergram', 'maps + dopplergram + p modes')
-COLOURS = {'maps': '#ea8642', 'maps + dopplergram': '#45a5aa', 'maps + dopplergram + p modes': '#c4a000'}
+MODELS = ('maps', 'maps + dopplergram')
+COLOURS = {'maps': '#ea8642', 'maps + dopplergram': '#45a5aa'}
 UNITS = {'rv': ('RV', 'm/s', '%.2f'), 'fwhm': ('FWHM', 'm/s', '%.2f'), 'bis': ('BIS', 'm/s', '%.2f'),
          'contrast': ('contrast', 'ppm', '%.0f')}
+HARPSN_KEYS = ('jd', 'jd_start', 'texp', 'rv', 'rv_err', 'fwhm', 'fwhm_err', 'bis', 'bis_err', 'contrast',
+               'contrast_err', 'rv_raw', 'berv', 'berv_bary_to_helio', 'rv_diff_extinction')
+FRAME_INFO = ('jd', 'obs_vr', 'obs_vw', 'obs_vn', 'B0', 'dsun', 'shift_px', 'v_quiet_mean')
 
 
 def _key(t_rec):
@@ -79,8 +82,8 @@ def run_day(a):
 
     # ---- exposures of the day (middle of the exposure, UTC at the Earth)
     h = obs.load_harpsn(a.harpsn, a.date, end=a.date, daily=False, quality=a.quality)
-    if 'jd_start' not in h:
-        sys.exit('load_harpsn gives no jd_start: update sunsim (times from file_root + texp)')
+    if 'jd_start' not in h or 'rv_raw' not in h:
+        sys.exit('load_harpsn gives no jd_start / rv_raw: update sunsim')
     n_exp = len(h['jd'])
     _log('%s: %d exposures' % (a.date, n_exp))
     if n_exp == 0:
@@ -88,12 +91,11 @@ def run_day(a):
             json.dump({'date': a.date, 'n_exp': 0}, open(done_file, 'w'))
         return 0
 
-    # ---- matching: every exposure takes the closest 720 s slot with a good continuum and dopplergram (as the notebook)
+    # ---- matching: every exposure takes the closest 720 s continuum (and the 45 s magnetogram closest to it)
     exp_file = os.path.join(folder, 'exposures.npz')
-    names = {k: sg.SERIES[k][0] for k in sg.SERIES}
     jd0, jd1 = h['jd'].min() - a.max_dt / 86400, h['jd'].max() + a.max_dt / 86400
-    rec = {k: sg.query_records(names[k], jd0, jd1) for k in names}
-    slots = rec['continuum'][rec['continuum']['T_REC'].isin(rec['dopplergram']['T_REC'])].reset_index(drop=True)
+    rec = {k: sg.query_records(sg.SERIES[k][0], jd0, jd1) for k in sg.SERIES}
+    slots = rec['continuum']
     exp_trec = np.array([''] * n_exp, dtype=object)
     exp_dt = np.full(n_exp, np.inf)
     epochs = {}
@@ -105,87 +107,105 @@ def run_day(a):
             tr = slots['T_REC'].values[kk]
             if tr not in epochs:
                 km, _ = sg.closest(slots['jd'].values[kk], rec['magnetogram']['jd'].values)
-                epochs[tr] = {'continuum': tr, 'dopplergram': tr, 'magnetogram': rec['magnetogram']['T_REC'].values[km[0]],
+                epochs[tr] = {'continuum': tr, 'magnetogram': rec['magnetogram']['T_REC'].values[km[0]],
                               'jd': float(slots['jd'].values[kk])}
             exp_trec[i], exp_dt[i] = tr, ddt
     epochs = sorted(epochs.values(), key=lambda e: e['jd'])
-    np.savez(exp_file, **{k: h[k] for k in ('jd', 'jd_start', 'texp', 'rv', 'rv_err', 'fwhm', 'fwhm_err', 'bis',
-                                            'bis_err', 'contrast', 'contrast_err') if k in h},
-             exp_trec=exp_trec.astype(str), exp_dt=exp_dt, epochs=json.dumps(epochs))
     _log('%d exposures matched to %d epochs (|dt| max %.0f s)' % (np.sum(exp_dt <= a.max_dt), len(epochs),
          exp_dt[np.isfinite(exp_dt)].max() if np.any(np.isfinite(exp_dt)) else np.nan))
 
-    # ---- the 45 s frames needed: within ref_window / 2 (+ 2 frames) of the middle of an exposure
-    frames = []
-    if a.pmodes:
-        half = (a.ref_window / 2 + 90) / 86400
-        r45 = sg.query_records(sg.SERIES_45S[0], h['jd'].min() - half, h['jd'].max() + half)
+    # ---- the 45 s dopplergrams within window / 2 of the middle of a matched exposure, given to their closest epoch
+    matched = h['jd'][exp_dt <= a.max_dt]
+    frames = {}
+    if len(epochs) and len(matched):
+        half = (a.window / 2 + sg.CADENCE_45S) / 86400
+        r45 = sg.query_records(sg.SERIES_45S[0], matched.min() - half, matched.max() + half)
         near = np.zeros(len(r45), bool)
-        for m in h['jd']:
+        for m in matched:
             near |= np.abs(r45['jd'].values - m) <= half
-        frames = list(r45['T_REC'].values[near])
-    todo_e = [e for e in epochs if not os.path.exists(os.path.join(folder, 'epochs', _key(e['continuum']) + '.npz'))]
-    todo_f = [t for t in frames if not os.path.exists(os.path.join(folder, 'frames45', _key(t) + '.npz'))]
+        r45 = r45[near]
+        ke, _ = sg.closest(r45['jd'].values, [e['jd'] for e in epochs])
+        for t_rec, kk in zip(r45['T_REC'].values, ke):
+            frames.setdefault(epochs[kk]['continuum'], []).append(t_rec)
+    n_frames = sum(len(f) for f in frames.values())
+
+    def frame_done(t):
+        return os.path.exists(os.path.join(folder, 'frames45', _key(t) + '.npz'))
+
+    def epoch_done(e):
+        return (os.path.exists(os.path.join(folder, 'epochs', _key(e['continuum']) + '.npz'))
+                and all(frame_done(t) for t in frames.get(e['continuum'], [])))
+
+    todo = [e for e in epochs if not epoch_done(e)]
     if a.limit:
-        todo_e, todo_f = todo_e[:a.limit], todo_f[:a.limit]
+        todo = todo[:a.limit]
+    n_todo_f = sum(len([t for t in frames.get(e['continuum'], []) if not frame_done(t)]) for e in todo)
     _log('to do: %d of %d epochs (~%.1f GB), %d of %d frames of 45 s (~%.1f GB); all deleted after processing'
-         % (len(todo_e), len(epochs), 0.05 * len(todo_e), len(todo_f), len(frames), 0.018 * len(todo_f)))
+         % (len(todo), len(epochs), 0.035 * len(todo), n_todo_f, n_frames, 0.018 * n_todo_f))
+
+    # ---- velocity of the Sun relative to the barycentre along the line of sight (JPL Horizons, eq. 1)
+    if not a.dry_run:
+        jpl = obs.sun_barycentric_rv(h['jd'])
+        np.savez(exp_file, **{k: h[k] for k in HARPSN_KEYS if k in h}, v_sun=jpl['v'], lt=jpl['lt'], rr=jpl['rr'],
+                 exp_trec=exp_trec.astype(str), exp_dt=exp_dt, epochs=json.dumps(epochs))
+        _log('JPL: v_sun %.3f to %.3f m/s, minus berv_bary_to_helio: %.4f m/s at most'
+             % (jpl['v'].min(), jpl['v'].max(), np.nanmax(np.abs(jpl['v'] - h.get('berv_bary_to_helio', np.nan)))))
     if a.dry_run:
         return 0
 
     thresholds = dict(noise_th=a.noise_th, B_th=a.B_th, I_th=a.I_th, A_th=a.A_th, mu_area=a.mu_area, faculae=a.faculae)
     fits_dir = tempfile.mkdtemp(prefix='hmi_', dir=a.tmp)
     failed = 0
+    fetch45 = lambda t: sg.fetch_record(sg.SERIES_45S[0], t, sg.SERIES_45S[1], fits_dir)
     try:
-        # ---- 720 s epochs
         t0 = time.time()
-        for k, (e, files) in enumerate(sg.prefetch(todo_e, lambda e: sg.fetch_epoch(e, fits_dir),
-                                                   workers=a.workers, ahead=a.workers), 1):
+        for k, (e, files) in enumerate(sg.prefetch(todo, lambda e: sg.fetch_epoch(e, fits_dir), workers=1, ahead=1), 1):
             if isinstance(files, Exception):
                 failed += 1
-                _log('[%d/%d] %s: download failed (%s)' % (k, len(todo_e), e['continuum'], str(files)[:150]))
+                _log('[%d/%d] %s: download failed (%s)' % (k, len(todo), e['continuum'], str(files)[:150]))
                 continue
+            # ---- identification of the epoch
             try:
-                r = sg.process_epoch(files, size=a.size, n_rings=a.n_rings, thresholds=thresholds)
-                info = {key: (float(r[key]) if np.ndim(r[key]) == 0 else list(map(float, r[key])))
-                        for key in ('ff_sp_disc', 'ff_fc_disc', 'ff_nt_disc', 'n_spots', 'n_plages', 'omega', 'rotation',
-                                    'v_quiet_mean', 'obs_vr', 'B0', 'shift_px')}
-                info.update({key: e[key] for key in ('continuum', 'magnetogram', 'dopplergram', 'jd')})
+                r = sg.identify_epoch(files, size=a.size, n_rings=a.n_rings, thresholds=thresholds,
+                                      network_velocity=a.network_velocity)
+                info = {key: float(r[key]) for key in ('ff_sp_disc', 'ff_fc_disc', 'ff_nt_disc', 'n_spots', 'n_plages')}
+                info.update({key: e[key] for key in ('continuum', 'magnetogram', 'jd')})
                 np.savez(os.path.join(folder, 'epochs', _key(e['continuum']) + '.npz'), ff_sp=r['ff_sp'],
-                         ff_fc=r['ff_fc'], v_cell=r['v_cell'], w_cell=r['w_cell'], info=json.dumps(info))
+                         ff_fc=r['ff_fc'], info=json.dumps(info))
+                context = r['context']
                 del r
             except Exception as err:                 # e.g. an image with missing data
                 failed += 1
-                _log('[%d/%d] %s: not processed (%s)' % (k, len(todo_e), e['continuum'], str(err)[:150]))
+                _log('[%d/%d] %s: not processed (%s)' % (k, len(todo), e['continuum'], str(err)[:150]))
+                continue
             finally:
                 for p, _ in files.values():
                     if os.path.exists(p):
                         os.remove(p)
-            if k % 10 == 0 or k == len(todo_e):
-                el = time.time() - t0
-                _log('[%d/%d] epochs, %.0f s, ~%.0f min left' % (k, len(todo_e), el, el / k * (len(todo_e) - k) / 60))
 
-        # ---- 45 s frames
-        t0 = time.time()
-        fetch45 = lambda t: sg.fetch_record(sg.SERIES_45S[0], t, sg.SERIES_45S[1], fits_dir)
-        for k, (t_rec, files) in enumerate(sg.prefetch(todo_f, fetch45, workers=a.workers, ahead=a.workers), 1):
-            if isinstance(files, Exception):
-                failed += 1
-                _log('[%d/%d] %s: download failed (%s)' % (k, len(todo_f), t_rec, str(files)[:150]))
-                continue
-            try:
-                r = sg.frame_cell_velocities(files, a.n_rings)
-                np.savez(os.path.join(folder, 'frames45', _key(t_rec) + '.npz'), v_cell=r['v_cell'], n_pix=r['n_pix'],
-                         jd=r['jd'], obs_vr=r['obs_vr'], t_rec=t_rec)
-            except Exception as err:
-                failed += 1
-                _log('[%d/%d] %s: not processed (%s)' % (k, len(todo_f), t_rec, str(err)[:150]))
-            finally:
-                if os.path.exists(files[0]):
-                    os.remove(files[0])
-            if k % 50 == 0 or k == len(todo_f):
-                el = time.time() - t0
-                _log('[%d/%d] frames, %.0f s, ~%.0f min left' % (k, len(todo_f), el, el / k * (len(todo_f) - k) / 60))
+            # ---- its 45 s dopplergrams
+            todo_f = [t for t in frames.get(e['continuum'], []) if not frame_done(t)]
+            for t_rec, f45 in sg.prefetch(todo_f, fetch45, workers=a.workers, ahead=a.workers):
+                if isinstance(f45, Exception):
+                    failed += 1
+                    _log('%s: download failed (%s)' % (t_rec, str(f45)[:150]))
+                    continue
+                try:
+                    fr = sg.frame_cell_sums(f45, context, n_rings=a.n_rings, mu_min=a.mu_min)
+                    np.savez(os.path.join(folder, 'frames45', _key(t_rec) + '.npz'), swv=fr['swv'].astype(np.float32),
+                             sw=fr['sw'].astype(np.float32), t_rec=t_rec, epoch=e['continuum'],
+                             info=json.dumps({key: float(fr[key]) for key in FRAME_INFO}))
+                    del fr
+                except Exception as err:
+                    failed += 1
+                    _log('%s: not processed (%s)' % (t_rec, str(err)[:150]))
+                finally:
+                    if os.path.exists(f45[0]):
+                        os.remove(f45[0])
+            del context
+            el = time.time() - t0
+            _log('[%d/%d] epoch %s (%d frames), %.0f s, ~%.0f min left'
+                 % (k, len(todo), e['continuum'], len(todo_f), el, el / k * (len(todo) - k) / 60))
     finally:
         shutil.rmtree(fits_dir, ignore_errors=True)
 
@@ -193,9 +213,10 @@ def run_day(a):
     n_fr = len([f for f in os.listdir(os.path.join(folder, 'frames45')) if f.endswith('.npz')])
     if not a.limit:
         json.dump({'date': a.date, 'n_exp': n_exp, 'n_epochs': len(epochs), 'epochs_done': n_ep,
-                   'n_frames': len(frames), 'frames_done': n_fr, 'failed': failed, 'pmodes': bool(a.pmodes),
-                   'n_rings': a.n_rings, 'size': a.size, 'thresholds': thresholds}, open(done_file, 'w'), indent=1)
-    _log('%s done: %d / %d epochs, %d / %d frames, %d failed' % (a.date, n_ep, len(epochs), n_fr, len(frames), failed))
+                   'n_frames': n_frames, 'frames_done': n_fr, 'failed': failed, 'window': a.window,
+                   'mu_min': a.mu_min, 'network_velocity': a.network_velocity, 'n_rings': a.n_rings, 'size': a.size,
+                   'thresholds': thresholds}, open(done_file, 'w'), indent=1)
+    _log('%s done: %d / %d epochs, %d / %d frames, %d failed' % (a.date, n_ep, len(epochs), n_fr, n_frames, failed))
     return 1 if failed else 0
 
 
@@ -238,10 +259,10 @@ def exposure_quality(ex, harpsn):
 
 def load_days(out, n_rings):
     """The products of the complete days: exposures (dict of arrays, one row per exposure with an epoch), epochs (dict
-    of arrays), the 45 s frames of every day."""
+    of arrays), the 45 s frames of every day ({day: (jd, swv, sw, info)}) and the window of the days [s]."""
     days = sorted(d for d in os.listdir(os.path.join(out, 'days'))
                   if os.path.exists(os.path.join(out, 'days', d, 'done.json')))
-    ex, ep, frames = [], {k: [] for k in ('ff_sp', 'ff_fc', 'v_cell', 'w_cell', 'jd', 'obs_vr', 'a0', 'key')}, {}
+    ex, ep, frames, windows = [], {k: [] for k in ('ff_sp', 'ff_fc', 'jd', 'key')}, {}, set()
     for d in days:
         folder = os.path.join(out, 'days', d)
         done = json.load(open(os.path.join(folder, 'done.json')))
@@ -249,6 +270,7 @@ def load_days(out, n_rings):
             continue
         if done.get('n_rings', n_rings) != n_rings:
             raise ValueError('%s: %d rings, collect asked for %d' % (d, done['n_rings'], n_rings))
+        windows.add(float(done['window']))
         row_of = {}
         for f in sorted(os.listdir(os.path.join(folder, 'epochs'))):
             if not f.endswith('.npz'):
@@ -256,28 +278,29 @@ def load_days(out, n_rings):
             with np.load(os.path.join(folder, 'epochs', f)) as z:
                 info = json.loads(str(z['info']))
                 row_of[_key(info['continuum'])] = len(ep['jd'])
-                for k in ('ff_sp', 'ff_fc', 'v_cell', 'w_cell'):
+                for k in ('ff_sp', 'ff_fc'):
                     ep[k].append(z[k])
-            ep['jd'].append(info['jd']); ep['obs_vr'].append(info['obs_vr']); ep['a0'].append(info['rotation'][0])
+            ep['jd'].append(info['jd'])
             ep['key'].append(_key(info['continuum']))
         with np.load(os.path.join(folder, 'exposures.npz'), allow_pickle=True) as z:
             e = {k: z[k] for k in z.files if k != 'epochs'}
         e['epoch'] = np.array([row_of.get(_key(tr), -1) if tr else -1 for tr in e['exp_trec']])
         e['day'] = np.array([d] * len(e['jd']))
         ex.append(e)
-        jd45, v45, n45 = [], [], []
+        jd45, swv, sw, info = [], [], [], []
         for f in sorted(os.listdir(os.path.join(folder, 'frames45'))):
             if f.endswith('.npz'):
                 with np.load(os.path.join(folder, 'frames45', f)) as z:
-                    jd45.append(float(z['jd'])); v45.append(z['v_cell']); n45.append(z['n_pix'])
+                    i = json.loads(str(z['info']))
+                    jd45.append(i['jd']); swv.append(z['swv']); sw.append(z['sw']); info.append(i)
         if jd45:
-            frames[d] = (np.array(jd45), np.array(v45), np.array(n45))
+            frames[d] = (np.array(jd45), np.array(swv, dtype=np.float64), np.array(sw, dtype=np.float64), info)
     keys = set.intersection(*[set(e) for e in ex])
     ex = {k: np.concatenate([e[k] for e in ex]) for k in keys}
     keep = ex['epoch'] >= 0
     ex = {k: v[keep] for k, v in ex.items()}
     ep = {k: np.array(v) for k, v in ep.items()}
-    return ex, ep, frames
+    return ex, ep, frames, windows
 
 
 def run_collect(a):
@@ -285,14 +308,17 @@ def run_collect(a):
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     import pandas as pd
-    from sunsim import nbspectra, observations as obs, simulate_old_config, precomputed_filling_factors
+    from sunsim import observations as obs, simulate_old_config, precomputed_filling_factors
     from sunsim import supergranulation as sg
 
     res_dir = os.path.join(a.out, getattr(a, 'results', 'results'))
     fig_dir = os.path.join(res_dir, 'figures')
     figures = getattr(a, 'figures', True)
     os.makedirs(os.path.join(fig_dir, 'days'), exist_ok=True)
-    ex, ep, frames = load_days(a.out, a.n_rings)
+    ex, ep, frames, windows = load_days(a.out, a.n_rings)
+    window = a.window if a.window else min(windows)
+    if window > min(windows):
+        raise ValueError('--window %.0f s: the days have the frames of %.0f s only' % (window, min(windows)))
     if getattr(a, 'harpsn', None):
         # quality flags of the release: data_quality = 1 always, obs_quality >= min_obs_quality if it is given
         qf = exposure_quality(ex, a.harpsn)
@@ -321,42 +347,36 @@ def run_collect(a):
                              'of the exposures: %.4f to %.4f)' % (getattr(a, 'min_obs_quality', None),
                                                                   getattr(a, 'min_day_exp', 0), np.nanmin(qf['obs_quality']),
                                                                   np.nanmax(qf['obs_quality'])))
+
+    # ---- the corrected dopplergrams averaged over the window of every exposure and projected (nothing removed)
+    n_cells = ep['ff_sp'].shape[1]
+    v_exp, sw_exp = np.full((len(ex['jd']), n_cells), np.nan), np.zeros((len(ex['jd']), n_cells))
+    n45, ok45 = np.zeros(len(ex['jd']), np.int64), np.zeros(len(ex['jd']), bool)
+    rows = []
+    for d, (jd45, swv, sw, info) in frames.items():
+        m = np.flatnonzero(ex['day'] == d)
+        if len(m):
+            v_exp[m], sw_exp[m], n45[m], ok45[m] = sg.window_average(jd45, swv, sw, ex['jd'][m], window=window,
+                                                                     min_fill=a.min_fill)
+        rows += [dict(i, day=d) for i in info]
+    pd.DataFrame(rows).to_csv(os.path.join(res_dir, 'frames.csv'), index=False)
+    _log('dopplergrams: %d frames, window %.0f s: %d of %d exposures with >= %.0f %% of the frames (left out: %d)'
+         % (len(rows), window, ok45.sum(), len(ok45), 100 * a.min_fill, (~ok45).sum()))
+    ex = {k: v[ok45] for k, v in ex.items()}
+    v_exp, sw_exp, n45 = v_exp[ok45], sw_exp[ok45], n45[ok45]
+    v_exp, filled = sg.fill_empty_cells(v_exp, sw_exp, a.n_rings)
+    _log('cells without quiet pixels (ring mean): %.1f per exposure' % filled.sum(axis=1).mean())
+
     jd_start = obs.jd_of_date(a.start)
     ex['t'] = ex['jd'] - jd_start
     n_days = len(np.unique(ex['day']))
-    _log('%d exposures on %d days, %d epochs, 45 s frames on %d days' % (len(ex['jd']), n_days, len(ep['jd']), len(frames)))
-
-    # ---- calibration of the HMI velocities over the whole period (notebook, section 4.1)
-    amu = np.asarray(nbspectra.generate_grid_coordinates_nb(a.n_rings)[3])
-    ring = sg.ring_of_cells(a.n_rings)
-    ld = (1 - 0.6 * (1 - amu))[ring]
-    w_rv = ep['w_cell'] * ld
-    no_data = ~np.isfinite(ep['v_cell'])
-    v_scaled, scale = sg.rescale_by_rotation(ep['v_cell'], ep['a0'])
-    v_flat, ns = sg.remove_large_scale(v_scaled, ep['w_cell'], a.n_rings, terms=('ns',))
-    v_ring, _ = sg.remove_ring_profile(v_flat, ep['w_cell'], a.n_rings)
-    v_sg, disc_raw, disc_sg, vr_coef = sg.remove_observer_trend(v_ring, w_rv, ep['obs_vr'], degree=a.vr_degree)
-    v_sg[no_data] = 0.0
-    _log('calibration: scale %.4f-%.4f, north-south %.0f to %.0f m/s/R, disc velocity std %.2f -> %.2f m/s (OBS_VR '
-         'polynomial of degree %d)' % (scale.min(), scale.max(), ns.min(), ns.max(), np.std(disc_raw), np.std(disc_sg),
-                                       a.vr_degree))
-
-    # ---- p modes of every exposure (notebook, section 4.3)
-    e_idx = ex['epoch']
-    delta = np.zeros((len(e_idx), v_sg.shape[1]))
-    ok45 = np.zeros(len(e_idx), bool)
-    for d, (jd45, v45, _) in frames.items():
-        m = np.flatnonzero(ex['day'] == d)
-        if len(m) and len(jd45) > 1:
-            dd, ok = sg.pmode_velocities(jd45, v45, ex['jd_start'][m], ex['jd_start'][m] + ex['texp'][m] / 86400,
-                                         ref_window=a.ref_window)
-            delta[m], ok45[m] = dd, ok
-    _log('p modes for %d of %d exposures' % (ok45.sum(), len(ok45)))
-    v_exp = v_sg[e_idx]
-    v_pm = v_exp + delta
-    v_pm[no_data[e_idx]] = 0.0
+    _log('%d exposures on %d days, %d epochs' % (len(ex['jd']), n_days, len(ep['jd'])))
+    # HARPS-N RV in the rest frame of the Sun (Haywood et al. 2016, eq. 1): the RV of the DRS (BERV applied) - v_sun (JPL)
+    ex['rv_release'] = ex['rv']
+    ex['rv'] = ex['rv_raw'] - ex['v_sun']
 
     # ---- simulations of every exposure at its own time
+    e_idx = ex['epoch']
     conf = re.sub(r'(?m)^n_grid_rings\s*:\s*\d+', 'n_grid_rings : %d' % a.n_rings, open(a.conf).read())
     conf_file = os.path.join(res_dir, 'sun_N%d.conf' % a.n_rings)
     open(conf_file, 'w').write(conf)
@@ -366,12 +386,10 @@ def run_collect(a):
     t0 = time.time()
     sims = {'maps': simulate_old_config(conf_file, times=t, observables=list(QUANTITIES), paths=paths,
                                         active_regions_mask=ff, verbose=False)}
-    grids = sims['maps']['grids']
-    for name, v in (('maps + dopplergram', v_exp), ('maps + dopplergram + p modes', v_pm)):
-        sims[name] = simulate_old_config(conf_file, times=t, observables=list(QUANTITIES), paths=paths, grids=grids,
-                                         active_regions_mask=ff, verbose=False,
-                                         quiet_velocity=sg.quiet_velocity_field(t, v, a.n_rings))
-    _log('3 simulations of %d exposures: %.0f s' % (len(t), time.time() - t0))
+    sims['maps + dopplergram'] = simulate_old_config(conf_file, times=t, observables=list(QUANTITIES), paths=paths,
+                                                     grids=sims['maps']['grids'], active_regions_mask=ff, verbose=False,
+                                                     quiet_velocity=sg.quiet_velocity_field(t, v_exp, a.n_rings))
+    _log('%d simulations of %d exposures: %.0f s' % (len(sims), len(t), time.time() - t0))
     sim = {name: {q: (relative_ppm(s[q]) if q == 'contrast' else np.asarray(s[q], float)) for q in QUANTITIES}
            for name, s in sims.items()}
     ob = {q: np.asarray(ex[q], float) for q in QUANTITIES}
@@ -380,7 +398,8 @@ def run_collect(a):
     ob['contrast'] = relative_ppm(ob['contrast'])
 
     table = pd.DataFrame({'day': ex['day'], 'jd_utc': ex['jd'], 't': t, 'sdo_t_rec': ex['exp_trec'], 'dt_sdo_s': ex['exp_dt'],
-                          'pmodes': ok45})
+                          'n_frames': n45, 'rv_raw': ex['rv_raw'], 'v_sun_jpl': ex['v_sun'],
+                          'berv_bary_to_helio': ex['berv_bary_to_helio'], 'rv_release': ex['rv_release']})
     for k in ('obs_quality', 'airmass'):
         if k in ex:
             table[k] = ex[k]
@@ -403,9 +422,9 @@ def run_collect(a):
             for name in MODELS:
                 c = cd[q][name]
                 r, k, k_err = fit_line(c['sim'], c['obs'])
-                rows.append({'day': d, 'n': c['n'], 'n_pmodes': int(ok45[m].sum()), 'quantity': q, 'model': name,
-                             'RMS obs': c['rms_obs'], 'RMS obs - sim': c['rms'], 'r': r, 'slope': k,
-                             'slope_err': k_err, 'sim std': np.std(c['sim'])})
+                rows.append({'day': d, 'n': c['n'], 'quantity': q, 'model': name, 'RMS obs': c['rms_obs'],
+                             'RMS obs - sim': c['rms'], 'r': r, 'slope': k, 'slope_err': k_err,
+                             'sim std': np.std(c['sim'])})
         if figures and m.sum() >= a.min_exp:
             plot_day(plt, d, cd, os.path.join(fig_dir, 'days', '%s.png' % d))
     per_day = pd.DataFrame(rows)
@@ -451,25 +470,26 @@ def run_collect(a):
         dm.append(row)
     dm = pd.DataFrame(dm)
     dm.to_csv(os.path.join(res_dir, 'daily_means.csv'), index=False)
-    hd = {'t': dm['t'].values}
-    for q in QUANTITIES:
-        hd[q], hd[q + '_err'] = dm[q + '_obs'].values, dm[q + '_err'].values
-    cmp_daily = {q: {name: obs.compare_rv_exposures(hd, dm['%s_%s' % (q, name)].values, quantity=q, interventions=cuts)
-                     for name in MODELS} for q in QUANTITIES}
-    rows = []
-    for q in QUANTITIES:
-        for name in MODELS:
-            c = cmp_daily[q][name]
-            r, k, k_err = fit_line(c['sim'], c['obs'])
-            rows.append({'quantity': q, 'model': name, 'days': c['n'], 'RMS obs': c['rms_obs'], 'MAD obs': c['mad_obs'],
-                         'RMS obs - sim': c['rms'], 'MAD obs - sim': c['mad'], 'r': r, 'slope': k, 'slope_err': k_err,
-                         'sim std': np.std(c['sim'])})
-    daily_stats = pd.DataFrame(rows)
-    daily_stats.to_csv(os.path.join(res_dir, 'daily_stats.csv'), index=False)
-    print(daily_stats.round(3).to_string(), flush=True)
-    if figures:
-        plot_daily(plt, cmp_daily, a.start, os.path.join(fig_dir, 'daily_timeseries.png'))
-        plot_daily_correlation(plt, cmp_daily, os.path.join(fig_dir, 'daily_correlation_rv.png'))
+    if len(dm) >= 3:
+        hd = {'t': dm['t'].values}
+        for q in QUANTITIES:
+            hd[q], hd[q + '_err'] = dm[q + '_obs'].values, dm[q + '_err'].values
+        cmp_daily = {q: {name: obs.compare_rv_exposures(hd, dm['%s_%s' % (q, name)].values, quantity=q,
+                                                        interventions=cuts) for name in MODELS} for q in QUANTITIES}
+        rows = []
+        for q in QUANTITIES:
+            for name in MODELS:
+                c = cmp_daily[q][name]
+                r, k, k_err = fit_line(c['sim'], c['obs'])
+                rows.append({'quantity': q, 'model': name, 'days': c['n'], 'RMS obs': c['rms_obs'],
+                             'MAD obs': c['mad_obs'], 'RMS obs - sim': c['rms'], 'MAD obs - sim': c['mad'], 'r': r,
+                             'slope': k, 'slope_err': k_err, 'sim std': np.std(c['sim'])})
+        daily_stats = pd.DataFrame(rows)
+        daily_stats.to_csv(os.path.join(res_dir, 'daily_stats.csv'), index=False)
+        print(daily_stats.round(3).to_string(), flush=True)
+        if figures:
+            plot_daily(plt, cmp_daily, a.start, os.path.join(fig_dir, 'daily_timeseries.png'))
+            plot_daily_correlation(plt, cmp_daily, os.path.join(fig_dir, 'daily_correlation_rv.png'))
 
     # ---- the full dataset: every exposure of the period (medians removed, one offset per instrumental period)
     hf = {'t': t}
@@ -569,7 +589,7 @@ def plot_daily(plt, cmp_daily, start, path):
         x = pd.Timestamp(start) + pd.to_timedelta(c0['t'], unit='D')
         ax.errorbar(x, c0['obs'], yerr=c0['obs_err'], fmt='o', ms=4, color='#102e37', alpha=0.6,
                     label=('HARPS-N: RMS ' + fmt + ' %s') % (c0['rms_obs'], unit))
-        for name in MODELS[:2]:
+        for name in MODELS:
             c = cmp_daily[q][name]
             x = pd.Timestamp(start) + pd.to_timedelta(c['t'], unit='D')
             ax.plot(x, c['obs'] - c['res'], 's-', ms=3, lw=1, color=COLOURS[name], label=name)
@@ -590,8 +610,8 @@ def plot_daily(plt, cmp_daily, start, path):
 
 def plot_daily_correlation(plt, cmp_daily, path):
     """Daily mean RV of HARPS-N against the simulations: maps, maps + dopplergram."""
-    fig, axes = plt.subplots(1, 2, figsize=(11, 5), squeeze=False)
-    for ax, name in zip(axes[0], MODELS[:2]):
+    fig, axes = plt.subplots(1, len(MODELS), figsize=(5.5 * len(MODELS), 5), squeeze=False)
+    for ax, name in zip(axes[0], MODELS):
         c = cmp_daily['rv'][name]
         s = c['obs'] - c['res']                                   # simulation + offsets
         r, k, k_err = fit_line(s, c['obs'])
@@ -640,7 +660,7 @@ def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.split('\n\n')[0], formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest='step', required=True)
 
-    d = sub.add_parser('day', help='one day: HMI epochs and 45 s frames of its exposures')
+    d = sub.add_parser('day', help='one day: HMI epochs and corrected 45 s dopplergrams of its exposures')
     d.add_argument('--date', required=True, help='YYYY-MM-DD (UTC day of the exposures)')
     d.add_argument('--out', required=True)
     d.add_argument('--harpsn', required=True, help='csv of the HARPS-N public release')
@@ -653,15 +673,18 @@ def main(argv=None):
     d.add_argument('--A-th', type=float, default=20.0)
     d.add_argument('--mu-area', type=float, default=0.1)
     d.add_argument('--faculae', default='plage', choices=('plage', 'plage+network'))
+    d.add_argument('--no-network-velocity', dest='network_velocity', action='store_false',
+                   help='quiet pixels: not active at all (default: neither spot nor facula)')
     d.add_argument('--max-dt', type=float, default=900.0, help='[s] exposures farther from an HMI epoch are not used')
-    d.add_argument('--pmodes', action='store_true', help='also the 45 s dopplergrams (p modes)')
-    d.add_argument('--ref-window', type=float, default=1800.0, help='[s] p modes: exposure mean - mean over this window')
+    d.add_argument('--window', type=float, default=720.0,
+                   help='[s] the 45 s dopplergrams within window / 2 of the middle of every exposure are averaged')
+    d.add_argument('--mu-min', type=float, default=0.1, help='only the pixels with mu > this are projected')
     d.add_argument('--workers', type=int, default=1, help='downloads at the same time')
     d.add_argument('--tmp', default=None, help='folder of the FITS files (deleted after every epoch / frame)')
-    d.add_argument('--limit', type=int, default=0, help='test: at most this many epochs and frames')
+    d.add_argument('--limit', type=int, default=0, help='test: at most this many epochs')
     d.add_argument('--dry-run', action='store_true', help='only the matching and the size of the downloads')
 
-    c = sub.add_parser('collect', help='all the days: calibration, simulations, comparison with HARPS-N')
+    c = sub.add_parser('collect', help='all the days: averages, simulations, comparison with HARPS-N')
     c.add_argument('--out', required=True)
     c.add_argument('--start', required=True, help='origin of the times (YYYY-MM-DD)')
     c.add_argument('--conf', required=True, help='configuration of the simulation (n_grid_rings replaced)')
@@ -669,8 +692,10 @@ def main(argv=None):
     c.add_argument('--mask', default=None, help='CCF mask (replaces the path of the configuration)')
     c.add_argument('--interventions', default=None, help='HARPS-N interventions (one offset per instrumental period)')
     c.add_argument('--n-rings', type=int, default=30)
-    c.add_argument('--vr-degree', type=int, default=2, help='polynomial of OBS_VR removed from the disc velocity')
-    c.add_argument('--ref-window', type=float, default=1800.0)
+    c.add_argument('--window', type=float, default=None,
+                   help='[s] averaging window (default: the window of the day step; at most that one)')
+    c.add_argument('--min-fill', type=float, default=0.8,
+                   help='exposures with fewer frames than this fraction of window / 45 s are left out')
     c.add_argument('--min-exp', type=int, default=5, help='days with fewer exposures: not in the statistics')
     c.add_argument('--harpsn', default=None, help='csv of the release: its quality flags (data_quality = 1 kept)')
     c.add_argument('--min-obs-quality', type=float, default=None,

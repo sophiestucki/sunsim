@@ -173,7 +173,7 @@ def _quiet_velocity_run(v, ff_sp=None, **kw):
 
 def _quiet_velocity_check():
     """quiet_velocity: 0 changes nothing; the same velocity in every quiet cell shifts the RV by it; a fully spotted
-    cell is not shifted; the field object and remove_ring_profile."""
+    cell is not shifted; the field object."""
     from sunsim import supergranulation as sg
     ref, n_cells = _quiet_velocity_run(None)
     zero, _ = _quiet_velocity_run(np.zeros((4, n_cells)))
@@ -191,11 +191,50 @@ def _quiet_velocity_check():
     spotted, _ = _quiet_velocity_run(one, ff_sp=sp)
     nov, _ = _quiet_velocity_run(None, ff_sp=sp)
     assert np.array_equal(spotted.ccf_var, nov.ccf_var)
-    ring = sg.ring_of_cells(N)
-    out, prof = sg.remove_ring_profile(10.0 * ring[None, :] + np.zeros((3, 1)), np.ones((3, len(ring))), N)
-    assert np.allclose(out, 0) and np.allclose(prof, 10.0 * np.arange(N))
     idx, dt = sg.closest([1.0, 2.6, 9.0], [0.0, 2.0, 3.0])
     assert list(idx) == [0, 2, 2] and np.allclose(dt, np.array([1.0, 0.4, 6.0]) * 86400)
+
+
+def _haywood_check():
+    """Dopplergram corrections of Haywood et al. (2016): the geometry of the lines of sight, eq. 10 and 13 against the
+    vectors computed directly, the average over the frames of a window and the cells without data."""
+    from sunsim import supergranulation as sg
+    R, D = 6.96e8, 1.5e11
+    rho_sun = np.arcsin(R / D)
+    rng = np.random.default_rng(1)
+    r, a = rho_sun * np.sqrt(rng.uniform(0, 0.999, 500)), rng.uniform(0, 2 * np.pi, 500)
+    tx, ty = np.tan(r) * np.cos(a), np.tan(r) * np.sin(a)
+    u, p, mu = sg.los_geometry(np.r_[0.0, tx, 2 * rho_sun], np.r_[0.0, ty, 0.0], D, R)
+    u, p = np.array(u), np.array(p)
+    assert np.allclose(u[:, 0], [0, 0, -1]) and np.allclose(p[:, 0], [0, 0, R]) and np.isclose(mu[0], 1.0)
+    assert np.isnan(mu[-1])                                                      # off the disc
+    u, p, mu = u[:, 1:-1], p[:, 1:-1], mu[1:-1]
+    o = np.array([0.0, 0.0, D])[:, None]
+    los = (p - o) / np.linalg.norm(p - o, axis=0)
+    assert np.allclose(np.linalg.norm(p, axis=0), R, rtol=1e-9) and np.allclose(u, los, atol=1e-12)
+    assert np.allclose(mu, np.sum(p / R * (o - p), axis=0) / np.linalg.norm(o - p, axis=0), atol=1e-9)
+    vsc = np.array([-120.0, 25.0, -2900.0])                                       # OBS_VW, OBS_VN, OBS_VR
+    assert np.allclose(sg.spacecraft_velocity(u, *vsc), -np.sum(los * vsc[:, None], axis=0))
+    b0 = np.deg2rad(7.0)
+    axis = np.array([0.0, np.cos(b0), np.sin(b0)])
+    sinphi = axis @ p / R
+    omega = np.polyval(np.array(sg.SNODGRASS_ULRICH)[::-1], sinphi ** 2) * np.pi / 180 / 86400
+    v_surface = omega * np.cross(axis, p.T).T
+    v_rot = sg.rotation_velocity(u, p, b0, R)
+    assert np.allclose(v_rot, np.sum(los * v_surface, axis=0), atol=1e-9)
+    west = p[0] > 0.9 * R                                                        # the west limb recedes
+    assert west.any() and np.all(v_rot[west] > 1500) and np.all(v_rot[p[0] < -0.9 * R] < -1500)
+    # window average: the frames within window / 2 of the exposure, as the mean of the frames
+    jd = 2459340.0 + np.arange(40) * 45.0 / 86400
+    v = rng.normal(0, 300, (40, 6))
+    sw = np.full((40, 6), 2.0)
+    mean, _, n, ok = sg.window_average(jd, v * sw, sw, [jd[20], jd[0]], window=700.0)
+    sel = np.abs(jd - jd[20]) * 86400 <= 350
+    assert n[0] == sel.sum() == 15 and ok[0] and not ok[1] and np.allclose(mean[0], v[sel].mean(axis=0))
+    ring = sg.ring_of_cells(N)
+    vc = np.where(ring == N - 1, np.nan, 10.0 * ring)[None, :]
+    filled, empty = sg.fill_empty_cells(vc, np.ones_like(vc), N)
+    assert np.all(empty[0] == (ring == N - 1)) and np.allclose(filled[0], 10.0 * np.minimum(ring, N - 2))
 
 
 def _overlap_check():
@@ -392,7 +431,8 @@ CASES = [
     ('StarSim: quiet_velocity of the wrong shape', lambda: _quiet_velocity_run(np.zeros((3, 5))), ValueError),
     ('StarSim: quiet_velocity of the wrong number of cells', lambda: _quiet_velocity_run(np.zeros((4, 5))), ValueError),
     ('StarSim: quiet_velocity without ccf', lambda: _quiet_velocity_run(np.zeros((4, 5)), mode=['photometry']), ValueError),
-    ('correct: quiet_velocity (zero, uniform shift, spotted cell, ring profile)', _quiet_velocity_check, None),
+    ('correct: quiet_velocity (zero, uniform shift, spotted cell)', _quiet_velocity_check, None),
+    ('correct: dopplergram corrections (Haywood et al. 2016: eq. 10, 13, window)', _haywood_check, None),
     ('correct: local_path not required', lambda: None if local_path('no_such_key_xyz', required=False) is None else 1 / 0, None),
 ]
 

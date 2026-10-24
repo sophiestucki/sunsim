@@ -33,7 +33,7 @@ from datetime import datetime
 
 import numpy as np
 
-__all__ = ['mad', 'rms', 'jd_of_date', 'load_harpsn', 'daily_average', 'load_sorce', 'load_tsis', 'load_interventions',
+__all__ = ['mad', 'rms', 'jd_of_date', 'load_harpsn', 'sun_barycentric_rv', 'daily_average', 'load_sorce', 'load_tsis', 'load_interventions',
            'match_days', 'best_shift_match', 'compare_photometry', 'compare_rv', 'compare_rv_exposures', 'print_summary',
            'plot_photometry_comparison', 'plot_rv_comparison', 'plot_comparison', 'plot_correlation',
            'sweep_stats', 'load_sweep_stats', 'best_sets', 'plot_sweep_heatmaps', 'plot_sweep_parameters']
@@ -135,11 +135,75 @@ def load_harpsn(path, start, end=None, t_start=None, daily=True, quality=False):
                               ('contrast', 'contrast_err', 1.0)):
             if col in data:
                 out[k + '_err'] = scale * np.asarray(data[col], dtype=np.float64)
+        # the RV of the DRS (barycentric, BERV applied) and its corrections [m/s] (sun_barycentric_rv)
+        for k in ('rv_raw', 'berv', 'berv_bary_to_helio', 'rv_diff_extinction'):
+            if k in data:
+                out[k] = 1e3 * np.asarray(data[k], dtype=np.float64)
         if jd_start is not None:
             out['jd_start'], out['texp'] = jd_start, texp
     out = _cut(out, t_start if t_start is not None else start, end)
     out['t'] = _days(out['jd'], start)
     return daily_average(out, start) if daily else out
+
+
+HORIZONS_URL = 'https://ssd.jpl.nasa.gov/api/horizons.api'
+TNG_SITE = (342.1106, 28.7540, 2.387)        # HARPS-N, TNG (La Palma): E-longitude [deg], latitude [deg], altitude [km]
+
+
+def _horizons_vectors(jd_utc, center, vec_table, vec_corr, site=None, chunk=50, retries=3, timeout=120):
+    """State vectors of the Sun (JPL Horizons, ICRF, km and km/s) at the times jd_utc (JD UTC) relative to center
+    ('500@0': the Solar system barycentre; 'coord@399' with site = (E-lon, lat, alt) of the observer). Returns an
+    array (n_times, n_columns) of the columns after the date (X, Y, Z, VX, VY, VZ[, LT, RG, RR])."""
+    import json
+    import time
+    import urllib.parse
+    import urllib.request
+    jd_utc = np.atleast_1d(np.asarray(jd_utc, dtype=np.float64))
+    rows = []
+    for k in range(0, len(jd_utc), chunk):
+        q = {'format': 'json', 'COMMAND': "'10'", 'EPHEM_TYPE': "'VECTORS'", 'CENTER': "'%s'" % center,
+             'TLIST': ' '.join("'%.9f'" % t for t in jd_utc[k:k + chunk]), 'TLIST_TYPE': "'JD'", 'TIME_TYPE': "'UT'",
+             'VEC_TABLE': "'%s'" % vec_table, 'VEC_CORR': "'%s'" % vec_corr, 'OUT_UNITS': "'KM-S'",
+             'REF_SYSTEM': "'ICRF'", 'REF_PLANE': "'FRAME'", 'CSV_FORMAT': "'YES'", 'VEC_LABELS': "'NO'",
+             'OBJ_DATA': "'NO'"}
+        if site is not None:
+            q.update({'COORD_TYPE': "'GEODETIC'", 'SITE_COORD': "'%.6f,%.6f,%.4f'" % tuple(site)})
+        url = HORIZONS_URL + '?' + urllib.parse.urlencode(q)
+        for attempt in range(retries):
+            try:
+                with urllib.request.urlopen(url, timeout=timeout) as r:
+                    text = json.loads(r.read().decode())['result']
+                break
+            except Exception:
+                if attempt == retries - 1:
+                    raise
+                time.sleep(5 * (attempt + 1))
+        if '$$SOE' not in text:
+            raise RuntimeError('JPL Horizons: no ephemeris in the answer:\n' + text[-2000:])
+        lines = text.split('$$SOE')[1].split('$$EOE')[0].strip().splitlines()
+        rows += [[float(x) for x in line.split(',')[2:] if x.strip()] for line in lines]
+    out = np.array(rows, dtype=np.float64)
+    if len(out) != len(jd_utc):
+        raise RuntimeError('JPL Horizons gave %d epochs for %d times' % (len(out), len(jd_utc)))
+    return out
+
+
+def sun_barycentric_rv(jd_utc, site=TNG_SITE):
+    """Velocity of the Sun relative to the Solar system barycentre along the line of sight [m/s, > 0 away from the
+    observer], from JPL Horizons, at the times jd_utc (JD UTC, e.g. the middle of every HARPS-N exposure). As eq. 1 of
+    Haywood et al. (2016) with the observer in place of Vesta: the RV of the DRS (rv_raw, barycentric: the barycentric
+    velocity of the Earth, berv, already applied) minus this velocity is the RV in the rest frame of the Sun (what
+    berv_bary_to_helio of the release does).
+    The velocity is the one of the Sun when the light received at jd_utc was emitted (jd_utc - light time) and the line
+    of sight is the apparent direction of the Sun from the observer (site: E-longitude, latitude [deg], altitude [km]).
+    Returns a dict: 'v' [m/s], 'lt' (light time [s]) and 'rr' (range rate of the Sun relative to the observer [m/s]:
+    the whole velocity of the Sun seen from the observer, the Earth's motion included)."""
+    jd_utc = np.atleast_1d(np.asarray(jd_utc, dtype=np.float64))
+    topo = _horizons_vectors(jd_utc, 'coord@399', 3, 'LT', site=site)           # observer -> Sun, light-time corrected
+    los = topo[:, :3] / np.linalg.norm(topo[:, :3], axis=1)[:, None]
+    lt = topo[:, 6]
+    bary = _horizons_vectors(jd_utc - lt / 86400.0, '500@0', 2, 'NONE')           # Sun / barycentre at the emission
+    return {'v': 1e3 * np.sum(bary[:, 3:6] * los, axis=1), 'lt': lt, 'rr': 1e3 * topo[:, 8]}
 
 
 def daily_average(obs, start, keys=('rv', 'fwhm', 'bis', 'contrast')):

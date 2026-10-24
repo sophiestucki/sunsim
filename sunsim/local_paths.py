@@ -52,6 +52,8 @@ KEYS = {
     'sweep_results':    'results of the PIC sweep (PIC/opt_sweep.ipynb): the folder of the sets',
     'supergranulation_results': 'folder of PIC/supergranulation.py (days/, results/), for '
                         'analysis/supergranulation_pic_2021_quality.ipynb',
+    'supergranulation_haywood_results': 'folder of PIC/supergranulation_haywood.py (days/, results/), for '
+                        'analysis/supergranulation_haywood_2days.ipynb',
     'poet_data':        'data of the PoET notebooks (spectra, outputs, figures)',
     'personal_data':    'other input files of the analysis notebooks (e.g. masks made by hand)',
 }

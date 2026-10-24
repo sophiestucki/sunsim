@@ -1,0 +1,14 @@
+# Condor submit file, step 2: window averages, simulations, statistics and figures of all the days (after the days)
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/supergranulation_haywood_collect.sh
+Arguments  = "8"
+
+RequestCpus   = 8
+RequestMemory = 16GB
+RequestDisk   = 2GB
+
+Log    = logs/sgh_collect.log
+Output = logs/sgh_collect.out
+Error  = logs/sgh_collect.err
+
+Queue
