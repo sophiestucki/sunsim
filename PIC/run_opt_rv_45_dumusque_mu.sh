@@ -1,13 +1,13 @@
 #!/bin/bash
 # Step 2 (one job per line of the parameter file of KIND): simulation of the decade from the identification of its
-# thresholds (4096 px, 60 rings, 720 s magnetograms; the identification of sweep_720.dag, the grids of
-# build_grids_720_dumusque_mu.sh: Dumusque bisector times mu): light curve, RV, FWHM, BIS, contrast and CCF time series,
-# then the MAD and RMS against the observations (stats.json):
-#   bash run_opt_rv_720_dumusque_mu.sh <plage|fraction> <threads> <noise_th> <I_th> <A_th|B_sat> <Temp>
+# thresholds (4096 px, 60 rings, 45 s magnetograms; the identification of sweep_4096.dag or sweep_fraction.dag, the
+# grids of build_grids_45_dumusque_mu.sh: Dumusque bisector times mu): light curve, RV, FWHM, BIS, contrast and CCF
+# time series, then the MAD and RMS against the observations (stats.json):
+#   bash run_opt_rv_45_dumusque_mu.sh <plage|fraction> <threads> <noise_th> <I_th> <A_th|B_sat> <Temp>
 # The folder of the line links the filling factors of its set (shared by all the Temp of the set).
 PIPELINES=/nfs/pic.es/user/s/sstucki/sunsim/PIC
 KIND=$1
-source "${PIPELINES}/settings_720_dumusque_mu.sh"
+source "${PIPELINES}/settings_45_dumusque_mu.sh"
 export OMP_NUM_THREADS=$2 NUMBA_NUM_THREADS=$2
 
 noise_th=$3
@@ -24,7 +24,8 @@ ident="${IDENT}/${label}"
 
 for f in "$grids" "${ident}/filling_factors_N${N_RINGS}.npz"; do
     if [ ! -f "$f" ]; then
-        echo "ERROR: $f is missing: run sweep_720.dag (up to aggregate_720.sh) and build_grids_720_dumusque_mu.sh first"
+        echo "ERROR: $f is missing: run sweep_4096.dag or sweep_fraction.dag (up to aggregate) and" \
+             "build_grids_45_dumusque_mu.sh first"
         exit 1
     fi
 done
