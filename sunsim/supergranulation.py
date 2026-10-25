@@ -19,16 +19,18 @@ Every exposure
      pixel meets the sphere of radius RSUN_REF at (w, n, r) (heliocentric: west, north, towards SDO); delta = (w, n,
      r - r_sc) is the vector from SDO to the pixel, d its length (eq. 9, 11);
    - motion of SDO (eq. 10): v_sc = -(dw OBS_VW + dn OBS_VN + dr OBS_VR) / d;
-   - rotation of the Sun (eq. 12-13): omega(phi) = a1 + a2 sin^2 phi + a3 sin^4 phi (Snodgrass & Ulrich 1990, Table 1:
-     sidereal rates, the orbital motion of SDO is in OBS_V*), phi the heliographic latitude, the axis tilted by B0
-     (CRLT_OBS) towards SDO; v_rot = delta . (Omega x r) / d.
+   and projected on the cells of the SunSim grid with the quiet pixels (mu > mu_min) of its closest epoch, weighted by
+   the continuum intensity (frame_cell_sums: sums of w v and of w of every cell), together with the three images of
+   the rotation (rotation_basis, eq. 12-13: v_rot = a1 g1 + a2 g2 + a3 g3, omega(phi) = a1 + a2 sin^2 phi + a3 sin^4 phi,
+   phi the heliographic latitude, the axis tilted by B0 (CRLT_OBS) towards SDO, v_rot = delta . (Omega x r) / d).
+3. rotation of the Sun: a1, a2, a3 [deg/day, sidereal: the orbital motion of SDO is in OBS_V*] fitted on all the
+   frames of the day (fit_rotation; one offset per ring and per frame fitted with them for what is the same east and
+   west), and removed from every frame (remove_rotation). Table 1 of Haywood et al. (Snodgrass & Ulrich 1990,
+   SNODGRASS_ULRICH) is the rotation of the surface features: ~5 % faster than the plasma seen by the dopplergrams.
    All the velocities are rates of change of the distance to SDO (> 0 away from SDO, as the HMI velocities): the
    receding west limb has v_rot > 0.
-3. the corrected dopplergrams within window / 2 of the middle of the exposure are averaged (window_average; 720 s:
-   the p modes, ~5 min, cancel) and only the quiet pixels (mu > mu_min) are projected on the cells of the SunSim grid
-   (mean velocity weighted by the continuum intensity). Every frame is projected with the quiet pixels of its closest
-   epoch (frame_cell_sums: sum of w v and of w of every cell); the sums over the frames divided give the same as the
-   mean dopplergram projected.
+4. the corrected frames within window / 2 of the middle of the exposure are averaged (window_average; 720 s: the p
+   modes, ~5 min, cancel): the sums over the frames divided give the same as the mean dopplergram projected.
 Nothing else is removed: the velocity of a cell still has the centre-to-limb convective blueshift, the gravitational
 redshift and the zero point of HMI, the supergranulation and the meridional flow. The cells without any quiet pixel
 (the last ring is all at mu < 0.1) take the mean of their ring, or of the closest ring inside (fill_empty_cells).
@@ -53,7 +55,7 @@ SERIES = {'continuum': ('hmi.Ic_noLimbDark_720s', 'continuum'),
           'magnetogram': ('hmi.M_45s', 'magnetogram')}
 SERIES_45S = ('hmi.V_45s', 'Dopplergram')          # the dopplergrams
 CADENCE_45S = 45.0                                  # [s]
-SNODGRASS_ULRICH = (14.713, -2.396, -1.787)         # a1, a2, a3 [deg/day] (Haywood et al. 2016, Table 1)
+SNODGRASS_ULRICH = (14.713, -2.396, -1.787)         # a1, a2, a3 [deg/day] (Haywood et al. 2016, Table 1: not used)
 
 
 # =============================================================================================
@@ -258,26 +260,33 @@ def spacecraft_velocity(u, vw, vn, vr):
     return -(u[0] * vw + u[1] * vn + u[2] * vr)
 
 
-def rotation_velocity(u, p, b0, rsun, alphas=SNODGRASS_ULRICH):
-    """Eq. 12-13: line-of-sight velocity [m/s, > 0 away from the observer] of the solar rotation, u and p of
-    los_geometry, b0 the heliographic latitude of the observer [rad] (CRLT_OBS), alphas (a1, a2, a3) [deg/day]
-    (sidereal: the observer motion relative to the Sun is removed by spacecraft_velocity).
+def rotation_basis(u, p, b0, rsun):
+    """Eq. 12-13 as a sum: the line-of-sight velocity of the solar rotation is a1 g1 + a2 g2 + a3 g3 (alphas in
+    deg/day), u and p of los_geometry, b0 the heliographic latitude of the observer [rad] (CRLT_OBS).
     omega(phi) = a1 + a2 sin^2 phi + a3 sin^4 phi, sin phi = (y cos b0 + z sin b0) / R, the velocity of the surface
-    Omega x p with Omega = omega (0, cos b0, sin b0), projected on u (the rate of change of the distance)."""
+    Omega x p with Omega = omega (0, cos b0, sin b0), projected on u (the rate of change of the distance, > 0 away from
+    the observer): g_k = sin^(2k-2) phi u . ((0, cos b0, sin b0) x p) [m/s per deg/day]. Returns (g1, g2, g3)."""
     cb, sb = np.cos(b0), np.sin(b0)
     sin2 = ((p[1] * cb + p[2] * sb) / rsun) ** 2
-    omega = (alphas[0] + sin2 * (alphas[1] + sin2 * alphas[2])) * np.pi / 180 / 86400       # [rad/s]
-    vx = omega * (cb * p[2] - sb * p[1])
-    vy = omega * sb * p[0]
-    vz = -omega * cb * p[0]
-    return u[0] * vx + u[1] * vy + u[2] * vz
+    g1 = (u[0] * (cb * p[2] - sb * p[1]) + u[1] * sb * p[0] - u[2] * cb * p[0]) * (np.pi / 180 / 86400)
+    g2 = g1 * sin2
+    return g1, g2, g2 * sin2
 
 
-def correct_dopplergram(v_map, alphas=SNODGRASS_ULRICH, components=False):
-    """Velocity of the dopplergram v_map [m/s, > 0 away from SDO] without the motion of SDO (eq. 10) and the rotation
-    of the Sun (eq. 13, alphas of Table 1), pixel by pixel (module docstring).
+def rotation_velocity(u, p, b0, rsun, alphas=SNODGRASS_ULRICH):
+    """Eq. 12-13: line-of-sight velocity [m/s, > 0 away from the observer] of the solar rotation with the coefficients
+    alphas (a1, a2, a3) [deg/day] (sidereal: the observer motion relative to the Sun is removed by
+    spacecraft_velocity), u and p of los_geometry, b0 [rad] (rotation_basis)."""
+    g = rotation_basis(u, p, b0, rsun)
+    return alphas[0] * g[0] + alphas[1] * g[1] + alphas[2] * g[2]
+
+
+def correct_dopplergram(v_map, alphas=None, components=False, basis=False):
+    """Velocity of the dopplergram v_map [m/s, > 0 away from SDO] without the motion of SDO (eq. 10) and, if alphas
+    (a1, a2, a3) [deg/day] are given, the rotation of the Sun (eq. 13), pixel by pixel (module docstring).
     Returns a dict: 'v' (corrected velocity, float32, NaN off the disc), 'mu' (float32), the keywords used ('obs_vr',
-    'obs_vw', 'obs_vn' [m/s], 'B0' [deg], 'dsun' [m]) and, with components=True, 'v_sc' and 'v_rot' (float32)."""
+    'obs_vw', 'obs_vn' [m/s], 'B0' [deg], 'dsun' [m]), with components=True 'v_sc' and 'v_rot' (float32; v_rot only
+    with alphas) and with basis=True 'g' (the three images of rotation_basis, float32)."""
     m = v_map.meta
     rsun = float(m.get('rsun_ref', 696000000.0))
     dsun = float(m['dsun_obs'])
@@ -288,15 +297,24 @@ def correct_dopplergram(v_map, alphas=SNODGRASS_ULRICH, components=False):
     ty = pc[1, 0] * dx[None, :] + pc[1, 1] * dy[:, None]
     u, p, mu = los_geometry(tx, ty, dsun, rsun)
     del tx, ty
+    off = ~np.isfinite(mu)
     v_sc = spacecraft_velocity(u, vw, vn, vr)
-    v_rot = rotation_velocity(u, p, b0, rsun, alphas)
+    v_sc[off] = np.nan
+    g = rotation_basis(u, p, b0, rsun) if (alphas is not None or basis) else None
     del u, p
-    v = np.asarray(v_map.data, dtype=np.float64) - v_sc - v_rot
-    v[~np.isfinite(mu)] = np.nan
-    out = {'v': v.astype(np.float32), 'mu': mu.astype(np.float32), 'obs_vr': vr, 'obs_vw': vw, 'obs_vn': vn,
-           'B0': np.rad2deg(b0), 'dsun': dsun}
+    v = np.asarray(v_map.data, dtype=np.float64) - v_sc
+    out = {'mu': mu.astype(np.float32), 'obs_vr': vr, 'obs_vw': vw, 'obs_vn': vn, 'B0': np.rad2deg(b0), 'dsun': dsun}
+    if alphas is not None:
+        v_rot = alphas[0] * g[0] + alphas[1] * g[1] + alphas[2] * g[2]
+        v -= v_rot
+        if components:
+            out['v_rot'] = np.where(off, np.nan, v_rot).astype(np.float32)
+    v[off] = np.nan
+    out['v'] = v.astype(np.float32)
     if components:
-        out['v_sc'], out['v_rot'] = v_sc.astype(np.float32), v_rot.astype(np.float32)
+        out['v_sc'] = v_sc.astype(np.float32)
+    if basis:
+        out['g'] = tuple(np.where(off, np.nan, gk).astype(np.float32) for gk in g)
     return out
 
 
@@ -385,46 +403,100 @@ def identify_epoch(files, size=4096, n_rings=30, thresholds=None, network_veloci
                         'spot': day['spot'], 'facula': day['facula']}}
 
 
-def frame_cell_sums(files, context, n_rings=30, mu_min=0.1, alphas=SNODGRASS_ULRICH, keep_frame=False):
-    """One 45 s dopplergram (files = (path, keywords) of fetch_record) corrected (correct_dopplergram) and projected on
-    the cells with the quiet pixels of the closest epoch (context of identify_epoch), only the pixels with mu > mu_min
-    (0.1, Haywood et al. 2016). The dopplergram is resampled to the size of the identification if needed and cut to the
-    same square of the disc (the HMI images are aligned to ~1 pixel).
-    Returns a dict: 'swv', 'sw' (cell_sums), 'jd' (T_OBS, UTC), the keywords of correct_dopplergram, 'shift_px'
-    (distance between the disc centres of the dopplergram and the continuum, at the size of the identification),
-    'v_quiet_mean' (mean corrected velocity of the quiet pixels [m/s]) and, with keep_frame, 'v' (the corrected
-    velocity in the frame of the maps, NaN where mu <= mu_min)."""
+def frame_cell_sums(files, context, n_rings=30, mu_min=0.1, keep_frame=False):
+    """One 45 s dopplergram (files = (path, keywords) of fetch_record) without the motion of SDO (correct_dopplergram,
+    eq. 10) projected on the cells with the quiet pixels of the closest epoch (context of identify_epoch), only the
+    pixels with mu > mu_min (0.1, Haywood et al. 2016), and the three images of the rotation (rotation_basis) projected
+    in the same way: the rotation is fitted later on all the frames of the day (fit_rotation) and removed from the sums
+    (remove_rotation). The dopplergram is resampled to the size of the identification if needed and cut to the same
+    square of the disc (the HMI images are aligned to ~1 pixel).
+    Returns a dict: 'swv', 'sw' (cell_sums), 'swg' (3, n_cells: cell_sums of g1, g2, g3, same pixels and weights),
+    'jd' (T_OBS, UTC), the keywords of correct_dopplergram, 'shift_px' (distance between the disc centres of the
+    dopplergram and the continuum, at the size of the identification), 'v_quiet_mean' (mean velocity of the quiet
+    pixels without the motion of SDO [m/s]) and, with keep_frame, 'v' (that velocity in the frame of the maps, NaN where
+    mu <= mu_min)."""
     import astropy.units as u
     from astropy.coordinates import SkyCoord
     path, keywords = files
     dop = read_record(path, keywords)
-    c = correct_dopplergram(dop, alphas)
+    c = correct_dopplergram(dop, basis=True)
     with np.errstate(invalid='ignore'):
-        v = np.where(c['mu'] > mu_min, c['v'], np.float32(np.nan))
-    del c['v'], c['mu']
+        far = ~(c['mu'] > mu_min)
+    images = [c.pop('v')] + list(c.pop('g'))
+    del c['mu']
     size = context['size']
     scale = size / dop.data.shape[0]
     centre = dop.world_to_pixel(SkyCoord(0 * u.arcsec, 0 * u.arcsec, frame=dop.coordinate_frame))
     shift = float(np.hypot((centre.x.to_value(u.pix) + 0.5) * scale - 0.5 - context['crpix'][0],
                            (centre.y.to_value(u.pix) + 0.5) * scale - 0.5 - context['crpix'][1]))
-    if size != dop.data.shape[0]:
-        smap = sdo._sunpy()
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
-            v = np.asarray(smap.Map(v, dop.meta).resample([size, size] * u.pix).data, dtype=np.float32)
-    del dop
     lo, hi = context['lo'], context['hi']
-    v = np.flip(v[lo:hi, lo:hi])
+    for k, a in enumerate(images):
+        a[far] = np.nan
+        if size != dop.data.shape[0]:
+            smap = sdo._sunpy()
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                a = np.asarray(smap.Map(a, dop.meta).resample([size, size] * u.pix).data, dtype=np.float32)
+        images[k] = np.flip(a[lo:hi, lo:hi])
+    del dop, far
+    v = images[0]
     if v.shape != context['quiet'].shape:
         raise ValueError('dopplergram cut to %s, the quiet mask is %s' % (v.shape, context['quiet'].shape))
-    swv, sw = cell_sums(v, context['quiet'], context['weight'], n_rings)
-    with np.errstate(invalid='ignore'):
-        sel = context['quiet'] & np.isfinite(v)
-        vq = float(np.sum(context['weight'][sel] * v[sel], dtype=np.float64) / np.sum(context['weight'][sel], dtype=np.float64))
-    out = dict(c, swv=swv, sw=sw, jd=float(jd_of_t_rec(keywords['T_OBS'])[0]), shift_px=shift, v_quiet_mean=vq)
+    sel = context['quiet'] & np.isfinite(v)
+    for g in images[1:]:
+        sel &= np.isfinite(g)
+    swv, sw = cell_sums(v, sel, context['weight'], n_rings)
+    swg = np.array([cell_sums(g, sel, context['weight'], n_rings)[0] for g in images[1:]])
+    vq = float(np.sum(context['weight'][sel] * v[sel], dtype=np.float64) / np.sum(context['weight'][sel], dtype=np.float64))
+    out = dict(c, swv=swv, sw=sw, swg=swg, jd=float(jd_of_t_rec(keywords['T_OBS'])[0]), shift_px=shift, v_quiet_mean=vq)
     if keep_frame:
         out['v'] = v
     return out
+
+
+# =============================================================================================
+# rotation of every day
+# =============================================================================================
+def fit_rotation(swv, sw, swg, n_rings):
+    """Coefficients (a1, a2, a3) [deg/day] of eq. 12 fitted on frames (e.g. all the frames of one day), from the sums of
+    frame_cell_sums: the velocity of every cell v = swv / sw against the cell means of the rotation images
+    G_k = swg_k / sw (v_rot = a1 G1 + a2 G2 + a3 G3). One offset per ring and per frame is fitted with them and not used
+    (everything that is the same east and west: the convective blueshift, the zero point of HMI); least squares weighted
+    by sw. swv, sw (n_frames, n_cells), swg (n_frames, 3, n_cells).
+    Returns alphas (3,), their formal errors (3,; the supergranulation is not white noise: too small) and the weighted
+    RMS of the residuals [m/s]."""
+    sw = np.atleast_2d(np.asarray(sw, dtype=np.float64))
+    swv = np.atleast_2d(np.asarray(swv, dtype=np.float64))
+    swg = np.asarray(swg, dtype=np.float64).reshape(len(sw), 3, -1)
+    n_f = len(sw)
+    ok = sw > 0
+    w = np.where(ok, sw, 0.0)
+    den = np.where(ok, sw, 1.0)
+    idx = (np.arange(n_f)[:, None] * int(n_rings) + ring_of_cells(n_rings)[None, :]).ravel()
+    sw_ring = np.bincount(idx, weights=w.ravel(), minlength=n_f * int(n_rings))
+
+    def demeaned(a):
+        """a minus its weighted mean in every ring of every frame."""
+        s = np.bincount(idx, weights=(w * a).ravel(), minlength=n_f * int(n_rings))
+        m = np.where(sw_ring > 0, s / np.where(sw_ring > 0, sw_ring, 1.0), 0.0)
+        return (a - m[idx].reshape(a.shape))[ok]
+
+    y = demeaned(np.where(ok, swv / den, 0.0))
+    X = np.column_stack([demeaned(np.where(ok, swg[:, k] / den, 0.0)) for k in range(3)])
+    q = np.sqrt(w[ok])
+    A = X * q[:, None]
+    coef = np.linalg.lstsq(A, y * q, rcond=None)[0]
+    res = y - X @ coef
+    chi2 = np.sum(w[ok] * res ** 2)
+    dof = max(len(y) - 3 - int(np.sum(sw_ring > 0)), 1)
+    err = np.sqrt(np.diag(np.linalg.inv(A.T @ A)) * chi2 / dof)
+    return coef, err, float(np.sqrt(chi2 / np.sum(w[ok])))
+
+
+def remove_rotation(swv, swg, alphas):
+    """Sums swv of frame_cell_sums without the rotation of eq. 13 with the coefficients alphas [deg/day]."""
+    swg = np.asarray(swg, dtype=np.float64)
+    return np.asarray(swv, dtype=np.float64) - np.tensordot(np.asarray(alphas, dtype=np.float64), swg, axes=([0], [-2]))
 
 
 # =============================================================================================

@@ -6,14 +6,15 @@ for a whole period (on PIC). Two steps:
   python supergranulation_haywood.py day --date 2021-05-05 --out DIR --harpsn FILE [--window 720] [...]
       One day (one Condor job): the HMI epochs (720 s continuum, 45 s magnetogram) closest to its HARPS-N exposures,
       identified (spots, faculae, quiet pixels; supergranulation.identify_epoch), and every 45 s dopplergram within
-      window / 2 of the middle of an exposure, corrected for the motion of SDO (eq. 10) and the rotation of the Sun
-      (eq. 13, Table 1) and projected on the cells with the quiet pixels of its closest epoch
+      window / 2 of the middle of an exposure, corrected for the motion of SDO (eq. 10) and projected on the cells with
+      the quiet pixels of its closest epoch, with the three images of the rotation of eq. 13
       (supergranulation.frame_cell_sums). The velocity of the Sun relative to the barycentre along the line of sight
       of every exposure from JPL Horizons (observations.sun_barycentric_rv, eq. 1). The FITS files are deleted right
       after every epoch / frame. A day can be started again: what is done is skipped. --dry-run: only the matching and
       the size of the downloads.
   python supergranulation_haywood.py collect --out DIR --start DATE --conf CONF [...]
-      All the days: the corrected dopplergrams averaged over the window of every exposure (the p modes cancel) and
+      All the days: the rotation of eq. 12-13 fitted on the frames of every day (a1, a2, a3; supergranulation.fit_rotation)
+      and removed, the corrected dopplergrams averaged over the window of every exposure (the p modes cancel) and
       projected (supergranulation.window_average; nothing else removed), simulation of every exposure at its own time
       (maps; maps + dopplergram), and the comparison with the HARPS-N RV in the rest frame of the Sun, rv_raw (DRS,
       barycentric) - v_sun (JPL):
@@ -24,9 +25,10 @@ for a whole period (on PIC). Two steps:
 Folder DIR:
   days/<date>/exposures.npz   the exposures of the day, their HMI epoch (T_REC, |dt|) and JPL velocity
   days/<date>/epochs/*.npz    one file per epoch: cell filling factors, keywords
-  days/<date>/frames45/*.npz  one file per 45 s dopplergram: sums of the quiet pixels of every cell, keywords
+  days/<date>/frames45/*.npz  one file per 45 s dopplergram: sums of the quiet pixels of every cell (velocity, weights,
+                              the three images of the rotation), keywords
   days/<date>/done.json       the day is complete (numbers of exposures, epochs, frames, failures)
-  results/                    exposures.csv, frames.csv, per_day.csv, intra_day_summary.csv, daily_means.csv,
+  results/                    rotation.csv (a1, a2, a3 of every day), exposures.csv, frames.csv, per_day.csv, intra_day_summary.csv, daily_means.csv,
                               daily_stats.csv, full_stats.csv, figures/ (days/<date>.png, daily_*.png, per_day_r.png,
                               full_correlation.png) (--results NAME: another folder; with --min-obs-quality also
                               removed_exposures.csv)
@@ -130,7 +132,12 @@ def run_day(a):
     n_frames = sum(len(f) for f in frames.values())
 
     def frame_done(t):
-        return os.path.exists(os.path.join(folder, 'frames45', _key(t) + '.npz'))
+        """The frame is done with the images of the rotation (the frames of the first runs, Table 1 removed, are not)."""
+        path = os.path.join(folder, 'frames45', _key(t) + '.npz')
+        if not os.path.exists(path):
+            return False
+        with np.load(path) as z:
+            return 'swg' in z.files
 
     def epoch_done(e):
         return (os.path.exists(os.path.join(folder, 'epochs', _key(e['continuum']) + '.npz'))
@@ -193,7 +200,8 @@ def run_day(a):
                 try:
                     fr = sg.frame_cell_sums(f45, context, n_rings=a.n_rings, mu_min=a.mu_min)
                     np.savez(os.path.join(folder, 'frames45', _key(t_rec) + '.npz'), swv=fr['swv'].astype(np.float32),
-                             sw=fr['sw'].astype(np.float32), t_rec=t_rec, epoch=e['continuum'],
+                             sw=fr['sw'].astype(np.float32), swg=fr['swg'].astype(np.float32), t_rec=t_rec,
+                             epoch=e['continuum'],
                              info=json.dumps({key: float(fr[key]) for key in FRAME_INFO}))
                     del fr
                 except Exception as err:
@@ -214,7 +222,7 @@ def run_day(a):
     if not a.limit:
         json.dump({'date': a.date, 'n_exp': n_exp, 'n_epochs': len(epochs), 'epochs_done': n_ep,
                    'n_frames': n_frames, 'frames_done': n_fr, 'failed': failed, 'window': a.window,
-                   'mu_min': a.mu_min, 'network_velocity': a.network_velocity, 'n_rings': a.n_rings, 'size': a.size,
+                   'mu_min': a.mu_min, 'network_velocity': a.network_velocity, 'rotation': 'fitted per day (collect)', 'n_rings': a.n_rings, 'size': a.size,
                    'thresholds': thresholds}, open(done_file, 'w'), indent=1)
     _log('%s done: %d / %d epochs, %d / %d frames, %d failed' % (a.date, n_ep, len(epochs), n_fr, n_frames, failed))
     return 1 if failed else 0
@@ -259,7 +267,7 @@ def exposure_quality(ex, harpsn):
 
 def load_days(out, n_rings):
     """The products of the complete days: exposures (dict of arrays, one row per exposure with an epoch), epochs (dict
-    of arrays), the 45 s frames of every day ({day: (jd, swv, sw, info)}) and the window of the days [s]."""
+    of arrays), the 45 s frames of every day ({day: (jd, swv, sw, swg, info)}) and the window of the days [s]."""
     days = sorted(d for d in os.listdir(os.path.join(out, 'days'))
                   if os.path.exists(os.path.join(out, 'days', d, 'done.json')))
     ex, ep, frames, windows = [], {k: [] for k in ('ff_sp', 'ff_fc', 'jd', 'key')}, {}, set()
@@ -287,14 +295,18 @@ def load_days(out, n_rings):
         e['epoch'] = np.array([row_of.get(_key(tr), -1) if tr else -1 for tr in e['exp_trec']])
         e['day'] = np.array([d] * len(e['jd']))
         ex.append(e)
-        jd45, swv, sw, info = [], [], [], []
+        jd45, swv, sw, swg, info = [], [], [], [], []
         for f in sorted(os.listdir(os.path.join(folder, 'frames45'))):
             if f.endswith('.npz'):
                 with np.load(os.path.join(folder, 'frames45', f)) as z:
+                    if 'swg' not in z.files:
+                        raise ValueError('%s: frames without the images of the rotation (Table 1 removed): run the day '
+                                         'step again' % d)
                     i = json.loads(str(z['info']))
-                    jd45.append(i['jd']); swv.append(z['swv']); sw.append(z['sw']); info.append(i)
+                    jd45.append(i['jd']); swv.append(z['swv']); sw.append(z['sw']); swg.append(z['swg']); info.append(i)
         if jd45:
-            frames[d] = (np.array(jd45), np.array(swv, dtype=np.float64), np.array(sw, dtype=np.float64), info)
+            frames[d] = (np.array(jd45), np.array(swv, dtype=np.float64), np.array(sw, dtype=np.float64),
+                         np.array(swg, dtype=np.float64), info)
     keys = set.intersection(*[set(e) for e in ex])
     ex = {k: np.concatenate([e[k] for e in ex]) for k in keys}
     keep = ex['epoch'] >= 0
@@ -304,8 +316,6 @@ def load_days(out, n_rings):
 
 
 def run_collect(a):
-    import matplotlib
-    matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     import pandas as pd
     from sunsim import observations as obs, simulate_old_config, precomputed_filling_factors
@@ -348,18 +358,27 @@ def run_collect(a):
                                                                   getattr(a, 'min_day_exp', 0), np.nanmin(qf['obs_quality']),
                                                                   np.nanmax(qf['obs_quality'])))
 
-    # ---- the corrected dopplergrams averaged over the window of every exposure and projected (nothing removed)
+    # ---- rotation fitted on the frames of every day and removed, the dopplergrams averaged over the window of every
+    # exposure and projected (nothing else removed)
     n_cells = ep['ff_sp'].shape[1]
     v_exp, sw_exp = np.full((len(ex['jd']), n_cells), np.nan), np.zeros((len(ex['jd']), n_cells))
     n45, ok45 = np.zeros(len(ex['jd']), np.int64), np.zeros(len(ex['jd']), bool)
-    rows = []
-    for d, (jd45, swv, sw, info) in frames.items():
+    rows, rot = [], []
+    for d, (jd45, swv, sw, swg, info) in frames.items():
+        alphas, err, rms = sg.fit_rotation(swv, sw, swg, a.n_rings)
+        rot.append({'day': d, 'frames': len(jd45), 'a1': alphas[0], 'a2': alphas[1], 'a3': alphas[2],
+                    'a1_err': err[0], 'a2_err': err[1], 'a3_err': err[2], 'rms_residual': rms})
         m = np.flatnonzero(ex['day'] == d)
         if len(m):
-            v_exp[m], sw_exp[m], n45[m], ok45[m] = sg.window_average(jd45, swv, sw, ex['jd'][m], window=window,
-                                                                     min_fill=a.min_fill)
+            v_exp[m], sw_exp[m], n45[m], ok45[m] = sg.window_average(jd45, sg.remove_rotation(swv, swg, alphas), sw,
+                                                                     ex['jd'][m], window=window, min_fill=a.min_fill)
         rows += [dict(i, day=d) for i in info]
     pd.DataFrame(rows).to_csv(os.path.join(res_dir, 'frames.csv'), index=False)
+    rot = pd.DataFrame(rot)
+    rot.to_csv(os.path.join(res_dir, 'rotation.csv'), index=False)
+    _log('rotation of the days [deg/day]: a1 %.3f to %.3f, a2 %.2f to %.2f, a3 %.2f to %.2f (Table 1: %s)'
+         % (rot['a1'].min(), rot['a1'].max(), rot['a2'].min(), rot['a2'].max(), rot['a3'].min(), rot['a3'].max(),
+            sg.SNODGRASS_ULRICH))
     _log('dopplergrams: %d frames, window %.0f s: %d of %d exposures with >= %.0f %% of the frames (left out: %d)'
          % (len(rows), window, ok45.sum(), len(ok45), 100 * a.min_fill, (~ok45).sum()))
     ex = {k: v[ok45] for k, v in ex.items()}
@@ -706,7 +725,11 @@ def main(argv=None):
     c.add_argument('--no-figures', dest='figures', action='store_false', help='only the tables')
 
     a = p.parse_args(argv)
-    return run_day(a) if a.step == 'day' else run_collect(a)
+    if a.step == 'day':
+        return run_day(a)
+    import matplotlib
+    matplotlib.use('Agg')                            # no display on PIC (the notebooks keep their backend)
+    return run_collect(a)
 
 
 if __name__ == '__main__':

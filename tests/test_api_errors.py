@@ -222,6 +222,21 @@ def _haywood_check():
     v_surface = omega * np.cross(axis, p.T).T
     v_rot = sg.rotation_velocity(u, p, b0, R)
     assert np.allclose(v_rot, np.sum(los * v_surface, axis=0), atol=1e-9)
+    g = sg.rotation_basis(u, p, b0, R)
+    assert np.allclose(sum(a * gk for a, gk in zip(sg.SNODGRASS_ULRICH, g)), v_rot)
+    # fit of a1, a2, a3 on the cells of several frames, with any offset per ring and per frame
+    ring = sg.ring_of_cells(N)
+    n_f, n_c = 6, len(ring)
+    G = rng.normal(0, 30, (n_f, 3, n_c))
+    G[:, 1] = G[:, 0] * rng.uniform(0, 0.8, n_c)
+    G[:, 2] = G[:, 1] * rng.uniform(0, 0.8, n_c)
+    truth = np.array([14.2, -1.8, -2.4])
+    sw = rng.uniform(1, 3, (n_f, n_c))
+    sw[:, -2:] = 0                                                               # cells without quiet pixels
+    v = np.einsum('k,fkc->fc', truth, G) + rng.normal(0, 200, (n_f, N))[:, ring] + rng.normal(0, 0.5, (n_f, n_c))
+    alphas, err, rms = sg.fit_rotation(v * sw, sw, G * sw[:, None], N)
+    assert np.allclose(alphas, truth, atol=0.05) and rms < 1 and np.all(err > 0)
+    assert np.allclose(sg.remove_rotation(v * sw, G * sw[:, None], truth), (v - np.einsum('k,fkc->fc', truth, G)) * sw)
     west = p[0] > 0.9 * R                                                        # the west limb recedes
     assert west.any() and np.all(v_rot[west] > 1500) and np.all(v_rot[p[0] < -0.9 * R] < -1500)
     # window average: the frames within window / 2 of the exposure, as the mean of the frames

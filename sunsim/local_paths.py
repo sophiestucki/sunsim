@@ -49,6 +49,7 @@ KEYS = {
     'old_sdo_identification': 'identification_utils.py of the previous SDO pipeline (analysis/sdo_old_classification.py)',
     'ref_rv_10_years':  'RV of the 10-year run of the old StarSim (analysis/sdo_old_vs_new_harpsn.py, optional)',
     'ref_days_10_years': 'its days_list.txt (days since 2015-07-18)',
+    'ref_ccf_10_years': 'its CCFs, one row per day of ref_days_10_years on the velocities -18 to 18 km/s, step 0.25 km/s',
     'sweep_results':    'results of the PIC sweep (PIC/opt_sweep.ipynb): the folder of the sets',
     'supergranulation_results': 'folder of PIC/supergranulation.py (days/, results/), for '
                         'analysis/supergranulation_pic_2021_quality.ipynb',
