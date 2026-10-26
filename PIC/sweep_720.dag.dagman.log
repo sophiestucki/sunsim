@@ -1,0 +1,15 @@
+000 (2129043.000.000) 2026-10-23 00:17:15 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+...
+001 (2129043.000.000) 2026-10-23 00:17:15 Job executing on host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+...
+005 (2129043.000.000) 2026-10-23 05:12:34 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+...
