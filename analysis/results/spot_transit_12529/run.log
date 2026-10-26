@@ -1,0 +1,9 @@
+12:49:38 56 epochs to do, 1580 continua, 26274 magnetograms, 26274 dopplergrams
+OMP: Info #276: omp_set_nested routine deprecated, please use omp_set_max_active_levels instead.
+12:53:07 2016.04.08_00:00:00_TAI: mu = 0.167, x = -0.965, area 839 uhem, 16 frames, a = 14.615 -2.214 -1.693 deg/d, dv = -467.6 m/s
+12:56:26 2016.04.08_05:48:00_TAI: mu = 0.219, x = -0.954, area 863 uhem, 16 frames, a = 14.255 -2.634 -1.671 deg/d, dv = -132.4 m/s
+12:59:33 2016.04.08_12:00:00_TAI: mu = 0.277, x = -0.938, area 815 uhem, 16 frames, a = 13.901 -2.535 -1.901 deg/d, dv = +395.7 m/s
+13:03:04 2016.04.08_17:48:00_TAI: mu = 0.327, x = -0.920, area 845 uhem, 16 frames, a = 14.161 -2.592 -1.857 deg/d, dv = +223.5 m/s
+13:06:34 2016.04.09_00:00:00_TAI: mu = 0.382, x = -0.898, area 842 uhem, 16 frames, a = 14.574 -1.812 -2.373 deg/d, dv = -86.5 m/s
+13:10:53 2016.04.09_06:24:00_TAI: mu = 0.436, x = -0.872, area 844 uhem, 16 frames, a = 14.206 -2.574 -1.853 deg/d, dv = +250.1 m/s
+13:14:52 2016.04.09_12:00:00_TAI: mu = 0.481, x = -0.846, area 866 uhem, 16 frames, a = 13.886 -2.258 -2.234 deg/d, dv = +611.3 m/s

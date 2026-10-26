@@ -398,6 +398,12 @@ CASES = [
     ('correct: flatten_spectra', lambda: flatten_spectra(spectrum()), None),
     ('correct: CIFIST bisector in a CCF grid', lambda: ccf().built_grid(bisector=cifist_bisector(mu_scaling=(0.5, 0.5))), None),
     ('correct: Dumusque bisector with a linear mu law', lambda: ccf().built_grid(bisector=dumusque_bisector(True, (0, 1))), None),
+    ('correct: Dumusque bisector with a custom polynomial mu law', lambda: ccf().built_grid(
+        bisector=dumusque_bisector(True, (1.571, -4.512, 17.404, -13.463))), None),
+    ('correct: custom mu law (c0, c1, c2) = c0 + c1 mu + c2 mu^2', lambda: None if np.isclose(
+        dumusque_bisector(True, (1, 2, 3))(0.5)(0.3), dumusque_bisector(True)(0.5)(0.3) * 2.75) else 1 / 0, None),
+    ('Dumusque bisector: mu law with NaN', lambda: dumusque_bisector(True, (1, np.nan)), ValueError),
+    ('Dumusque bisector: empty mu law', lambda: dumusque_bisector(True, ()), ValueError),
     ('CCF_grid: unknown medium', lambda: ccf(medium='water'), ValueError),
     ('mask_weights: unknown medium', lambda: mask_weights(bad_mask_file(TMP), mask_medium='glass'), ValueError),
     ('correct: CCF grid in vacuum (mask and spectra in vacuum)', lambda: ccf(medium='vacuum', mask_medium='vacuum').built_grid(bisector=None), None),

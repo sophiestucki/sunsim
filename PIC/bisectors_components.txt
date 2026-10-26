@@ -1,0 +1,8 @@
+# name  remove_bis_spot  convective_shift  dumusque_mu_scaling ('a,b': the Dumusque (2014) bisector times a + b mu;
+# '-': the same bisector at every mu). The bisector of the spot CCF is removed, then this one is added:
+# mu_0_0 : (0, 0), nothing added
+# mu_0_1 : (0, 1), the Dumusque bisector times mu, zero at the limb (sweep_45_dumusque_mu.dag)
+# mu_1_0 : (1, 0), the Dumusque bisector, the same at every mu (old code)
+mu_0_0  1  1.0  0,0
+mu_0_1  1  1.0  0,1
+mu_1_0  1  1.0  1,0

@@ -121,20 +121,26 @@ def bisector_fit(rv, ccf, kind_interp='linear', integrated_bis=False):
 
 
 def _mu_factor(mu_scaling):
-    """Factor of the bisector at mu: None -> 1; (a, b) -> a + b mu (linear); a function f(mu) -> any law."""
+    """Factor of the bisector at mu: None -> 1; (a, b) -> a + b mu (linear); (c0, c1, ..., cn) -> c0 + c1 mu + ... +
+    cn mu^n (custom polynomial, increasing powers); a function f(mu) -> any law."""
     if mu_scaling is None:
         return None
     if callable(mu_scaling):
         return mu_scaling
-    a, b = (float(v) for v in mu_scaling)
-    return lambda mu: a + b * mu
+    coeffs = np.asarray(mu_scaling, dtype=np.float64)
+    if coeffs.ndim != 1 or len(coeffs) == 0 or not np.all(np.isfinite(coeffs)):
+        raise ValueError('mu_scaling must be None, a function f(mu) or finite coefficients (c0, c1, ...) of '
+                         'c0 + c1 mu + ..., got %r' % (mu_scaling,))
+    return np.polynomial.Polynomial(coeffs)
 
 
 def dumusque_bisector(normalization=True, mu_scaling=None):
     """Bisector of Dumusque (2014), added by rv_treatment: returns f(mu) -> p(ccf), p in km/s (np.poly1d).
     normalization : True for CCFs in [0, 1] (CCF_grid(normalization=True)), False for the raw CCF heights.
     mu_scaling    : None -> the same bisector at every mu; (a, b) -> the bisector at mu is multiplied by a + b mu
-                    (e.g. (0, 1): proportional to mu, zero at the limb); or any function g(mu) -> factor.
+                    (e.g. (0, 1): proportional to mu, zero at the limb); custom: (c0, c1, ..., cn) -> multiplied by
+                    c0 + c1 mu + ... + cn mu^n (e.g. the mu law of the faculae, (1.571, -4.512, 17.404, -13.463)); or
+                    any function g(mu) -> factor.
     Any other bisector can be given to rv_treatment as a function f(mu) -> p(ccf) (p in km/s)."""
     p = np.poly1d(np.array([-1.51773453,  3.52774949, -3.18794328,  1.22541774,  -0.22479665+0.4]) if normalization else np.array([ 69.72233642, -111.07077255,   66.13347937,  -19.34395212,    2.85797555, 0.16536442]))
     factor = _mu_factor(mu_scaling)
@@ -177,7 +183,7 @@ def cifist_bisector(mu_scaling=None):
     rv_treatment: returns f(mu) -> p(ccf), p in km/s (np.poly1d), the bisector of the mu of every ring (CCF heights in
     [0, 1]).
     mu_scaling : None -> the CIFIST bisectors as they are; (a, b) -> the bisector at mu is also multiplied by a + b mu;
-                 or any function g(mu) -> factor."""
+                 (c0, c1, ..., cn) -> by c0 + c1 mu + ... + cn mu^n; or any function g(mu) -> factor."""
     factor = _mu_factor(mu_scaling)
     if factor is None:
         return _cifist_poly

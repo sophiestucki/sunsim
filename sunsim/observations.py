@@ -35,7 +35,7 @@ import numpy as np
 
 __all__ = ['mad', 'rms', 'jd_of_date', 'load_harpsn', 'sun_barycentric_rv', 'daily_average', 'load_sorce', 'load_tsis', 'load_interventions',
            'match_days', 'best_shift_match', 'compare_photometry', 'compare_rv', 'compare_rv_exposures', 'print_summary',
-           'plot_photometry_comparison', 'plot_rv_comparison', 'plot_comparison', 'plot_correlation',
+           'photometry_offsets', 'plot_photometry_comparison', 'plot_rv_comparison', 'plot_comparison', 'plot_correlation',
            'sweep_stats', 'load_sweep_stats', 'best_sets', 'plot_sweep_heatmaps', 'plot_sweep_parameters']
 
 COLOURS = {'sim': '#ea8642', 'harpsn': '#102e37', 'sorce': '#102e37', 'tsis': '#918AE5', 'res': '#4d4d4d'}
@@ -287,8 +287,8 @@ def compare_photometry(tsi, t_sim, flux_sim, shift=0):
     """Observed TSI (load_sorce / load_tsis) against the simulated flux (t_sim in days since start), matched by day.
     Both are divided by their mean over the matched days. Returns a dict: 'name', 't' (simulated epochs of the matched
     days), 'obs', 'sim' [ppm, 1e6 (x/<x> - 1)], 'res' = obs - sim [ppm], 'mad', 'rms' (of res), 'mad_obs', 'rms_obs'
-    (of obs), 'n', and 'offset' [ppm]: 1e6 (<sim matched> / <sim all> - 1), added to obs and sim by the plots so that
-    several instruments are on the same scale (the mean of the whole simulation)."""
+    (of obs), 'n', and 'offset' [ppm]: 1e6 (<sim matched> / <sim all> - 1), added to sim by the plots so that several
+    instruments are on the same scale (the mean of the whole simulation; obs: see photometry_offsets)."""
     t_sim, flux_sim = np.asarray(t_sim, dtype=np.float64), np.asarray(flux_sim, dtype=np.float64)
     io, i_s = match_days(tsi['t'], t_sim, shift)
     out = {'name': tsi.get('name', 'TSI'), 'n': len(io)}
@@ -419,26 +419,45 @@ def _x(t, t0):
     return np.asarray(t, dtype=np.float64) - t0
 
 
+def photometry_offsets(photometry):
+    """Offsets [ppm] (obs, sim) of every instrument (compare_photometry, a list) that put them on a common scale. The
+    simulation: its 'offset' (the mean of the whole simulation). The observations: the first instrument with data its
+    'offset'; every other one so that its median over the days common with the first one is the median of the first
+    one over these days (its 'offset' if no common day). Returns a list of (obs, sim) offsets."""
+    out, ref = [], None
+    for ph in photometry:
+        off_obs = off_sim = ph['offset']
+        if ph['n'] and ref is not None:
+            _, i_ref, i = np.intersect1d(np.floor(ref['t']), np.floor(ph['t']), return_indices=True)
+            if len(i):
+                off_obs = float(np.median(ref['obs'][i_ref] + ref['offset']) - np.median(ph['obs'][i]))
+        elif ph['n']:
+            ref = ph
+        out.append((off_obs, off_sim))
+    return out
+
+
 def plot_photometry_comparison(photometry, ax=None, ax_res=None, t0=0.0, colours=None, align=True, sim_label='SunSim',
                                stats=True):
     """Observed and simulated TSI variations [ppm] (compare_photometry: one dict or a list, one per instrument) on ax
-    and the residuals on ax_res (optional). align: adds the 'offset' of every instrument (common scale: the mean of the
-    whole simulation). t0: subtracted from the times (days since start) on the x axis. Returns ax, ax_res."""
+    and the residuals on ax_res (optional). align: adds the offsets of photometry_offsets (common scale: the mean of the
+    whole simulation, the instruments with the same median on their common days). t0: subtracted from the times (days
+    since start) on the x axis. Returns ax, ax_res."""
     import matplotlib.pyplot as plt
     if isinstance(photometry, dict):
         photometry = [photometry]
     if ax is None:
         _, (ax, ax_res) = plt.subplots(2, 1, sharex=True, gridspec_kw={'hspace': 0, 'height_ratios': [2, 1]})
     defaults = [COLOURS['sorce'], COLOURS['tsis'], '#2a9d8f', '#e76f51']
-    for k, ph in enumerate(photometry):
+    offsets = photometry_offsets(photometry) if align else [(0.0, 0.0)] * len(photometry)
+    for k, (ph, (off_obs, off_sim)) in enumerate(zip(photometry, offsets)):
         if ph['n'] == 0:
             continue
         c = (colours or {}).get(ph['name'], defaults[k % len(defaults)])
-        off = ph['offset'] if align else 0.0
         x = _x(ph['t'], t0)
         label = ph['name'] + ('  (res. RMS %.0f ppm, MAD %.0f ppm)' % (ph['rms'], ph['mad']) if stats else '')
-        ax.plot(x, ph['obs'] + off, 'o-', color=c, alpha=0.5, label='TSI: ' + label)
-        ax.plot(x, ph['sim'] + off, 's-', color=COLOURS['sim'], alpha=0.5, label=sim_label if k == 0 else None)
+        ax.plot(x, ph['obs'] + off_obs, 'o-', color=c, alpha=0.5, label='TSI: ' + label)
+        ax.plot(x, ph['sim'] + off_sim, 's-', color=COLOURS['sim'], alpha=0.5, label=sim_label if k == 0 else None)
         if ax_res is not None:
             ax_res.plot(x, ph['res'], 'o', color=c, alpha=0.6)
     ax.axhline(0, color='k', alpha=0.1)

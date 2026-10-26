@@ -56,6 +56,7 @@ order with ccf_weight_lines, weights normalised to 1), velocity grid -range..ran
                 bisector times convective_shift is added. Rings weighted by their MURaM brightness.
   dumusque_mu_scaling = a, b ([star], not in the old code): the Dumusque bisector of a ring is also multiplied by
                 a + b mu (e.g. 0, 1: proportional to mu, zero at the limb; ccf_grid.dumusque_bisector(mu_scaling=...)).
+                Custom: c0, c1, ..., cn -> c0 + c1 mu + ... + cn mu^n (any number of coefficients).
   mps_highres : the MURaM high resolution spectrum is interpolated at the mu of every ring and its CCF is computed in
                 every ring (highres_mu = 1); the spot as in mps. The CCF amplitude of every ring is its brightness.
 Spectroscopy ('spec', the observable of the old compute_forward added by O. Porqueras): spectrum of one cell of every
@@ -624,11 +625,13 @@ def _old_mask(cfg):
 
 
 def _dumusque(cfg):
-    """Dumusque bisector f(mu) -> p(ccf) of the configuration: dumusque_mu_scaling 'a, b' -> times a + b mu."""
+    """Dumusque bisector f(mu) -> p(ccf) of the configuration: dumusque_mu_scaling 'a, b' -> times a + b mu;
+    'c0, c1, ..., cn' -> times c0 + c1 mu + ... + cn mu^n."""
     raw = cfg['dumusque_mu_scaling'].strip()
-    mu_scaling = tuple(float(v) for v in re.split(r'[\s,]+', raw)) if raw else None
-    if mu_scaling is not None and len(mu_scaling) != 2:
-        raise ValueError('dumusque_mu_scaling must be two numbers a, b (factor a + b mu), got %r' % raw)
+    try:
+        mu_scaling = tuple(float(v) for v in re.split(r'[\s,]+', raw)) if raw else None
+    except ValueError:
+        raise ValueError('dumusque_mu_scaling must be numbers c0, c1, ... (factor c0 + c1 mu + ...), got %r' % raw) from None
     return dumusque_bisector(bool(cfg['ccf_norm']), mu_scaling=mu_scaling)
 
 
