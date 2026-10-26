@@ -14,6 +14,14 @@ SG_THRESHOLDS="--noise-th 8 --B-th 24 --I-th 0.89 --A-th 20 --mu-area 0.1 --facu
 SG_WINDOW=720                          # [s] 45 s dopplergrams averaged around every exposure (p modes)
 SG_MU_MIN=0.1                          # only the pixels with mu > this are projected (Haywood et al. 2016)
 SG_WORKERS=2                           # downloads at the same time in one job
+SG_QUALITY="--harpsn ${HARPSN} --min-obs-quality 0.99 --min-day-exp 50"   # exposures and days of the comparison
+# collect: one results folder per variant (name: options of supergranulation_haywood.py collect), all on the same days
+SG_VARIANTS=(
+  "results_rotfit_quality_0.99:"
+  "results_discmean_quality_0.99:--remove-disc-mean"
+  "results_phys_quality_0.99:--rotation-obs-vr --north-south --clv-deg 5 --clv-drift obs_vr --drift-deg 2"
+  "results_phys_h2_quality_0.99:--rotation-obs-vr --north-south --clv-deg 5 --clv-drift obs_vr --drift-deg 2 --drift-harmonics 2"
+)
 SG_CONF=${PIPELINES}/../conf/starsim_sun_sdo_mps_highres.conf
 SG_MPS=/data/spotless/scratch/sstucki/starsim/mps_spectra/
 SG_MASK=/nfs/pic.es/user/s/sstucki/env/starsim/starsim/masks/HARPS_G20_mps_friendly.mas

@@ -19,8 +19,9 @@ for a whole period (on PIC). Two steps:
       mean of the quiet cells of every exposure, v_quiet of Ervin et al. 2022, eq. 15: the zero point of HMI drifts
       over the orbit of SDO; with --rotation-obs-vr a1 + a4 OBS_VR in the rotation; with --clv-deg N the CLV of the
       quiet cells, shifted Legendre polynomials of mu up to degree N (Ervin et al. 2024, eq. 4), minus its average over
-      all the exposures, its coefficients fitted with OBS_VR + one offset per day, --clv-drift obs_vr, or as fitted on
-      every exposure, --clv-drift exposure), simulation of every exposure at its own time
+      all the exposures (--clv-remove-average: all of it), its coefficients fitted with OBS_VR + one offset per day,
+      --clv-drift obs_vr, or as fitted on every exposure, --clv-drift exposure; with --north-south a north-south
+      gradient ns + ns_vr OBS_VR fitted with the rotation), simulation of every exposure at its own time
       (maps; maps + dopplergram), and the comparison with the HARPS-N RV in the rest frame of the Sun, rv_raw (DRS,
       barycentric) - v_sun (JPL):
         - every day (intra-day: median of the day removed): RMS, Pearson r, slope; one figure per day;
@@ -420,10 +421,15 @@ def run_collect(a):
         # the coefficients of every exposure taken from their fit with OBS_VR + one offset per day (the supergranulation
         # around it kept); exposure: the coefficients of every exposure as fitted
         clv = sg.fit_clv(v_exp, sw_exp, a.n_rings, clv_deg)
-        c = clv if a.clv_drift == 'exposure' else sg.obs_vr_model(clv, ex['obs_vr'], ex['day'], a.drift_deg)
-        v_exp = v_exp - (c - c.mean(axis=0)) @ sg.clv_basis(a.n_rings, clv_deg).T
-        _log('CLV of the quiet cells (degree %d, %s) minus its average removed: c0 %.1f to %.1f m/s'
-             % (clv_deg, a.clv_drift, c[:, 0].min(), c[:, 0].max()))
+        # --clv-remove-average: the average CLV removed too (the spectra of the grids already have the convective
+        # blueshift; only the supergranulation around the CLV stays)
+        c = clv if a.clv_drift == 'exposure' else sg.obs_vr_model(clv, ex['obs_vr'], ex['day'], a.drift_deg, ex['jd'],
+                                                                   getattr(a, 'drift_harmonics', 0))
+        keep = 0.0 if getattr(a, 'clv_remove_average', False) else c.mean(axis=0)
+        v_exp = v_exp - (c - keep) @ sg.clv_basis(a.n_rings, clv_deg).T
+        _log('CLV of the quiet cells (degree %d, %s) removed%s: c0 %.1f to %.1f m/s'
+             % (clv_deg, a.clv_drift, '' if getattr(a, 'clv_remove_average', False) else ' (its average kept)',
+                c[:, 0].min(), c[:, 0].max()))
     v_exp, filled = sg.fill_empty_cells(v_exp, sw_exp, a.n_rings)
     _log('cells without quiet pixels (ring mean): %.1f per exposure' % filled.sum(axis=1).mean())
 
@@ -769,6 +775,12 @@ def main(argv=None):
                    help='with --clv-deg: CLV coefficients fitted with OBS_VR + one offset per day (obs_vr) or as fitted '
                         'on every exposure (exposure)')
     c.add_argument('--drift-deg', type=int, default=2, help='degree of the polynomial in OBS_VR (--clv-drift obs_vr)')
+    c.add_argument('--drift-harmonics', type=int, default=0,
+                   help='--clv-drift obs_vr: also the harmonics 1..N of the orbit of SDO (24 h, 12 h, ...; default 0)')
+    c.add_argument('--clv-remove-average', action='store_true',
+                   help='with --clv-deg: the average CLV removed too (already in the spectra of the grids)')
+    c.add_argument('--north-south', action='store_true',
+                   help='a north-south gradient ns + ns_vr OBS_VR fitted with the rotation of every day and removed')
     c.add_argument('--min-exp', type=int, default=5, help='days with fewer exposures: not in the statistics')
     c.add_argument('--harpsn', default=None, help='csv of the release: its quality flags (data_quality = 1 kept)')
     c.add_argument('--min-obs-quality', type=float, default=None,

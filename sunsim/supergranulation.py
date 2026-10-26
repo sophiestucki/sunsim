@@ -560,14 +560,21 @@ def fit_clv(v, w, n_rings, deg=5):
     return c
 
 
-def obs_vr_model(y, obs_vr, day, deg=2):
-    """Fit of y (n_exp,) or (n_exp, n) = polynomial of degree deg in OBS_VR [m/s] (no constant) + one offset per day,
-    over all the exposures: the part of y that follows the orbit of SDO and the zero point of every day; the rest (e.g.
-    the supergranulation) is in the residuals. Returns the fitted values (same shape as y)."""
+def obs_vr_model(y, obs_vr, day, deg=2, jd=None, harmonics=0):
+    """Fit of y (n_exp,) or (n_exp, n) = polynomial of degree deg in OBS_VR [m/s] (no constant) + one offset per day
+    (+ with jd [JD UTC] the harmonics 1..harmonics of the orbit of SDO, geosynchronous: 24 h, 12 h, ...; the HMI
+    residuals have 24 h and 12 h periods, Ervin et al. 2024, and the same OBS_VR comes twice per orbit), over all the
+    exposures: the part of y that follows the orbit of SDO and the zero point of every day; the rest (e.g. the
+    supergranulation) is in the residuals. Use many days: a solar signal of the day that follows OBS_VR goes too.
+    Returns the fitted values (same shape as y)."""
     y = np.asarray(y, dtype=np.float64)
     vr = np.asarray(obs_vr, dtype=np.float64) / 1000.0
     days, d = np.unique(np.asarray(day), return_inverse=True)
-    X = np.column_stack([vr ** p for p in range(1, int(deg) + 1)] + [(d == k).astype(float) for k in range(len(days))])
+    cols = [vr ** p for p in range(1, int(deg) + 1)]
+    if harmonics:
+        ph = 2 * np.pi * ((np.asarray(jd, dtype=np.float64) + 0.5) % 1.0)
+        cols += [f(k * ph) for k in range(1, int(harmonics) + 1) for f in (np.cos, np.sin)]
+    X = np.column_stack(cols + [(d == k).astype(float) for k in range(len(days))])
     return X @ np.linalg.lstsq(X, y, rcond=None)[0]
 
 
