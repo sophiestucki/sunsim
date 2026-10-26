@@ -1,8 +1,15 @@
-# name  remove_bis_spot  convective_shift  dumusque_mu_scaling ('a,b': the Dumusque (2014) bisector times a + b mu;
-# '-': the same bisector at every mu). The bisector of the spot CCF is removed, then this one is added:
-# mu_0_0 : (0, 0), nothing added
-# mu_0_1 : (0, 1), the Dumusque bisector times mu, zero at the limb (sweep_45_dumusque_mu.dag)
-# mu_1_0 : (1, 0), the Dumusque bisector, the same at every mu (old code)
-mu_0_0  1  1.0  0,0
-mu_0_1  1  1.0  0,1
-mu_1_0  1  1.0  1,0
+# name  remove_bis_spot  convective_shift  dumusque_mu_scaling ('c0,c1,...,cn': the Dumusque (2014) bisector times
+# c0 + c1 mu + ... + cn mu^n, e.g. 'a,b' -> a + b mu; '-': the same bisector at every mu). The bisector of the spot
+# CCF is removed, then this one is added:
+# mu_0_0  : (0, 0), nothing added
+# mu_0_1  : (0, 1), the Dumusque bisector times mu, zero at the limb (sweep_45_dumusque_mu.dag)
+# mu_1_0  : (1, 0), the Dumusque bisector, the same at every mu (old code)
+# palumbo : the RV of the spot relative to the quiet photosphere of every ring is the dv_conv of the spots of Palumbo
+#           et al. (2024, 0.1 umbra + 0.9 penumbra; ~+250 m/s at the disc centre, -210 m/s at mu = 0.15), within
+#           2.3 m/s for 0.15 <= mu <= 0.95 (analysis/spot_dumusque_palumbo.py --pipeline, Temp 300, 60 rings; the same
+#           for Temp 600 and 1100). The factor is ~-2.5: with the bisector of the spot removed, its CCF is at 0 m/s
+#           and the MURaM quiet CCF at -600 to -1000 m/s, so the other rows put the spot ~+950 m/s from the quiet Sun
+mu_0_0   1  1.0  0,0
+mu_0_1   1  1.0  0,1
+mu_1_0   1  1.0  1,0
+palumbo  1  1.0  -2.1506,-3.4333,6.4040,-3.0952

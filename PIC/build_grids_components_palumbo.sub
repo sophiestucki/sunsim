@@ -1,0 +1,16 @@
+# Condor submit file, step 1 of sweep_components_palumbo.dag: the grids (N_RINGS of settings_components.sh) of every
+# Temp of parameters_components.txt, bisector palumbo (jobs_components_palumbo_bisectors.txt, written by
+# jobs_components_palumbo.sh)
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/build_grids_components.sh
+Arguments  = "1 $(bisector)"
+
+RequestCpus   = 10
+RequestMemory = 16GB
+RequestDisk   = 10GB
+
+Log    = logs/build_grids_components_$(bisector).log
+Output = logs/build_grids_components_$(bisector).out
+Error  = logs/build_grids_components_$(bisector).err
+
+Queue bisector from jobs_components_palumbo_bisectors.txt

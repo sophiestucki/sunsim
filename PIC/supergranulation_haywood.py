@@ -15,7 +15,12 @@ for a whole period (on PIC). Two steps:
   python supergranulation_haywood.py collect --out DIR --start DATE --conf CONF [...]
       All the days: the rotation of eq. 12-13 fitted on the frames of every day (a1, a2, a3; supergranulation.fit_rotation)
       and removed, the corrected dopplergrams averaged over the window of every exposure (the p modes cancel) and
-      projected (supergranulation.window_average; nothing else removed), simulation of every exposure at its own time
+      projected (supergranulation.window_average; nothing else removed; with --remove-disc-mean the intensity weighted
+      mean of the quiet cells of every exposure, v_quiet of Ervin et al. 2022, eq. 15: the zero point of HMI drifts
+      over the orbit of SDO; with --rotation-obs-vr a1 + a4 OBS_VR in the rotation; with --clv-deg N the CLV of the
+      quiet cells, shifted Legendre polynomials of mu up to degree N (Ervin et al. 2024, eq. 4), minus its average over
+      all the exposures, its coefficients fitted with OBS_VR + one offset per day, --clv-drift obs_vr, or as fitted on
+      every exposure, --clv-drift exposure), simulation of every exposure at its own time
       (maps; maps + dopplergram), and the comparison with the HARPS-N RV in the rest frame of the Sun, rv_raw (DRS,
       barycentric) - v_sun (JPL):
         - every day (intra-day: median of the day removed): RMS, Pearson r, slope; one figure per day;
@@ -363,13 +368,23 @@ def run_collect(a):
     n_cells = ep['ff_sp'].shape[1]
     v_exp, sw_exp = np.full((len(ex['jd']), n_cells), np.nan), np.zeros((len(ex['jd']), n_cells))
     n45, ok45 = np.zeros(len(ex['jd']), np.int64), np.zeros(len(ex['jd']), bool)
+    ex['obs_vr'] = np.full(len(ex['jd']), np.nan)
     rows, rot = [], []
     for d, (jd45, swv, sw, swg, info) in frames.items():
+        vr45 = np.array([i['obs_vr'] for i in info], dtype=np.float64)
+        if getattr(a, 'rotation_obs_vr', False):
+            swg = sg.rotation_obs_vr_basis(swg, vr45)
+        if getattr(a, 'north_south', False):
+            swg = sg.north_south_basis(swg, sw, vr45, a.n_rings)
         alphas, err, rms = sg.fit_rotation(swv, sw, swg, a.n_rings)
-        rot.append({'day': d, 'frames': len(jd45), 'a1': alphas[0], 'a2': alphas[1], 'a3': alphas[2],
-                    'a1_err': err[0], 'a2_err': err[1], 'a3_err': err[2], 'rms_residual': rms})
+        names = (['a1', 'a2', 'a3'] + ['a4'] * getattr(a, 'rotation_obs_vr', False)
+                 + ['ns', 'ns_vr'] * getattr(a, 'north_south', False))
+        rot.append(dict({'day': d, 'frames': len(jd45)}, **dict(zip(names, alphas)),
+                        **{n + '_err': e for n, e in zip(names, err)}, rms_residual=rms))
         m = np.flatnonzero(ex['day'] == d)
         if len(m):
+            o = np.argsort(jd45)
+            ex['obs_vr'][m] = np.interp(ex['jd'][m], jd45[o], vr45[o])
             v_exp[m], sw_exp[m], n45[m], ok45[m] = sg.window_average(jd45, sg.remove_rotation(swv, swg, alphas), sw,
                                                                      ex['jd'][m], window=window, min_fill=a.min_fill)
         rows += [dict(i, day=d) for i in info]
@@ -379,10 +394,36 @@ def run_collect(a):
     _log('rotation of the days [deg/day]: a1 %.3f to %.3f, a2 %.2f to %.2f, a3 %.2f to %.2f (Table 1: %s)'
          % (rot['a1'].min(), rot['a1'].max(), rot['a2'].min(), rot['a2'].max(), rot['a3'].min(), rot['a3'].max(),
             sg.SNODGRASS_ULRICH))
+    if getattr(a, 'rotation_obs_vr', False):
+        _log('a1 + a4 OBS_VR: a4 %.3f to %.3f deg/day per km/s' % (rot['a4'].min(), rot['a4'].max()))
+    if getattr(a, 'north_south', False):
+        _log('north-south gradient ns + ns_vr OBS_VR: ns %.1f to %.1f m/s per solar radius, ns_vr %.1f to %.1f per km/s'
+             % (rot['ns'].min(), rot['ns'].max(), rot['ns_vr'].min(), rot['ns_vr'].max()))
     _log('dopplergrams: %d frames, window %.0f s: %d of %d exposures with >= %.0f %% of the frames (left out: %d)'
          % (len(rows), window, ok45.sum(), len(ok45), 100 * a.min_fill, (~ok45).sum()))
     ex = {k: v[ok45] for k, v in ex.items()}
     v_exp, sw_exp, n45 = v_exp[ok45], sw_exp[ok45], n45[ok45]
+    # disc mean of the quiet cells of every exposure (weighted by the intensity: v_quiet of Ervin et al. 2022, eq. 15),
+    # removed with --remove-disc-mean: the zero point of HMI drifts over the orbit of SDO (with OBS_VR)
+    k = np.isfinite(v_exp) & (sw_exp > 0)
+    v_disc = np.sum(np.where(k, sw_exp * np.nan_to_num(v_exp), 0.0), axis=1) / np.sum(np.where(k, sw_exp, 0.0), axis=1)
+    clv_deg = getattr(a, 'clv_deg', -1)
+    if getattr(a, 'remove_disc_mean', False) and clv_deg >= 0:
+        raise ValueError('--remove-disc-mean or --clv-deg, not both')
+    if getattr(a, 'remove_disc_mean', False):
+        v_exp = v_exp - v_disc[:, None]
+        _log('disc mean of the quiet cells removed from every exposure: %.1f to %.1f m/s' % (v_disc.min(), v_disc.max()))
+    clv = np.full((len(v_exp), max(clv_deg + 1, 0)), np.nan)
+    if clv_deg >= 0:
+        # centre-to-limb variation of the quiet cells of every exposure (shifted Legendre polynomials of mu, Ervin et al.
+        # 2024, eq. 4), minus its average over all the exposures: removed, the average CLV kept. --clv-drift obs_vr:
+        # the coefficients of every exposure taken from their fit with OBS_VR + one offset per day (the supergranulation
+        # around it kept); exposure: the coefficients of every exposure as fitted
+        clv = sg.fit_clv(v_exp, sw_exp, a.n_rings, clv_deg)
+        c = clv if a.clv_drift == 'exposure' else sg.obs_vr_model(clv, ex['obs_vr'], ex['day'], a.drift_deg)
+        v_exp = v_exp - (c - c.mean(axis=0)) @ sg.clv_basis(a.n_rings, clv_deg).T
+        _log('CLV of the quiet cells (degree %d, %s) minus its average removed: c0 %.1f to %.1f m/s'
+             % (clv_deg, a.clv_drift, c[:, 0].min(), c[:, 0].max()))
     v_exp, filled = sg.fill_empty_cells(v_exp, sw_exp, a.n_rings)
     _log('cells without quiet pixels (ring mean): %.1f per exposure' % filled.sum(axis=1).mean())
 
@@ -417,11 +458,13 @@ def run_collect(a):
     ob['contrast'] = relative_ppm(ob['contrast'])
 
     table = pd.DataFrame({'day': ex['day'], 'jd_utc': ex['jd'], 't': t, 'sdo_t_rec': ex['exp_trec'], 'dt_sdo_s': ex['exp_dt'],
-                          'n_frames': n45, 'rv_raw': ex['rv_raw'], 'v_sun_jpl': ex['v_sun'],
+                          'n_frames': n45, 'obs_vr': ex['obs_vr'], 'v_disc_mean': v_disc, 'rv_raw': ex['rv_raw'], 'v_sun_jpl': ex['v_sun'],
                           'berv_bary_to_helio': ex['berv_bary_to_helio'], 'rv_release': ex['rv_release']})
     for k in ('obs_quality', 'airmass'):
         if k in ex:
             table[k] = ex[k]
+    for n in range(clv.shape[1]):
+        table['clv_c%d' % n] = clv[:, n]
     for q in QUANTITIES:
         table[q + '_obs'], table[q + '_err'] = ob[q], err[q]
         for name in MODELS:
@@ -715,6 +758,17 @@ def main(argv=None):
                    help='[s] averaging window (default: the window of the day step; at most that one)')
     c.add_argument('--min-fill', type=float, default=0.8,
                    help='exposures with fewer frames than this fraction of window / 45 s are left out')
+    c.add_argument('--remove-disc-mean', action='store_true',
+                   help='the disc mean of the quiet cells (intensity weighted) removed from every exposure')
+    c.add_argument('--rotation-obs-vr', action='store_true',
+                   help='a1 + a4 OBS_VR in the rotation of every day (the east-west gradient of HMI with the orbit)')
+    c.add_argument('--clv-deg', type=int, default=-1,
+                   help='CLV of the quiet cells of every exposure (shifted Legendre polynomials of mu up to this degree; '
+                        '0: a constant) minus its average removed (default -1: not)')
+    c.add_argument('--clv-drift', default='obs_vr', choices=('obs_vr', 'exposure'),
+                   help='with --clv-deg: CLV coefficients fitted with OBS_VR + one offset per day (obs_vr) or as fitted '
+                        'on every exposure (exposure)')
+    c.add_argument('--drift-deg', type=int, default=2, help='degree of the polynomial in OBS_VR (--clv-drift obs_vr)')
     c.add_argument('--min-exp', type=int, default=5, help='days with fewer exposures: not in the statistics')
     c.add_argument('--harpsn', default=None, help='csv of the release: its quality flags (data_quality = 1 kept)')
     c.add_argument('--min-obs-quality', type=float, default=None,

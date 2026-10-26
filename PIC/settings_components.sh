@@ -3,9 +3,9 @@
 # of bright pixels larger than A_th), the time series of its parts simulated one by one, for several definitions of
 # the spot bisector. On top of settings.sh (period, environment, observations, write_conf); everything in ${BASE_C}.
 #   parameters_components.txt : noise_th, I_th, A_th, Temp (one simulation of every part per line and bisector)
-#   bisectors_components.txt  : name, remove_bis_spot, convective_shift, dumusque_mu_scaling ('a,b': the Dumusque
-#                               bisector of a ring times a + b mu; '-': the same at every mu), one grid per bisector and
-#                               Temp
+#   bisectors_components.txt  : name, remove_bis_spot, convective_shift, dumusque_mu_scaling ('c0,c1,...': the
+#                               Dumusque bisector of a ring times c0 + c1 mu + ...; '-': the same at every mu), one grid
+#                               per bisector and Temp
 # The parts (PARTS), from the identification of every set with faculae='plage' and faculae='plage+network'
 # (split_components.py):
 #   spot               : the spots alone (no facula)

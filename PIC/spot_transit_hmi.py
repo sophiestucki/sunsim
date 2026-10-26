@@ -29,9 +29,11 @@ CCF of SunSim needs (the Dumusque bisector x (a + b mu) of settings_45_dumusque_
       Evershed flow of the penumbra together. The FITS files are deleted after every epoch; an epoch already done
       (DIR/epochs/<T_REC>.npz) is skipped, so the run can be started again.
   python spot_transit_hmi.py collect --out DIR
-      Table of all the epochs (DIR/spot_transit.csv), the fit dv = a + b mu + c x (x: west coordinate of the spot
-      centre in solar radii; c x is what is antisymmetric east-west: the spot rotates faster than the plasma of the
-      dopplergrams), the same as a Dumusque scaling (dumusque_mu_scaling = a / <p>, b / <p>, <p> the mean of the
+      Table of all the epochs (DIR/spot_transit.csv), the fit dv = a + b mu + k_orb OBS_VR + k_rot v_rot (OBS_VR: the
+      velocity of SDO away from the Sun, +-3 km/s over its 24 h orbit; v_rot: the rotation velocity of the spot, +-2
+      km/s east to west: the HMI velocities of the spot have an error that follows the whole Doppler shift of its line,
+      much larger than in the quiet Sun, Schuck et al. 2016), dv - k_orb OBS_VR - k_rot v_rot, a and b as a Dumusque
+      scaling, the comparison with Palumbo et al. (2024) and the disc-integrated RV of the spot (dumusque_mu_scaling = a / <p>, b / <p>, <p> the mean of the
       Dumusque bisector over the CCF heights) and the figure DIR/spot_transit.png.
 
 A transit of one large, isolated, round spot is the simple case to start with, e.g. NOAA 12529 (2016-04-08 to
@@ -51,6 +53,20 @@ import time
 import numpy as np
 
 EPOCH_INFO = ('jd', 'mu', 'x', 'y', 'radius_deg', 'area_uhem', 'contrast', 'n_spot', 'n_ref', 'n_spots')
+R_SUN = 696000000.0                     # [m] (RSUN_REF)
+# limb darkening of the HMI continuum (6173 A), I(mu) / I(1): polynomial (highest power first) fitted on
+# hmi.Ic_720s / hmi.Ic_noLimbDark_720s of 2016.04.14_00:00:00_TAI (max error 0.004 for mu > 0.05)
+HMI_LD = np.poly1d([1.15333, -3.62938, 4.52343, -2.96468, 1.6294, 0.29151])
+# Palumbo, Saar & Haywood (2024, ApJ 973, 11; arXiv:2404.16747), Appendix B: HMI 2014-2018, every 4 h (the 12 h and
+# 24 h systematics of the orbit average out), intensity-weighted, mu bins of 0.1. Table 1: quiet Sun velocity
+# [m/s] (v_grav and a constant convective offset removed); Table 2: dv_conv = v_feature - v_quiet at the same mu
+# [m/s]. Umbra: I < 0.45 <I_quiet>, penumbra 0.45 - 0.89 (umbra + penumbra = the spot mask of sdo with I_th = 0.89)
+PALUMBO_MU = np.array([0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95])
+PALUMBO = {'quiet':     np.array([213.95, 95.06, 20.31, -21.66, -42.22, -49.15, -44.72, -25.22, 8.57]),
+           'network':   np.array([-53.76, -22.74, 9.67, 37.01, 59.81, 82.34, 105.17, 124.36, 129.50]),
+           'plage':     np.array([-82.47, -56.14, -16.70, 19.24, 49.58, 80.78, 111.50, 145.31, 160.66]),
+           'umbra':     np.array([-161.60, -65.30, 44.70, 110.51, 159.09, 189.38, 215.56, 228.84, 225.24]),
+           'penumbra':  np.array([-216.29, -128.93, -31.76, 47.32, 115.11, 174.19, 224.75, 255.76, 256.74])}
 
 
 def _key(t_rec):
@@ -234,6 +250,7 @@ def run(a):
                         n_spot=int(mask.sum()), n_ref=int(refs['ref'].sum()), n_spots=n_groups)
             np.savez(out, jd_frames=np.array(jd_f), alphas=alphas, alpha_err=alpha_err, rot_rms=rot_rms,
                      shift_px=np.array([s['shift_px'] for s in sums]),
+                     obs_vr=float(np.mean([s['obs_vr'] for s in sums])),
                      **{k: np.array(x) for k, x in vel.items()}, **info)
             _log('%s: mu = %.3f, x = %+.3f, area %.0f uhem, %d frames, a = %.3f %.3f %.3f deg/d, dv = %+.1f m/s'
                  % (tr, mu_c, centre[0], area, len(jd_f), *alphas,
@@ -254,7 +271,7 @@ def collect(a):
     import matplotlib.pyplot as plt
     from sunsim.ccf_grid import dumusque_bisector
 
-    rows = []
+    rows, jd_frames = [], []
     for path in sorted(glob.glob(os.path.join(a.out, 'epochs', '*.npz'))):
         with np.load(path) as z:
             if 'v_spot' not in z.files or len(z['v_spot']) == 0:
@@ -266,49 +283,95 @@ def collect(a):
             rows.append([float(z[k]) for k in EPOCH_INFO] +
                         [dv.mean(), err, np.mean(z['v_spot'] - z['v_quiet']), np.mean(z['v_spot'] - z['v_plane'])] +
                         [z[k].mean() for k in ('v_spot', 'v_ref', 'v_quiet', 'v_plane')] + list(z['alphas']) +
-                        [float(z['rot_rms']), len(dv)])
+                        [float(z['rot_rms']), len(dv), float(z['obs_vr']) if 'obs_vr' in z.files else np.nan])
+            jd_frames.append(z['jd_frames'])
     if not rows:
         print('no epoch with a spot in %s/epochs' % a.out)
         return 1
     cols = list(EPOCH_INFO) + ['dv', 'dv_err', 'dv_quiet_disc', 'dv_plane', 'v_spot', 'v_ref', 'v_quiet', 'v_plane',
-                               'a1', 'a2', 'a3', 'rot_rms', 'n_frames']
+                               'a1', 'a2', 'a3', 'rot_rms', 'n_frames', 'obs_vr']
     t = np.array(rows)
+    t = t[np.argsort(t[:, 0])]
+    # one transit: the spot moves from east to west; once it has set at the west limb, the largest spot is another
+    # one rising at the east limb (x jumps back): those epochs are left out
+    jump = np.flatnonzero(np.diff(t[:, EPOCH_INFO.index('x')]) < -0.5)
+    if len(jump):
+        print('%d epochs after the spot set at the west limb left out (another spot)' % (len(t) - jump[0] - 1))
+        t = t[:jump[0] + 1]
+        jd_frames = [jd_frames[i] for i in np.argsort([j.mean() for j in jd_frames])][:jump[0] + 1]
+    missing = ~np.isfinite(t[:, -1])
+    if missing.any():                                 # epochs of a run that did not keep it: from the JSOC keywords
+        t[missing, -1] = _obs_vr([j for j, m in zip(jd_frames, missing) if m])
     T = {c: t[:, i] for i, c in enumerate(cols)}
-    np.savetxt(os.path.join(a.out, 'spot_transit.csv'), t, delimiter=',', header=','.join(cols), comments='',
-               fmt='%.6f')
 
-    # dv = a + b mu + c x: what is symmetric east-west (mu) and antisymmetric (x)
+    # rotation velocity of the spot centre (fitted plasma rotation; > 0 west, receding; B0 neglected)
+    s2 = np.clip(T['y'], -1, 1) ** 2                                      # sin^2 latitude
+    omega = np.deg2rad(T['a1'] + T['a2'] * s2 + T['a3'] * s2 ** 2) / 86400
+    T['v_rot'] = omega * R_SUN * T['x']
+
+    # dv = a + b mu + k_orb OBS_VR + k_rot v_rot: what is symmetric east-west (mu) and the error of the HMI velocities
+    # of the spot, which follows the whole Doppler shift of its line at HMI: the orbit of SDO (OBS_VR, +-3 km/s over
+    # 24 h) and the rotation of the Sun (v_rot, +-2 km/s east to west). Much larger in the spot than in the quiet Sun
+    # (Schuck et al. 2016); k_orb and k_rot come out alike (AR 12529: -117 and -154 m/s per km/s): the HMI velocity
+    # scale of the spot pixels is ~13 % short, and the rotation fitted on the quiet Sun leaves k_rot v_rot in the spot.
     use = T['mu'] > a.mu_min
     print('%d epochs (%d with mu > %.2f)' % (len(t), use.sum(), a.mu_min))
     coef = None
-    if use.sum() > 3:
-        A = np.column_stack([np.ones(use.sum()), T['mu'][use], T['x'][use]])
+    T['dv_corr'] = T['dv'].copy()
+    if use.sum() > 4:
+        vr, vrot = T['obs_vr'] / 1000, T['v_rot'] / 1000                # [km/s]
+        A = np.column_stack([np.ones(use.sum()), T['mu'][use], vr[use], vrot[use]])
         coef, *_ = np.linalg.lstsq(A, T['dv'][use], rcond=None)
         rms = np.std(T['dv'][use] - A @ coef)
+        T['dv_corr'] = T['dv'] - coef[2] * vr - coef[3] * vrot
         p_mean = np.polyint(dumusque_bisector(True)(1.0))
         p_mean = (p_mean(1) - p_mean(0)) * 1000                         # mean over the heights [m/s]
-        print('dv = %.1f + %.1f mu + %.1f x  [m/s], rms %.1f m/s' % (coef[0], coef[1], coef[2], rms))
+        print('dv = %.1f + %.1f mu + %.1f OBS_VR + %.1f v_rot  [m/s, velocities in km/s], rms %.1f m/s'
+              % (coef[0], coef[1], coef[2], coef[3], rms))
         print('Dumusque bisector: mean %.1f m/s -> dumusque_mu_scaling = %.3f, %.3f' % (p_mean, coef[0] / p_mean,
                                                                                         coef[1] / p_mean))
     else:
-        print('no fit: it needs more than 3 epochs')
+        print('no fit: it needs more than 4 epochs')
+    # the quiet Sun at the mu of the spot, the same 24 h term removed (k_q), for the comparison with Palumbo et al.
+    T['v_ref_corr'] = T['v_ref'].copy()
+    if use.sum() > 4:
+        A = np.column_stack([T['mu'][use] ** k for k in range(4)] + [vr[use]])
+        cq, *_ = np.linalg.lstsq(A, T['v_ref'][use], rcond=None)
+        T['v_ref_corr'] = T['v_ref'] - cq[-1] * vr
+        print('quiet Sun at the mu of the spot: %.1f m/s per km/s of OBS_VR' % cq[-1])
+
+    # the spot in the disc-integrated RV (Haywood et al. 2016, eq. 11 and 14-16): fraction of the light of the disc
+    # in the spot f (its projected area, its contrast, the limb darkening), convective term f dv and photometric term
+    # (the light missing, (1 - contrast), at the rotation velocity of the spot)
+    mu_g = np.linspace(0, 1, 2001)
+    ld_disc = np.trapezoid(2 * HMI_LD(mu_g) * mu_g, mu_g)                 # mean intensity of the disc / I(1)
+    f_geom = 2e-6 * T['area_uhem'] * T['mu']                              # projected area / disc
+    T['f_spot'] = f_geom * T['contrast'] * HMI_LD(T['mu']) / ld_disc
+    T['drv_conv'] = T['f_spot'] * T['dv_corr']
+    T['drv_phot'] = -f_geom * (1 - T['contrast']) * HMI_LD(T['mu']) / ld_disc * T['v_rot']
+    extra = ['dv_corr', 'v_ref_corr', 'f_spot', 'v_rot', 'drv_conv', 'drv_phot']
+    t = np.column_stack([t] + [T[k] for k in extra])
+    np.savetxt(os.path.join(a.out, 'spot_transit.csv'), t, delimiter=',', header=','.join(cols + extra),
+               comments='', fmt='%.6f')
+    print('disc-integrated RV of the spot: convective %+.2f to %+.2f m/s, photometric %+.2f to %+.2f m/s'
+          % (T['drv_conv'].min(), T['drv_conv'].max(), T['drv_phot'].min(), T['drv_phot'].max()))
+    palumbo_figure(a, T)
 
     t_d = T['jd'] - T['jd'].min()
     west = T['x'] > 0
     fig, ax = plt.subplots(2, 2, figsize=(12, 7.5))
-    ax[0, 0].errorbar(t_d, T['dv'], T['dv_err'], fmt='o', ms=3, color='k')
+    ax[0, 0].errorbar(t_d, T['dv'], T['dv_err'], fmt='o', ms=3, color='0.6', label='dv')
+    ax[0, 0].plot(t_d, T['dv_corr'], 'ko', ms=3, label='dv - k_orb OBS_VR - k_rot v_rot')
     ax[0, 0].set_xlabel('days from %s' % _iso(T['jd'].min()))
-    ax[0, 0].set_ylabel('v_spot - v_quiet [m/s]')
-    ax[0, 0].plot(t_d, T['dv_quiet_disc'], 's', ms=3, mfc='none', color='0.5', label='v_spot - v_quiet (whole disc)')
-    ax[0, 0].plot(t_d, T['dv_plane'], '^', ms=3, mfc='none', color='C2', label='v_spot - v_plane (annulus)')
+    ax[0, 0].set_ylabel('v_spot - v_quiet(mu) [m/s]')
     ax[0, 0].legend(fontsize=8)
     for sel, colour, label in ((~west, 'C0', 'east'), (west, 'C3', 'west')):
-        ax[0, 1].errorbar(T['mu'][sel], T['dv'][sel], T['dv_err'][sel], fmt='o', ms=3, color=colour, label=label)
+        ax[0, 1].errorbar(T['mu'][sel], T['dv_corr'][sel], T['dv_err'][sel], fmt='o', ms=3, color=colour, label=label)
     if coef is not None:
         mu = np.linspace(max(a.mu_min, T['mu'].min()), 1, 50)
         ax[0, 1].plot(mu, coef[0] + coef[1] * mu, 'k-', label='a + b mu')
     ax[0, 1].set_xlabel('mu')
-    ax[0, 1].set_ylabel('v_spot - v_quiet [m/s]')
+    ax[0, 1].set_ylabel('dv - k_orb OBS_VR - k_rot v_rot [m/s]')
     ax[0, 1].legend(fontsize=8)
     ax[1, 0].plot(t_d, T['area_uhem'], 'o-', ms=3)
     ax[1, 0].set_xlabel('days')
@@ -316,13 +379,84 @@ def collect(a):
     ax2 = ax[1, 0].twinx()
     ax2.plot(t_d, T['a1'], 'x', ms=3, color='C1')
     ax2.set_ylabel('a1 fitted [deg/day]', color='C1')
-    ax[1, 1].plot(T['mu'], T['contrast'], 'o', ms=3)
-    ax[1, 1].set_xlabel('mu')
-    ax[1, 1].set_ylabel('<I_spot> / <I_quiet>')
+    if coef is not None:
+        res = T['dv'] - coef[0] - coef[1] * T['mu']
+        vtot = (T['obs_vr'] + T['v_rot']) / 1000
+        for sel, colour, label in ((~west, 'C0', 'east'), (west, 'C3', 'west')):
+            ax[1, 1].plot(vtot[sel], res[sel], 'o', ms=3, color=colour, label=label)
+        v = np.linspace(vtot.min(), vtot.max(), 2)
+        ax[1, 1].plot(v, coef[2] * v, 'k-', label='k_orb = %.0f m/s per km/s' % coef[2])
+        ax[1, 1].plot(v, coef[3] * v, 'k--', label='k_rot = %.0f m/s per km/s' % coef[3])
+        ax[1, 1].legend(fontsize=8)
+    ax[1, 1].set_xlabel('OBS_VR + v_rot: Doppler shift of the spot at HMI [km/s]')
+    ax[1, 1].set_ylabel('dv - (a + b mu) [m/s]')
     plt.tight_layout()
     fig.savefig(os.path.join(a.out, 'spot_transit.png'), dpi=130)
     print('written: %s, %s' % (os.path.join(a.out, 'spot_transit.csv'), os.path.join(a.out, 'spot_transit.png')))
     return 0
+
+
+def palumbo_figure(a, T):
+    """The spot against Palumbo et al. (2024) in their mu bins (table printed), the quiet Sun at the mu of the spot
+    against their quiet Sun (one constant removed: the zero points differ), and the disc-integrated RV of the spot."""
+    import matplotlib.pyplot as plt
+    edges = np.append(PALUMBO_MU - 0.05, 1.0)
+    k = np.digitize(T['mu'], edges) - 1
+    binned = {q: np.array([np.mean(T[q][k == i]) if np.any(k == i) else np.nan for i in range(len(PALUMBO_MU))])
+              for q in ('dv_corr', 'v_ref_corr')}
+    n = np.bincount(k[(k >= 0) & (k < len(PALUMBO_MU))], minlength=len(PALUMBO_MU))
+    off = np.nanmean(binned['v_ref_corr'] - PALUMBO['quiet'])
+    print('\n  mu   n | spot (this transit) | Palumbo: umbra penumbra   plage network | quiet: this - %.0f  Palumbo'
+          % off)
+    for i, mu in enumerate(PALUMBO_MU):
+        print('%5.2f %3d | %19.1f | %15.1f %8.1f %7.1f %7.1f | %17.1f %8.1f'
+              % (mu, n[i], binned['dv_corr'][i], PALUMBO['umbra'][i], PALUMBO['penumbra'][i], PALUMBO['plage'][i],
+                 PALUMBO['network'][i], binned['v_ref_corr'][i] - off, PALUMBO['quiet'][i]))
+
+    fig, ax = plt.subplots(1, 3, figsize=(16, 4.8))
+    styles = {'umbra': ('C3', '--'), 'penumbra': ('C1', '--'), 'plage': ('C2', '-'), 'network': ('C9', '-')}
+    for q, (c, ls) in styles.items():
+        ax[0].plot(PALUMBO_MU, PALUMBO[q], ls, color=c, marker='.', label='Palumbo+24 %s' % q)
+    west = T['x'] > 0
+    ax[0].plot(T['mu'][~west], T['dv_corr'][~west], 'o', ms=3, color='0.55', mfc='none', label='spot, east')
+    ax[0].plot(T['mu'][west], T['dv_corr'][west], 's', ms=3, color='0.55', mfc='none', label='spot, west')
+    ax[0].plot(PALUMBO_MU, binned['dv_corr'], 'ko-', lw=2, label='spot (umbra + penumbra), binned')
+    ax[0].axhline(0, color='0.8', lw=0.8)
+    ax[0].set_xlabel('mu')
+    ax[0].set_ylabel('dv_conv = v - v_quiet(mu) [m/s]')
+    ax[0].legend(fontsize=7)
+    ax[1].plot(PALUMBO_MU, PALUMBO['quiet'], 'C0.-', label='Palumbo+24 quiet Sun')
+    ax[1].plot(T['mu'], T['v_ref_corr'] - off, 'k.', ms=4, label='quiet Sun at the spot mu - %.0f m/s' % off)
+    ax[1].set_xlabel('mu')
+    ax[1].set_ylabel('v_quiet [m/s]')
+    ax[1].legend(fontsize=8)
+    t_d = T['jd'] - T['jd'].min()
+    ax[2].plot(t_d, T['drv_conv'], 'C3o-', ms=3, label='convective: f dv')
+    ax[2].plot(t_d, T['drv_phot'], 'C0o-', ms=3, label='photometric')
+    ax[2].plot(t_d, T['drv_conv'] + T['drv_phot'], 'k-', label='total')
+    ax[2].axhline(0, color='0.8', lw=0.8)
+    ax[2].set_xlabel('days from %s' % _iso(T['jd'].min()))
+    ax[2].set_ylabel('disc-integrated RV of the spot [m/s]')
+    ax[2].legend(fontsize=8)
+    plt.tight_layout()
+    fig.savefig(os.path.join(a.out, 'spot_transit_palumbo.png'), dpi=130)
+
+
+def _obs_vr(jd_frames):
+    """Mean OBS_VR [m/s] (velocity of SDO away from the Sun) of the frames of every epoch (list of arrays of their T_OBS,
+    JD UTC), from the keywords of hmi.V_45s (one JSOC query)."""
+    from sunsim import supergranulation as sg
+    lo = min(j.min() for j in jd_frames) - 1e-3
+    hi = max(j.max() for j in jd_frames) + 1e-3
+    k = sg._client().query('%s[%s-%s]' % (sg.SERIES_45S[0], sg.t_rec_of_jd(lo), sg.t_rec_of_jd(hi)),
+                           key='T_OBS,OBS_VR')
+    jd = sg.jd_of_t_rec(k['T_OBS'].values)
+    vr = k['OBS_VR'].values.astype(np.float64)
+    out = []
+    for j in jd_frames:
+        idx, _ = sg.closest(j, jd)
+        out.append(vr[idx].mean())
+    return np.array(out)
 
 
 def _iso(jd):

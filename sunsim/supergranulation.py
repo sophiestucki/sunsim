@@ -32,7 +32,10 @@ Every exposure
 4. the corrected frames within window / 2 of the middle of the exposure are averaged (window_average; 720 s: the p
    modes, ~5 min, cancel): the sums over the frames divided give the same as the mean dopplergram projected.
 Nothing else is removed: the velocity of a cell still has the centre-to-limb convective blueshift, the gravitational
-redshift and the zero point of HMI, the supergranulation and the meridional flow. The cells without any quiet pixel
+redshift and the zero point of HMI, the supergranulation and the meridional flow. The HMI velocities left after eq. 10
+follow the orbit of SDO (OBS_VR): an east-west gradient (rotation_obs_vr_basis: a1 + a4 OBS_VR in fit_rotation) and the
+zero point and shape of the CLV (fit_clv: shifted Legendre polynomials of mu; obs_vr_model: their part that follows
+OBS_VR), both optional. The cells without any quiet pixel
 (the last ring is all at mu < 0.1) take the mean of their ring, or of the closest ring inside (fill_empty_cells).
 quiet_velocity_field(times, v, N_rings) gives the result to StarSim(quiet_velocity=...) (or
 simulate_old_config(quiet_velocity=...)): in every cell, the CCF of the quiet photosphere is shifted by its velocity.
@@ -462,12 +465,12 @@ def fit_rotation(swv, sw, swg, n_rings):
     frame_cell_sums: the velocity of every cell v = swv / sw against the cell means of the rotation images
     G_k = swg_k / sw (v_rot = a1 G1 + a2 G2 + a3 G3). One offset per ring and per frame is fitted with them and not used
     (everything that is the same east and west: the convective blueshift, the zero point of HMI); least squares weighted
-    by sw. swv, sw (n_frames, n_cells), swg (n_frames, 3, n_cells).
+    by sw. swv, sw (n_frames, n_cells), swg (n_frames, 3, n_cells), or with more images (rotation_obs_vr_basis: a4).
     Returns alphas (3,), their formal errors (3,; the supergranulation is not white noise: too small) and the weighted
-    RMS of the residuals [m/s]."""
+    RMS of the residuals [m/s] (one coefficient per image of swg)."""
     sw = np.atleast_2d(np.asarray(sw, dtype=np.float64))
     swv = np.atleast_2d(np.asarray(swv, dtype=np.float64))
-    swg = np.asarray(swg, dtype=np.float64).reshape(len(sw), 3, -1)
+    swg = np.asarray(swg, dtype=np.float64).reshape(len(sw), -1, sw.shape[1])
     n_f = len(sw)
     ok = sw > 0
     w = np.where(ok, sw, 0.0)
@@ -482,21 +485,90 @@ def fit_rotation(swv, sw, swg, n_rings):
         return (a - m[idx].reshape(a.shape))[ok]
 
     y = demeaned(np.where(ok, swv / den, 0.0))
-    X = np.column_stack([demeaned(np.where(ok, swg[:, k] / den, 0.0)) for k in range(3)])
+    X = np.column_stack([demeaned(np.where(ok, swg[:, k] / den, 0.0)) for k in range(swg.shape[1])])
     q = np.sqrt(w[ok])
     A = X * q[:, None]
     coef = np.linalg.lstsq(A, y * q, rcond=None)[0]
     res = y - X @ coef
     chi2 = np.sum(w[ok] * res ** 2)
-    dof = max(len(y) - 3 - int(np.sum(sw_ring > 0)), 1)
+    dof = max(len(y) - X.shape[1] - int(np.sum(sw_ring > 0)), 1)
     err = np.sqrt(np.diag(np.linalg.inv(A.T @ A)) * chi2 / dof)
     return coef, err, float(np.sqrt(chi2 / np.sum(w[ok])))
 
 
+def rotation_obs_vr_basis(swg, obs_vr):
+    """swg of frame_cell_sums (n_frames, 3, n_cells) with a fourth image g1 x OBS_VR [km/s] of every frame: fitted with
+    them (fit_rotation), a1 + a4 OBS_VR. The HMI velocities left after eq. 10 have an east-west gradient that follows
+    OBS_VR (~0.1 deg/day per km/s on a1, ~15 m/s at the limb): not the Sun, but the shape of g1."""
+    swg = np.asarray(swg, dtype=np.float64)
+    vr = np.asarray(obs_vr, dtype=np.float64) / 1000.0
+    return np.concatenate([swg, swg[:, :1] * vr[:, None, None]], axis=1)
+
+
+def north_of_cells(n_rings, size=512):
+    """Mean north coordinate [solar radii, > 0 north] of the pixels of every cell, in the frame of the maps of
+    identify_day (origin='lower': north up)."""
+    cells, npix = sdo.cell_projection((size, size), n_rings)
+    y = np.repeat((np.arange(size) + 0.5) / size * 2 - 1, size)
+    return np.bincount(cells[cells >= 0], weights=y[cells >= 0], minlength=len(npix)) / np.maximum(npix, 1)
+
+
+def north_south_basis(swg, sw, obs_vr, n_rings):
+    """swg of frame_cell_sums with two more images: the north coordinate of the cells, alone and x OBS_VR [km/s]
+    (sums over the quiet pixels: sw x north). Fitted with the rotation (fit_rotation): the HMI velocities left after
+    eq. 10 have a north-south gradient (~ -45 m/s per solar radius, +-7 with OBS_VR) that no solar flow gives (the
+    rotation is east-west, the meridional flow the same north and south)."""
+    swg, sw = np.asarray(swg, dtype=np.float64), np.asarray(sw, dtype=np.float64)
+    yn = sw * north_of_cells(n_rings)[None, :]
+    vr = np.asarray(obs_vr, dtype=np.float64)[:, None] / 1000.0
+    return np.concatenate([swg, yn[:, None], (yn * vr)[:, None]], axis=1)
+
+
 def remove_rotation(swv, swg, alphas):
-    """Sums swv of frame_cell_sums without the rotation of eq. 13 with the coefficients alphas [deg/day]."""
+    """Sums swv of frame_cell_sums without the rotation of eq. 13 with the coefficients alphas [deg/day] (one per image
+    of swg)."""
     swg = np.asarray(swg, dtype=np.float64)
     return np.asarray(swv, dtype=np.float64) - np.tensordot(np.asarray(alphas, dtype=np.float64), swg, axes=([0], [-2]))
+
+
+# =============================================================================================
+# centre-to-limb variation of the quiet cells
+# =============================================================================================
+def mu_of_cells(n_rings):
+    """mu of the centre of the ring of every cell of a SunSim grid of n_rings rings."""
+    from . import nbspectra
+    return np.asarray(nbspectra.generate_grid_coordinates_nb(int(n_rings))[3], dtype=np.float64)[ring_of_cells(n_rings)]
+
+
+def clv_basis(n_rings, deg=5):
+    """Shifted Legendre polynomials P_n(2 mu - 1), n = 0..deg, of the cells (n_cells, deg + 1): the convective blueshift
+    v(mu) = sum c_n P_n(2 mu - 1) of Kashyap & Hanasoge (2021), as in Ervin et al. (2024, eq. 4)."""
+    return np.polynomial.legendre.legvander(2.0 * mu_of_cells(n_rings) - 1.0, int(deg))
+
+
+def fit_clv(v, w, n_rings, deg=5):
+    """Coefficients c_n of clv_basis fitted on the cells of every exposure (least squares weighted by w, e.g. sw of
+    window_average; the cells with NaN or w = 0 left out). v, w (n_exp, n_cells). Returns c (n_exp, deg + 1)."""
+    v = np.array(v, dtype=np.float64, ndmin=2)
+    w = np.array(w, dtype=np.float64, ndmin=2)
+    P = clv_basis(n_rings, deg)
+    c = np.full((len(v), P.shape[1]), np.nan)
+    for i in range(len(v)):
+        k = np.isfinite(v[i]) & (w[i] > 0)
+        q = np.sqrt(w[i][k])
+        c[i] = np.linalg.lstsq(P[k] * q[:, None], v[i][k] * q, rcond=None)[0]
+    return c
+
+
+def obs_vr_model(y, obs_vr, day, deg=2):
+    """Fit of y (n_exp,) or (n_exp, n) = polynomial of degree deg in OBS_VR [m/s] (no constant) + one offset per day,
+    over all the exposures: the part of y that follows the orbit of SDO and the zero point of every day; the rest (e.g.
+    the supergranulation) is in the residuals. Returns the fitted values (same shape as y)."""
+    y = np.asarray(y, dtype=np.float64)
+    vr = np.asarray(obs_vr, dtype=np.float64) / 1000.0
+    days, d = np.unique(np.asarray(day), return_inverse=True)
+    X = np.column_stack([vr ** p for p in range(1, int(deg) + 1)] + [(d == k).astype(float) for k in range(len(days))])
+    return X @ np.linalg.lstsq(X, y, rcond=None)[0]
 
 
 # =============================================================================================
