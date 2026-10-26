@@ -2,6 +2,8 @@
 # run_components.sub)
 Universe   = vanilla
 Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/collect_components.sh
+# the bisectors of VARS collect bisectors="..." in the DAG; without it, all of bisectors_components.txt
+Arguments  = "$(bisectors)"
 
 RequestCpus   = 1
 RequestMemory = 4GB

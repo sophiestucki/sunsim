@@ -9,7 +9,19 @@
 #           2.3 m/s for 0.15 <= mu <= 0.95 (analysis/spot_dumusque_palumbo.py --pipeline, Temp 300, 60 rings; the same
 #           for Temp 600 and 1100). The factor is ~-2.5: with the bisector of the spot removed, its CCF is at 0 m/s
 #           and the MURaM quiet CCF at -600 to -1000 m/s, so the other rows put the spot ~+950 m/s from the quiet Sun
-mu_0_0   1  1.0  0,0
-mu_0_1   1  1.0  0,1
-mu_1_0   1  1.0  1,0
-palumbo  1  1.0  -2.1506,-3.4333,6.4040,-3.0952
+#
+# keep_* : remove_bis_spot = 0, the spot keeps the bisector of its MURaM CCF (the one of the quiet photosphere: the spot
+#          CCF is within 2-12 m/s of the quiet one in every ring), and the Dumusque bisector times the scaling is added
+#          (sweep_components_keepbis.dag; the identification and the parts of sweep_components.dag are used):
+# keep_dumusque    : (1, 0), the Dumusque bisector, the same at every mu
+# keep_dumusque_mu : (0, 1), the Dumusque bisector times mu
+# keep_palumbo     : spot - quiet of every ring = dv_conv of the spots of Palumbo et al. (2024), within 2.6 m/s for
+#                    0.15 <= mu <= 0.95 (+0.8 x Dumusque at the disc centre, -0.7 at mu = 0.15;
+#                    analysis/spot_dumusque_palumbo.py --pipeline --remove-bis-spot 0, Temp 300)
+mu_0_0            1  1.0  0,0
+mu_0_1            1  1.0  0,1
+mu_1_0            1  1.0  1,0
+palumbo           1  1.0  -2.1506,-3.4333,6.4040,-3.0952
+keep_dumusque     0  1.0  1,0
+keep_dumusque_mu  0  1.0  0,1
+keep_palumbo      0  1.0  -1.1208,3.1829,-0.2985,-0.9572

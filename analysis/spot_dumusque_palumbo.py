@@ -153,13 +153,14 @@ def pipeline_fit(a, target_bins):
     from sunsim import dumusque_bisector
     row = [l.split() for l in open(os.path.join(PIC, 'bisectors_components.txt'))
            if l.split() and not l.startswith('#') and l.split()[0] == a.like][0]
-    remove, cs = row[1], float(row[2])
+    remove, cs = row[1] if a.remove_bis_spot is None else str(a.remove_bis_spot), float(row[2])
+    suffix = '' if remove == '1' else '_keepbis'                         # remove_bis_spot = 0: the spot keeps its bisector
     results = {'w_umbra': a.w_umbra, 'n_rings': a.n_rings, 'remove_bis_spot': remove, 'convective_shift': cs,
                'dT': {}}
     fig, ax = plt.subplots(1, 3, figsize=(16, 4.8))
     mu_fine = np.linspace(0.05, 1, 200)
     for j, dT in enumerate(a.dT):
-        conf = pipeline_conf(os.path.join(a.out, 'pipeline_T_%d.conf' % dT), dT, a.n_rings, remove, cs, '0')
+        conf = pipeline_conf(os.path.join(a.out, 'pipeline%s_T_%d.conf' % (suffix, dT)), dT, a.n_rings, remove, cs, '0')
         amu, ph, sp = pipeline_rings(conf)
         rv_quiet = ring_rv(ph.rvs_ring, ph.ccf_rings)
         dum = dumusque_bisector(False)                                   # ccf_norm = 0 in write_conf
@@ -172,14 +173,14 @@ def pipeline_fit(a, target_bins):
         polys = {deg: np.poly1d(np.polyfit(amu[fit], f[fit], deg)) for deg in a.degrees}
         r = {'mu_rings': amu.tolist(), 'target': target.tolist(), 'base': base.tolist(), 'D': D.tolist(),
              'f': f.tolist(), 'dumusque_mu_scaling': {}, 'rms': {}, 'rms_check': {}}
-        print('dT = %d K, %d rings: base (spot without bisector - quiet) %.0f to %.0f m/s, D %.0f to %.0f m/s'
+        print('dT = %d K, %d rings: base (spot without Dumusque - quiet) %.0f to %.0f m/s, D %.0f to %.0f m/s'
               % (dT, len(amu), base[fit].min(), base[fit].max(), D[fit].min(), D[fit].max()))
         for deg, g in polys.items():
             coeffs = g.coeffs[::-1]
             scaling = ','.join('%.4f' % c for c in coeffs)
             rv_g = ring_rv(sp.rvs_ring + g(amu)[:, None] * add, sp.ccf_rings) - rv_quiet
             # end to end: the configuration with this dumusque_mu_scaling, read and built by simulate_old_config
-            conf_g = pipeline_conf(os.path.join(a.out, 'pipeline_T_%d_deg%d.conf' % (dT, deg)), dT, a.n_rings, remove,
+            conf_g = pipeline_conf(os.path.join(a.out, 'pipeline%s_T_%d_deg%d.conf' % (suffix, dT, deg)), dT, a.n_rings, remove,
                                    cs, scaling)
             _, ph_g, sp_g = pipeline_rings(conf_g)
             rv_check = ring_rv(sp_g.rvs_ring, sp_g.ccf_rings) - ring_rv(ph_g.rvs_ring, ph_g.ccf_rings)
@@ -192,7 +193,7 @@ def pipeline_fit(a, target_bins):
                 ax[2].plot(amu, rv_check, 'o-', ms=3, color='C%d' % j,
                            label='pipeline, dumusque_mu_scaling of degree %d, dT = %d K' % (deg, dT))
         results['dT'][str(int(dT))] = r
-        ax[0].plot(amu, base, '--', color='C%d' % j, label='spot (bisector removed) - quiet, dT = %d K' % dT)
+        ax[0].plot(amu, base, '--', color='C%d' % j, label='spot without Dumusque - quiet, dT = %d K' % dT)
         ax[1].plot(amu, f, 'o', ms=3, color='C%d' % j, label='f(mu) needed, dT = %d K' % dT)
         ax[1].plot(mu_fine, polys[max(polys)](mu_fine), '-', color='C%d' % j, label='degree %d fit' % max(polys))
     for q, ls in (('umbra', ':'), ('penumbra', '-.')):
@@ -206,12 +207,12 @@ def pipeline_fit(a, target_bins):
         ax[k].axhline(0, color='0.85', lw=0.8)
         ax[k].axvspan(0, PALUMBO_MU[0], color='0.95', zorder=0)
         ax[k].legend(fontsize=7)
-    ax[0].set_title('component pipeline: spot without bisector')
+    ax[0].set_title('component pipeline (remove_bis_spot = %s): spot without Dumusque' % remove)
     ax[1].set_title('factor of the Dumusque bisector')
     ax[2].set_title('pipeline configuration with the fitted scaling')
     plt.tight_layout()
-    fig.savefig(os.path.join(a.out, 'spot_dumusque_palumbo_pipeline.png'), dpi=130)
-    with open(os.path.join(a.out, 'spot_dumusque_palumbo_pipeline.json'), 'w') as fh:
+    fig.savefig(os.path.join(a.out, 'spot_dumusque_palumbo_pipeline%s.png' % suffix), dpi=130)
+    with open(os.path.join(a.out, 'spot_dumusque_palumbo_pipeline%s.json' % suffix), 'w') as fh:
         json.dump(results, fh, indent=1)
     print('written: %s' % a.out)
     return 0
@@ -227,6 +228,9 @@ def main(argv=None):
                         'remove_bis_spot and convective_shift of the row --like of PIC/bisectors_components.txt)')
     p.add_argument('--n-rings', type=int, default=60, help='--pipeline: N_RINGS (60, settings_components.sh)')
     p.add_argument('--like', default='mu_1_0', help='--pipeline: row of bisectors_components.txt (mu_1_0)')
+    p.add_argument('--remove-bis-spot', type=int, choices=(0, 1), default=None,
+                   help='--pipeline: remove_bis_spot (default: the one of the row --like); 0: the spot keeps the '
+                        'bisector of its MURaM CCF, outputs *_keepbis')
     p.add_argument('--out', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'results',
                                                  'spot_dumusque_palumbo'))
     a = p.parse_args(argv)
