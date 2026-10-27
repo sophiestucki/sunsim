@@ -1,0 +1,17 @@
+# condor_submit_dag sweep_components_rawccf.dag : sweep_components.dag again with ccf_norm = 2 (CCF_NORM of
+# settings_components.sh: raw ring CCFs, the brightness of the spots and faculae and the limb darkening in the RV),
+# for every spot bisector of bisectors_components.txt and every line of parameters_components.txt. The identification
+# and the filling factors of the parts are those of sweep_components.dag (ident and aggregate are not run again), the
+# confs, grids, simulations and results go to the folders with the suffix _rawccf in ${BASE}/components:
+#   0. the lists of the jobs (SCRIPT PRE jobs_components.sh)
+#   1. the grids of every Temp, one job per bisector (build_grids_components.sub)
+#   2. one job per line and bisector: the simulation of the 5 parts, stats.json of the totals (run_components.sub)
+#   3. tables and figures of the totals (collect_components.sub; it runs even if some sets failed)
+# Not at the same time as the other sweep_components*.dag: they write the same lists of jobs.
+JOB grids    build_grids_components.sub
+JOB sets     run_components.sub
+JOB collect  collect_components.sub
+SCRIPT PRE grids /bin/bash jobs_components.sh
+PARENT grids CHILD sets
+PARENT sets  CHILD collect
+SCRIPT POST sets /bin/true

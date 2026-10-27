@@ -193,7 +193,8 @@ OPTION_DEFAULTS = [
     ('general', 'spectral_library', str, 'phoenix', 'Phoenix (the only library of the first versions)'),
     ('general', 'mps_spectra_folder', str, 'MPS-ATLAS_spectra', 'MPS-ATLAS_spectra of the old package'),
     ('general', 'mps_mu_grid', int, 0, 'Phoenix intensities at their own angles'),
-    ('general', 'ccf_norm', int, 1, 'CCF normalised to [0, 1], as in the first versions'),
+    ('general', 'ccf_norm', int, 1, 'CCF normalised to [0, 1], as in the first versions (0: -ccf/min(ccf) + 1; 2, '
+     'mps_highres only: raw CCF, the brightness of every ring kept)'),
     ('general', 'flux_flat', int, 1, 'high resolution spectra divided by their continuum, as in the first versions'),
     ('general', 'highres_mu', int, 1, 'mps_highres: spectrum interpolated at the mu of every ring'),
     ('general', 'remove_bis_spot', int, 1, 'MURaM: bisector of the spot CCF removed'),
@@ -632,7 +633,10 @@ def _dumusque(cfg):
         mu_scaling = tuple(float(v) for v in re.split(r'[\s,]+', raw)) if raw else None
     except ValueError:
         raise ValueError('dumusque_mu_scaling must be numbers c0, c1, ... (factor c0 + c1 mu + ...), got %r' % raw) from None
-    return dumusque_bisector(bool(cfg['ccf_norm']), mu_scaling=mu_scaling)
+    # the [0, 1] polynomial for CCFs in [0, 1]; the other one for the heights of -ccf/min(ccf) + 1 (ccf_norm = 0, and
+    # the raw CCFs of mps_highres with ccf_norm = 2, whose bisectors are computed on these heights)
+    raw = cfg['ccf_norm'] == 2 and cfg['spectral_library'] == 'mps_highres'
+    return dumusque_bisector(bool(cfg['ccf_norm']) and not raw, mu_scaling=mu_scaling)
 
 
 def _spot_rv_axis(cfg, rv, ccf, mu):
@@ -687,6 +691,7 @@ def _ccf_grids(cfg, geometry, has_faculae, report):
     step, rng = 1000 * cfg['ccf_rv_step'], 1000 * cfg['ccf_rv_range']
     rv = np.arange(-rng, rng + step, step)
     wvm, fm = _old_mask(cfg)
+    raw_ccf = cfg['ccf_norm'] == 2 and lib == 'mps_highres'      # raw ring CCFs (brightness kept)
     norm = bool(cfg['ccf_norm'])
     T_ph = cfg['temperature_photosphere']
     T = {'ph': T_ph, 'sp': T_ph - cfg['spot_T_contrast'], 'fc': T_ph + cfg['facula_T_contrast']}
@@ -711,6 +716,8 @@ def _ccf_grids(cfg, geometry, has_faculae, report):
         if not cfg['highres_mu']:
             report['notes'].append('highres_mu = 0 (smoothed ratio of the old code) is not supported: the spectrum is '
                                    'interpolated at the mu of every ring (highres_mu = 1)')
+        if raw_ccf and by_order:
+            raise ValueError('ccf_norm = 2 (raw CCFs) is not implemented with instrument = HARPS-N')
         for surface in ('ph', 'sp', 'fc'):
             if surface == 'fc' and not has_faculae:
                 out['fc'] = out['ph']
@@ -732,9 +739,26 @@ def _ccf_grids(cfg, geometry, has_faculae, report):
             orders = _instrument_ccf(cfg, wv, rows[-1], rv, wvm, fm, N) if by_order else None
             for i, mu in enumerate(amu):
                 f_ring = _ring_intensity(cfg, acd, rows, mu, lim)
-                c = orders._ccf_of_spectrum(f_ring) if by_order else ccf_of(wv, f_ring, False)
+                if raw_ccf:
+                    # raw CCF (minus the mask-weighted flux, a peak on a continuum of minus the brightness of the
+                    # ring): the spot is dark, the facula bright, the quiet disc limb darkened. The bisectors are
+                    # computed on its heights normalised as ccf_norm = 0 (-ccf/min(ccf) + 1), as before
+                    c = nbspectra.cross_correlation_mask(rv, np.ascontiguousarray(wv, dtype=np.float64),
+                                                         np.ascontiguousarray(f_ring, dtype=np.float64), wvm, fm,
+                                                         False, 2)
+                    heights = -c / np.min(c) + 1
+                else:
+                    c = orders._ccf_of_spectrum(f_ring) if by_order else ccf_of(wv, f_ring, False)
+                    heights = c
                 ccfs.append(c)
-                axes.append(_spot_rv_axis(cfg, rv, c, mu) if surface == 'sp' else rv)
+                axes.append(_spot_rv_axis(cfg, rv, heights, mu) if surface == 'sp' else rv)
+            if raw_ccf:
+                # in units of the quiet star (sum over the cells of the continuum of the quiet CCF), so that the
+                # values stay of order 1; a common factor does not change rv, fwhm, bis
+                if surface == 'ph':
+                    total = np.sum(geometry['Ngrid_in_ring'] * -np.min(ccfs, axis=1) * pare / (4 * np.pi))
+                out[surface] = RingCCF(N, rv, np.array(ccfs) / total, np.array(axes))
+                continue
             # old: ccf_ring = ccf * pare / 4 pi (ccf * pare by order); StarSim multiplies ccf_rings by pare / 4 pi
             scale = 4 * np.pi if by_order else 1.0
             out[surface] = RingCCF(N, rv, scale * np.array(ccfs), np.array(axes))

@@ -23,12 +23,18 @@ SIZE=4096                              # pixels of the HMI images (full resoluti
 N_RINGS=60                             # rings of the SunSim grid (write_conf uses it)
 N_BLOCKS=80                            # identification: the days in N_BLOCKS jobs (= Queue of identify_components.sub)
 TAG=components_m${MAGNETOGRAM}_size_${SIZE}_N${N_RINGS}
+# ccf_norm of the configurations: 2 = raw ring CCFs (mps_highres: the spots dark, the faculae bright and the quiet disc
+# limb darkened in the RV too); 0 = -ccf/min(ccf) + 1, every ring normalised (the runs before 2026-10-27). The
+# simulations with ccf_norm = 2 go to folders with the suffix _rawccf; the identification and the filling factors of
+# the parts are shared (those of sets_<TAG>)
+CCF_NORM=2
+RUN=$([ "$CCF_NORM" = 2 ] && echo _rawccf)
 BASE_C=${BASE}/components              # confs/, grids/, sets_<TAG>/, opt_rv_<TAG>/, results_<TAG>/
-CONFS=${BASE_C}/confs
-GRIDS=${BASE_C}/grids
-SETS=${BASE_C}/sets_${TAG}             # <bisector>/<part>/<name>/ : simulation (and stats.json of the TOTALS)
-IDENT=${SETS}/ident                    # <set label>/ and <set label>_network/ : identification (plage, plage+network)
-PARTS_DIR=${SETS}/parts                # <set label>/<part>/ : filling factors of every part (split_components.py)
+CONFS=${BASE_C}/confs${RUN}
+GRIDS=${BASE_C}/grids${RUN}
+SETS=${BASE_C}/sets_${TAG}${RUN}       # <bisector>/<part>/<name>/ : simulation (and stats.json of the TOTALS)
+IDENT=${BASE_C}/sets_${TAG}/ident      # <set label>/ and <set label>_network/ : identification (plage, plage+network)
+PARTS_DIR=${BASE_C}/sets_${TAG}/parts  # <set label>/<part>/ : filling factors of every part (split_components.py)
 PARAMS=${PIPELINES}/parameters_components.txt
 BISECTORS=${PIPELINES}/bisectors_components.txt
 PARTS="spot plage network spot_plage spot_plage_network"
@@ -53,12 +59,14 @@ write_conf_bisector() {
     read -r remove cs mu <<< "$def"
     [ "$mu" = "-" ] && mu=""
     write_conf "$2" "$3"
-    awk -v r="$remove" -v cs="$cs" -v mu="$mu" '
+    awk -v r="$remove" -v cs="$cs" -v mu="$mu" -v n="$CCF_NORM" '
+        /^ccf_norm *:/       {print "ccf_norm : " n; next}
         /^remove_bis_spot:/  {print "remove_bis_spot: " r; next}
         /^convective_shift:/ {print "convective_shift: " cs; if (mu != "") print "dumusque_mu_scaling: " mu; next}
         {print}' "$3" > "$3.tmp" && mv "$3.tmp" "$3"
-    if ! grep -q "^remove_bis_spot: ${remove}$" "$3" || ! grep -q "^convective_shift: ${cs}$" "$3"; then
-        echo "ERROR: no remove_bis_spot or convective_shift line in $3"
+    if ! grep -q "^remove_bis_spot: ${remove}$" "$3" || ! grep -q "^convective_shift: ${cs}$" "$3" ||
+       ! grep -q "^ccf_norm : ${CCF_NORM}$" "$3"; then
+        echo "ERROR: no remove_bis_spot, convective_shift or ccf_norm line in $3"
         return 1
     fi
 }

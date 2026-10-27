@@ -57,7 +57,7 @@ for part in $TOTALS; do
 done
 
 # the time series of every part also in one folder per bisector (time [d] in the first column)
-out="${BASE_C}/opt_rv_${TAG}/${bisector}"
+out="${BASE_C}/opt_rv_${TAG}${RUN}/${bisector}"
 mkdir -p "$out"
 for part in $PARTS; do
     for q in rv lc fwhm bis contrast ccf ff; do
