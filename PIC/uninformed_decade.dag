@@ -1,0 +1,13 @@
+# condor_submit_dag uninformed_decade.dag : the statistical model of the masks of uninformed_masks_model.ipynb
+# (starsim codes+tests) trained on the decade, with the SDO masks of noise_th = 8, I_th = 0.8, A_th = 10 at 1024 px
+# (hmi.M_45s; settings_uninformed.sh), everything in ${BASE}/uninformed_decade:
+#   1. the SDO masks of every day, in 40 blocks of days (uninformed_maps.sub)
+#   2. the training: statistics of the decade, fit of the generator, closed loop and calibrations on windows spread
+#      over the decade; model/model.json (uninformed_train.sub; it runs even if some days failed)
+#   3. 3 months of synthetic masks at the solar minimum and maximum, compared with SDO (uninformed_synth.sub)
+JOB maps   uninformed_maps.sub
+JOB train  uninformed_train.sub
+JOB synth  uninformed_synth.sub
+PARENT maps  CHILD train
+PARENT train CHILD synth
+SCRIPT POST maps /bin/true

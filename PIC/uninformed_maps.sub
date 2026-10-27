@@ -1,0 +1,20 @@
+# Condor submit file, step 1 of uninformed_decade.dag: the SDO masks at 1024 px (noise_th 8, I_th 0.8, A_th 10,
+# hmi.M_45s) of the decade in 40 blocks of days (N_BLOCKS of settings_uninformed.sh: keep the two equal)
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/uninformed_maps.sh
+
+# $1 = workers (days at the same time in the job: ~4 GB of memory each), $2 = block
+Arguments = "2 $(Process)"
+
+RequestCpus   = 2
+RequestMemory = 10GB
+RequestDisk   = 1GB
+
+Log    = logs/uninformed_maps_$(Process).log
+Output = logs/uninformed_maps_$(Process).out
+Error  = logs/uninformed_maps_$(Process).err
+
+stream_output = True
+stream_error  = True
+
+Queue 40

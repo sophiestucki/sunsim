@@ -1,0 +1,20 @@
+# Condor submit file, step 3 of uninformed_decade.dag: 3 months of synthetic masks at the minimum and at the maximum
+# (one job)
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/uninformed_synth.sh
+
+# $1 = workers (one per period and realization: 2 x 3)
+Arguments = "6"
+
+RequestCpus   = 6
+RequestMemory = 16GB
+RequestDisk   = 1GB
+
+Log    = logs/uninformed_synth.log
+Output = logs/uninformed_synth.out
+Error  = logs/uninformed_synth.err
+
+stream_output = True
+stream_error  = True
+
+Queue
