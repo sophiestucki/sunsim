@@ -47,8 +47,8 @@ python -m sunsim.observations stats "$folder" --start "$START" --harpsn "$HARPSN
                                     --param noise_th="$noise_th" I_th="$I_th" "$X_NAME"="$X" T_sp="$Temp" || exit 1
 
 # the time series also in one folder (time [d] in the first column)
-mkdir -p "${BASE_DMU}/opt_rv_${TAG}"
+mkdir -p "${BASE_DMU}/opt_rv_${TAG}${RUN}"
 for q in rv lc fwhm bis contrast ccf; do
-    cp "${folder}/${q}.txt" "${BASE_DMU}/opt_rv_${TAG}/${q}_${name}.txt"
+    cp "${folder}/${q}.txt" "${BASE_DMU}/opt_rv_${TAG}${RUN}/${q}_${name}.txt"
 done
 echo "Done: ${folder}"

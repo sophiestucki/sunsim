@@ -1,0 +1,22 @@
+# Condor submit file, step 2 of sweep_45_dumusque_mu_rawccf.dag (Dumusque bisector times mu, ccf_norm = 2: raw ring
+# CCFs): one simulation per line of parameters.txt (noise_th, I_th, A_th, Temp), after build_grids_45_dumusque_mu_rawccf.sub
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/run_opt_rv_45_dumusque_mu.sh
+environment = "CCF_NORM=2"
+
+# $1 = kind, $2 = OMP_NUM_THREADS, $3 = noise_th, $4 = I_th, $5 = A_th, $6 = Temp
+Arguments = "plage 8 $(noise_th) $(I_th) $(A_th) $(Temp)"
+
+max_materialize = 50
+RequestCpus   = 8
+RequestMemory = 16GB
+RequestDisk   = 1GB
+
+Log    = logs/45_dumusque_mu_rawccf_plage_noise_$(noise_th)_I_$(I_th)_A_$(A_th)_T_$(Temp).log
+Output = logs/45_dumusque_mu_rawccf_plage_noise_$(noise_th)_I_$(I_th)_A_$(A_th)_T_$(Temp).out
+Error  = logs/45_dumusque_mu_rawccf_plage_noise_$(noise_th)_I_$(I_th)_A_$(A_th)_T_$(Temp).err
+
+stream_output = True
+stream_error  = True
+
+Queue noise_th, I_th, A_th, Temp from parameters.txt
