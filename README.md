@@ -40,20 +40,25 @@ Copy [`local_paths.example.ini`](local_paths.example.ini) to `local_paths.ini` (
 
 ```python
 import numpy as np
-from sunsim import StarSim, SOLAR_DIFFERENTIAL_ROTATION, flux_grid, active_region
+from sunsim import (StarSim, SOLAR_DIFFERENTIAL_ROTATION, flux_grid, active_region, black_body,
+                    limb_darkened_spectra)
 
-# specific-intensity spectra {mu: {'wav': ..., 'intensity': ...}} of the quiet photosphere, spots and faculae
+# specific-intensity spectra {mu: {'wav': ..., 'intensity': ...}} of the quiet photosphere, spots and faculae:
+# here black bodies with a quadratic limb darkening (use MURaM or Phoenix spectra for real work, see the tutorial)
+wav = np.linspace(3800, 8000, 2000)                                 # [A]
+T = {'qp': 5770.0, 'sp': 4000.0, 'fc': 5870.0}                      # quiet, spot, facula [K]
 grids = {}
-for name, spectra in (('qp', flux_quiet), ('sp', flux_spot), ('fc', flux_facula)):
-    g = flux_grid(60, spectra, name, None, 3800, 8000, mode='photometry')
+for name, temp in T.items():
+    spectra = limb_darkened_spectra(wav, black_body(wav, temp), 'quadratic', (0.47, 0.23))
+    g = flux_grid(30, spectra, name, None, 3800, 8000, mode='photometry')
     g.built_grid()
     grids['flux_grid_' + name] = g.grid
 
 time = np.linspace(0, 25.4, 100)                                    # [days]
-ss = StarSim(time, N_rings=60, inclination=0, rotation_period=25.4,
+ss = StarSim(time, N_rings=30, inclination=0, rotation_period=25.4,
              differential_rotation=SOLAR_DIFFERENTIAL_ROTATION,
-             active_regions_map=[active_region('sp', 10, 90, 180),   # spot: radius 10 deg, colatitude 90, longitude 180
-                                 active_region('fc', 15, 90, 180)],  # facula around it
+             active_regions_map=[active_region('sp', 5, 90, 180),    # spot: radius 5 deg, colatitude 90, longitude 180
+                                 active_region('fc', 10, 90, 180)],  # facula around it
              mode=['photometry'], **grids)
 ss.generate_timeseries()
 ss.flux_var, ss.ff_sp, ss.ff_fc                                     # light curve and filling factors
@@ -61,6 +66,8 @@ ss.flux_var, ss.ff_sp, ss.ff_fc                                     # light curv
 from sunsim import plot_utils
 plot_utils.plot_photometry(ss, show_disc=True)                      # filling factors + light curve + the disc
 ```
+
+This runs right after the installation, without any data (~20 s, most of it the first compilation by Numba).
 
 Photometry, spectroscopy and CCFs can be computed in the same simulation: `mode=['photometry', 'spectroscopy', 'ccf']` with the photometry grids in `flux_grid_xx`, the spectroscopy grids in `spec_grid_xx` and the CCF grids in `ccf_grid_xx`.
 
@@ -125,17 +132,20 @@ The geometry of all epochs is computed first with NumPy. All epochs are then pro
 | `tutorial/tutorial.ipynb` | tutorial with examples of every mode |
 | `tutorial/tutorial_sdo.ipynb` | tutorial of the maps from SDO/HMI images (`sunsim.sdo`), and their simulation |
 | `tutorial/old_starsim/` | configuration file and spot map of an old StarSim run, used in section 9 of the tutorial |
+| `tests/test_api_errors.py` | wrong usages of the API and the error each one must give, and correct usages: no data needed (`python tests/test_api_errors.py`) |
 | `tests/old_version/` | automatic comparison with the old StarSim on 60 cases (`python tests/old_version/test_old_version.py`) |
+| `LICENSE` | MIT license |
 | `local_paths.example.ini` | template of `local_paths.ini`, the paths of the data on your computer |
 
 ## Tests
 
 ```bash
+python tests/test_api_errors.py                      # ~115 usages (wrong ones and the errors they give, correct ones), no data (a few seconds)
 python tests/old_version/test_old_version.py         # SunSim against the old StarSim on 60 cases
 python tests/old_version/test_old_version.py -k sdo  # only the cases whose name contains 'sdo'
 ```
 
-The comparison with the old StarSim needs the old code: the paths `old_starsim` (folder of the old package) and `old_python` (Python of its environment) of `local_paths.ini`; without them it is skipped. It runs the old code once per case and keeps its results in `tests/old_version/reference/`; it then only runs SunSim (~1 min). The cases on the real SDO maps also need the path `sdo_maps`. Changes made on purpose are listed as `KNOWN` differences, with the reason.
+Run `tests/test_api_errors.py` after changing the code. The comparison with the old StarSim needs the old code: the paths `old_starsim` (folder of the old package) and `old_python` (Python of its environment) of `local_paths.ini`; without them it is skipped. It runs the old code once per case and keeps its results in `tests/old_version/reference/`; it then only runs SunSim (~1 min). The cases on the real SDO maps also need the path `sdo_maps`. Changes made on purpose are listed as `KNOWN` differences, with the reason.
 
 ## Conventions
 
@@ -143,6 +153,10 @@ The comparison with the old StarSim needs the old code: the paths `old_starsim` 
 - **Region position.** `active_region(typ, size, colatitude, longitude)`: the **colatitude** (0 = north pole, 90 = equator, 180 = south pole); `region.latitude` gives the latitude (90 − colatitude).
 - **Inclination.** `inclination` is the angle between the rotation axis and the plane of the sky: 0 = equator-on, π/2 = pole-on.
 - **Rotation period.** `rotation_period` is the period at the equator.
+
+## License
+
+SunSim is distributed under the MIT license (see [`LICENSE`](LICENSE)), as the original StarSim of David Baroch.
 
 ## Credits
 

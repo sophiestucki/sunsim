@@ -8,6 +8,8 @@ version = "1.0.0"
 description = "Photometric and spectroscopic variability of the Sun and stars from spots, faculae and transiting planets (light curves, spectra, CCFs, RV, FWHM, BIS)"
 readme = "README.md"
 requires-python = ">=3.9"
+license = {text = "MIT"}
+classifiers = ["License :: OSI Approved :: MIT License"]
 authors = [
     { name = "Sophie Stucki", email = "stucki@ieec.cat" },
     { name = "David Baroch" },
