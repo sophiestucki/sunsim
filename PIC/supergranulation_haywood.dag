@@ -1,9 +1,0 @@
-# condor_submit_dag supergranulation_haywood.dag :
-#   1. one job per day of supergranulation_haywood_days.txt: HMI epochs, corrected 45 s dopplergrams and JPL velocities
-#      of its exposures (supergranulation_haywood_day.sub)
-#   2. all the days: window averages, simulations, statistics and figures (supergranulation_haywood_collect.sub; it
-#      runs even if some days failed: only the complete days are used)
-JOB days    supergranulation_haywood_day.sub
-JOB collect supergranulation_haywood_collect.sub
-PARENT days CHILD collect
-SCRIPT POST days /bin/true

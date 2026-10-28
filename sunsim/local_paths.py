@@ -1,6 +1,6 @@
 """
 local_paths: the folders and files that are not part of SunSim (models, spectra, maps, other codes), given once per
-computer instead of being written in the notebooks, tests and benchmarks.
+computer instead of being written in the notebooks and tests.
 
     from sunsim import local_path
     folder = local_path('phoenix_models')                     # error with instructions if it is not set
@@ -14,7 +14,7 @@ Every key is looked for, in this order:
    fill in the paths you have; local_paths.ini is not tracked by git.
 Paths can start with ~ and can be relative to the folder of the .ini file.
 
-KEYS lists the keys used by the tutorial, the tests and the benchmarks.
+KEYS lists the keys used by the tutorial and the tests.
 """
 import os
 from configparser import ConfigParser
@@ -38,25 +38,10 @@ KEYS = {
                         'the tests when the folder of old_starsim does not have them',
     'old_python':       'Python executable of the environment in which the old StarSim runs',
     'old_harps_files':  'folder where the old StarSim reads its HARPS-N files (blaze, wavelengths, plot-data-3.csv)',
-    'starsim4':         'folder of StarSim v4 (branch inverse-model), for benchmark_starsim4.ipynb',
-    'starsim_david':    'folder of StarSim of D. Baroch, for benchmark_starsim_david.ipynb',
-    'sunsim_python':    'Python executable used to run SunSim in the benchmarks (default: the current Python)',
-    'sun_mask_data':    'input data of the solar mask notebooks (making_mask.ipynb, masks.ipynb)',
     'harpsn_sun':       'HARPS-N solar telescope csv of the public release (sunsim.observations.load_harpsn)',
     'harpsn_interventions': 'text file with the dates of the HARPS-N interventions, one YYYY-MM-DD per line',
     'sorce_tsi':        'SORCE/TIM total solar irradiance, IDL .sav with time [JD] and tsi (sunsim.observations.load_sorce)',
     'tsis_tsi':         'TSIS-1/TIM total solar irradiance csv, tsis_tsi_24hr.csv (sunsim.observations.load_tsis)',
-    'old_sdo_identification': 'identification_utils.py of the previous SDO pipeline (analysis/sdo_old_classification.py)',
-    'ref_rv_10_years':  'RV of the 10-year run of the old StarSim (analysis/sdo_old_vs_new_harpsn.py, optional)',
-    'ref_days_10_years': 'its days_list.txt (days since 2015-07-18)',
-    'ref_ccf_10_years': 'its CCFs, one row per day of ref_days_10_years on the velocities -18 to 18 km/s, step 0.25 km/s',
-    'sweep_results':    'results of the PIC sweep (PIC/opt_sweep.ipynb): the folder of the sets',
-    'supergranulation_results': 'folder of PIC/supergranulation.py (days/, results/), for '
-                        'analysis/supergranulation_pic_2021_quality.ipynb',
-    'supergranulation_haywood_results': 'folder of PIC/supergranulation_haywood.py (days/, results/), for '
-                        'analysis/supergranulation_haywood_2days.ipynb',
-    'poet_data':        'data of the PoET notebooks (spectra, outputs, figures)',
-    'personal_data':    'other input files of the analysis notebooks (e.g. masks made by hand)',
 }
 
 _ENV_FILE = 'SUNSIM_PATHS_FILE'

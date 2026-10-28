@@ -1,4 +1,0 @@
-JOB ident     identify_4096.sub
-JOB aggregate aggregate_4096.sub
-PARENT ident CHILD aggregate
-SCRIPT POST ident /bin/true

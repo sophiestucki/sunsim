@@ -1,9 +1,0 @@
-# condor_submit_dag uninformed_decade_dsat.dag : uninformed_decade.dag trained again with the decay rate of the regions
-# constant above A_SAT = 100 MSH (the large regions lived too short), on the SDO masks of uninformed_decade.dag
-# (${BASE}/uninformed_decade/maps, not computed again); everything in ${BASE}/uninformed_decade_dsat
-# (settings_uninformed_dsat.sh):
-#   1. the training (uninformed_train_dsat.sub)
-#   2. 3 months of synthetic masks at the solar minimum and maximum, compared with SDO (uninformed_synth_dsat.sub)
-JOB train  uninformed_train_dsat.sub
-JOB synth  uninformed_synth_dsat.sub
-PARENT train CHILD synth

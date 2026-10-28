@@ -29,12 +29,12 @@ Requirements: Python ≥ 3.9, `numpy`, `numba`, `scipy`, `astropy`, `matplotlib`
 
 ### Paths of the data on your computer
 
-The spectra, masks, maps and models are not part of the repository, and no notebook, test or benchmark contains a path of one computer. Every path is read by `sunsim.local_path(key)`:
+The spectra, masks, maps and models are not part of the repository, and no notebook or test contains a path of one computer. Every path is read by `sunsim.local_path(key)`:
 
 1. from the environment variable `SUNSIM_<KEY>` (e.g. `SUNSIM_PHOENIX_MODELS=/data/phoenix`), or
 2. from the section `[paths]` of a file `local_paths.ini` in the folder of the repository (or the current folder, or `~/.config/sunsim/`; or the file named by `SUNSIM_PATHS_FILE`).
 
-Copy [`local_paths.example.ini`](local_paths.example.ini) to `local_paths.ini` (not tracked by git) and fill in the folders you have. A missing path gives an error that says which key to set; the tests and benchmarks that need data you do not have are skipped. The keys are listed in `sunsim/local_paths.py` (`KEYS`): `phoenix_models`, `muram_spectra`, `muram_lowres_spectra`, `muram_spot_spectra`, `ccf_masks`, `sdo_data`, `sdo_maps`, `harpsn_sun`, `harpsn_interventions`, `sorce_tsi`, `tsis_tsi`, `old_starsim`, `old_python`, `starsim4`, `starsim_david`, ...
+Copy [`local_paths.example.ini`](local_paths.example.ini) to `local_paths.ini` (not tracked by git) and fill in the folders you have. A missing path gives an error that says which key to set; the tests that need data you do not have are skipped. The keys are listed in `sunsim/local_paths.py` (`KEYS`): `phoenix_models`, `muram_spectra`, `muram_lowres_spectra`, `muram_spot_spectra`, `ccf_masks`, `sdo_data`, `sdo_maps`, `harpsn_sun`, `harpsn_interventions`, `sorce_tsi`, `tsis_tsi`, `old_starsim`, `old_starsim_data`, `old_python`, `old_harps_files`.
 
 ## Quick start
 
@@ -124,24 +124,13 @@ The geometry of all epochs is computed first with NumPy. All epochs are then pro
 | `sunsim/data/instruments/` | wavelengths and blaze of the orders of HARPS (`Instrument.harps()`), total efficiency of HARPS-N (`Instrument.harpsn_example()`) |
 | `tutorial/tutorial.ipynb` | tutorial with examples of every mode |
 | `tutorial/tutorial_sdo.ipynb` | tutorial of the maps from SDO/HMI images (`sunsim.sdo`), and their simulation |
-| `tests/test_api_errors.py` | wrong usages of the API and the error each one must give, and correct usages (`python tests/test_api_errors.py`) |
-| `tests/test_sdo_fraction.py` | facular fractions of the SDO maps (`faculae='fraction'`): total filling factors kept from the pixels to the cells and StarSim, on synthetic maps and 3 real days |
+| `tutorial/old_starsim/` | configuration file and spot map of an old StarSim run, used in section 9 of the tutorial |
 | `tests/old_version/` | automatic comparison with the old StarSim on 60 cases (`python tests/old_version/test_old_version.py`) |
-| `tests/test_disc_spectrum_vs_ccf.ipynb` | check: CCF of the disc-integrated spectrum (spectroscopy mode) vs CCF mode, with and without rotation |
-| `benchmarks/benchmark_old_vs_optimized.ipynb` | old StarSim vs SunSim: time, memory, outputs, parameter sweeps, tests, 89 real SDO epochs |
-| `benchmarks/benchmark_starsim4.ipynb` | StarSim v4 vs SunSim |
-| `benchmarks/benchmark_starsim_david.ipynb` | original StarSim (D. Baroch) vs SunSim: outputs (reference and special cases, `fast` mode), time and RAM |
-| `benchmarks/benchmark_v4_vs_david_fast.ipynb` | StarSim v4 vs the `fast` mode of StarSim (D. Baroch): time and RAM (reads the runners of the two notebooks above, in the same folder) |
-| `benchmarks/sdo_benchmark.py` | benchmark of the 2D maps on 89 real SDO epochs (old StarSim vs SunSim) |
-| `benchmarks/trappist1_phoenix_mu/` | old StarSim vs SunSim for the spectra (`'spec'`): TRAPPIST-1, Phoenix SPECINT, one spot (configuration file and spot map of the old run, notebook, script running the old code) |
-| `analysis/` | working notebooks that use SunSim but are not part of it (solar line masks, an early timing test) |
 | `local_paths.example.ini` | template of `local_paths.ini`, the paths of the data on your computer |
 
 ## Tests
 
 ```bash
-python tests/test_api_errors.py                      # ~80 usages (wrong ones and the errors they give, correct ones) (a few seconds)
-python tests/test_sdo_fraction.py                    # facular fractions of the SDO maps (3 real days with sdo_data)
 python tests/old_version/test_old_version.py         # SunSim against the old StarSim on 60 cases
 python tests/old_version/test_old_version.py -k sdo  # only the cases whose name contains 'sdo'
 ```
