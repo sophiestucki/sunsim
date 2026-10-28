@@ -1,0 +1,21 @@
+# Condor submit file, step 4 of sweep_noise.dag: one simulation per line of parameters_noise_plage.txt
+# (noise_th, B_th, I_th, A_th, Temp), after build_grids_noise.sub and aggregate_noise.sub
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/run_noise.sh
+
+# $1 = kind, $2 = OMP_NUM_THREADS, $3 = noise_th, $4 = B_th, $5 = I_th, $6 = A_th, $7 = Temp
+Arguments = "plage 8 $(noise_th) $(B_th) $(I_th) $(A_th) $(Temp)"
+
+max_materialize = 50
+RequestCpus   = 8
+RequestMemory = 24GB
+RequestDisk   = 1GB
+
+Log    = logs/noise_plage_noise_$(noise_th)_I_$(I_th)_A_th_$(A_th)_T_$(Temp).log
+Output = logs/noise_plage_noise_$(noise_th)_I_$(I_th)_A_th_$(A_th)_T_$(Temp).out
+Error  = logs/noise_plage_noise_$(noise_th)_I_$(I_th)_A_th_$(A_th)_T_$(Temp).err
+
+stream_output = True
+stream_error  = True
+
+Queue noise_th, B_th, I_th, A_th, Temp from parameters_noise_plage.txt

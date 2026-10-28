@@ -15,9 +15,10 @@ The model of uninformed_masks_model.ipynb (starsim codes+tests) trained on the d
       (spot_map_{t}.npz, faculae_map_{t}.npz, bit-packed; t = days since --start; days/<date>.json, summary.csv) and
       the FITS files deleted after every epoch (at most `workers` epochs downloaded in advance). A day already done is
       skipped, so the run can be started again.
-  python uninformed_decade.py train --out DIR [--workers 8]
+  python uninformed_decade.py train --out DIR [--maps DIR/maps] [--decay-sat A_sat] [--workers 8]
       Features of every day, regions tracked over the decade, statistics; the parameters of the generator
-      (uninformed_masks.py) fitted: sizes, decay, nesting, spots of a region on the whole decade; emergence rate and
+      (uninformed_masks.py) fitted: sizes, decay (below A_sat MSH only, constant decay rate above it, if given),
+      nesting, spots of a region on the whole decade; emergence rate and
       butterfly latitudes of cycles 24 and 25; pores, plage-only regions and background plage scaled with the activity
       of the cycles; then the closed loop on the spots and the calibration of the plage on windows spread over the
       decade. Written in DIR/model: model.json (the parameters, uninformed_masks.params(json.load(...)['P'])),
@@ -589,10 +590,11 @@ def bins_table(feats, tracks, year0, width=91.0):
     return rows, np.array([year0 + x / 365.25 for x in bt]), np.abs(bl)
 
 
-def fit_parameters(S, P):
+def fit_parameters(S, P, A_sat=None):
     """fit_parameters of the notebook for what does not follow the cycle: sizes, growth, decay, nesting, spots of a
-    region, pores next to regions."""
-    P = dict(P)
+    region, pores next to regions. With A_sat [MSH] the decay law D0 (A / 100)^p is fitted on the regions below A_sat
+    only, and D is constant above it (the decay of the large regions, seen over a few days, is too short to fit)."""
+    P = dict(P, A_sat=A_sat)
     lp = np.log(S['peak_area'])
     P['logA_mean'], P['logA_sigma'] = float(lp.mean()), float(lp.std())
     P['A_min'] = float(S['peak_area'].min())
@@ -600,6 +602,8 @@ def fit_parameters(S, P):
         P['growth_days'] = float(max(np.median(S['growth_days']), 0.5))
     A, D = S['decay'][:, 0], S['decay'][:, 1]
     ok = (D > 0) & (A > 0)
+    if A_sat is not None:
+        ok &= A < A_sat
     if ok.sum() >= 3:
         p, lnD0 = np.polyfit(np.log(A[ok] / 100), np.log(D[ok]), 1)
         P['decay_p'], P['D0'] = float(np.clip(p, 0.0, 1.0)), float(np.exp(lnD0))
@@ -839,7 +843,8 @@ def run_train(a):
          'pores per day' % (len(tracks), len(S['birth_lat']), np.exp(np.log(S['peak_area']).mean()), S['p_nest'],
                             S['n_regions'].mean(), S['n_pores'].mean()), log)
 
-    P = fit_parameters(S, um.params(um.DEFAULTS))
+    P = fit_parameters(S, um.params(um.DEFAULTS), a.decay_sat)
+    _log('decay: D0 %.1f MSH/day, decay_p %.3f, A_sat %s MSH' % (P['D0'], P['decay_p'], P['A_sat']), log)
     rows, b_year, b_lat = bins_table(feats, tracks, year0, a.bin_days)
     P, fit = fit_cycles(rows, b_year, b_lat, P)
     _log('cycles: rate_max %.2f /day (detected births), cycle_start %.2f, cycle_width %.2f yr; butterfly lat_start '
@@ -954,6 +959,8 @@ def main(argv=None):
     t.add_argument('--n-windows', type=int, default=12, help='windows of the calibrations, spread over the period')
     t.add_argument('--window-days', type=float, default=30.0)
     t.add_argument('--n-iter', type=int, default=4, help='iterations of the closed loop')
+    t.add_argument('--decay-sat', type=float, default=None,
+                   help='A_sat [MSH]: decay rate constant above this peak area (default: no limit)')
     t.add_argument('--bg-grid', type=float, nargs='+', default=[0.08, 0.12, 0.16, 0.20, 0.24, 0.28])
     t.add_argument('--speck-grid', type=float, nargs='+', default=[1.0, 1.2])
     t.add_argument('--k-grid', type=float, nargs='+', default=[10.0, 20.0, 40.0])

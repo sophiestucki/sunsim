@@ -8,7 +8,8 @@ The model
   Hathaway, Wilson & Reichmann 1994, consecutive cycles overlap). Each region belongs to one cycle; its latitude is
   drawn around the butterfly-diagram latitude of that cycle (exponential drift, Hathaway 2011), or, with probability
   p_nest, next to a recent spotted region (nesting, Isik et al. 2018).
-* A region has a lognormal peak area, grows linearly for growth_days and decays linearly at D = D0 (A_peak/100)^p.
+* A region has a lognormal peak area, grows linearly for growth_days and decays linearly at D = D0 (A_peak/100)^p
+  (A_peak capped at A_sat in D, if given: the large regions decay at a constant rate, as Gnevyshev-Waldmeier).
   Its spots are a circular leader and a few circular followers behind it; pores are one-day dots.
 * Plage is a flux density in units of the plage threshold: a gaussian per region (k_fac x peak area) that spreads by
   surface diffusion (eta) and decays exponentially (tau_fac), plage-only regions, a background in the activity belts,
@@ -65,6 +66,8 @@ DEFAULTS = dict(
     growth_days=2.0,       # linear growth to the peak
     D0=10.0,               # MSH / day, decay rate at A_peak = 100 MSH: D = D0 (A_peak / 100)^decay_p
     decay_p=0.5,           # 0: Gnevyshev-Waldmeier (same D for all); 0.5: Hathaway & Choudhary (2008)
+    A_sat=None,            # MSH, D stops growing above this peak area: D = D0 (min(A_peak, A_sat) / 100)^decay_p;
+                           # None: no limit
     # --- nesting ---
     p_nest=0.3,            # probability to emerge next to a spotted region of the last nest_days
     nest_sigma=3.0,        # deg, offset of a nested emergence
@@ -250,8 +253,15 @@ def scaled(P, key, year):
 # =============================================================================================
 # regions
 # =============================================================================================
+def decay_rate(A, P):
+    """Linear decay rate [MSH / day] of a region of peak area A: D0 (min(A, A_sat) / 100)^decay_p."""
+    if P['A_sat'] is not None:
+        A = min(A, P['A_sat'])
+    return P['D0'] * (A / 100)**P['decay_p']
+
+
 def area_at(reg, t):
-    """Spot area [MSH] of a region at t: linear growth, then linear decay at D = D0 (A_peak / 100)^p."""
+    """Spot area [MSH] of a region at t: linear growth, then linear decay at D = decay_rate(A_peak)."""
     dt = t - reg['t0']
     if dt < 0:
         return 0.0
@@ -305,7 +315,7 @@ def generate_regions(P, star, t_start, t_end, year0=2015.0, spin_up=150.0, seed=
                     n_f = min(rng.poisson(A / P['follower_scale']), 30) if kind == 'spots' else 0
                     off = np.column_stack([-rng.uniform(0.2, 1.0, n_f), rng.normal(0, 0.3, n_f)])
                     reg = dict(t0=t0, lat=float(np.clip(lat, -89, 89)), lon=lon % 360, A=A, tg=P['growth_days'],
-                               D=P['D0'] * (A / 100)**P['decay_p'], k=P['k_fac'], tau=P['tau_fac'], n_f=n_f,
+                               D=decay_rate(A, P), k=P['k_fac'], tau=P['tau_fac'], n_f=n_f,
                                spots=(kind == 'spots'), off=off, cycle=cyc, pore=False)
                     regs.append(reg)
                     if reg['spots']:

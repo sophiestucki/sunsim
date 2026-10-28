@@ -23,7 +23,8 @@ for a whole period (on PIC). Two steps:
       --clv-drift obs_vr, or as fitted on every exposure, --clv-drift exposure; with --north-south a north-south
       gradient ns + ns_vr OBS_VR fitted with the rotation), simulation of every exposure at its own time
       (maps; maps + dopplergram), and the comparison with the HARPS-N RV in the rest frame of the Sun, rv_raw (DRS,
-      barycentric) - v_sun (JPL):
+      barycentric) - v_sun (JPL), with --diff-extinction also minus rv_diff_extinction of the release (the differential
+      extinction across the disc in the atmosphere, Collier Cameron et al. 2019: a slow trend in the day, not in HMI):
         - every day (intra-day: median of the day removed): RMS, Pearson r, slope; one figure per day;
         - the daily averages over the period (one offset per instrumental period): maps against maps + dopplergram;
         - the full dataset: every exposure of the period (one offset per instrumental period): RMS, Pearson r, slope.
@@ -63,6 +64,43 @@ UNITS = {'rv': ('RV', 'm/s', '%.2f'), 'fwhm': ('FWHM', 'm/s', '%.2f'), 'bis': ('
 HARPSN_KEYS = ('jd', 'jd_start', 'texp', 'rv', 'rv_err', 'fwhm', 'fwhm_err', 'bis', 'bis_err', 'contrast',
                'contrast_err', 'rv_raw', 'berv', 'berv_bary_to_helio', 'rv_diff_extinction')
 FRAME_INFO = ('jd', 'obs_vr', 'obs_vw', 'obs_vn', 'B0', 'dsun', 'shift_px', 'v_quiet_mean')
+
+
+def _b0(jd):
+    """B0 [deg] at jd (UTC)."""
+    from astropy.time import Time
+    import sunpy.coordinates.sun as sun
+    return float(sun.B0(Time(jd, format='jd')).deg)
+
+
+def move_mask(mask, dt, b0, omega=None):
+    """A mask of the disc (frame of the maps of identify_day: cut to the disc, row 0 south, west on the right) moved by
+    the differential rotation over dt [days]: every pixel takes the value of the point that was there dt before (False
+    for a point that was behind the limb). omega(lat) [deg/day, synodic]: Snodgrass & Ulrich (1990) minus the motion of
+    the Earth by default."""
+    from sunsim import supergranulation as sg
+    n = mask.shape[0]
+    c, R = (n - 1) / 2.0, n / 2.0
+    y, x = np.mgrid[:n, :n].astype(np.float32)
+    x, y = (x - c) / R, (y - c) / R
+    z2 = 1 - x ** 2 - y ** 2
+    inside = z2 > 0
+    z = np.sqrt(np.where(inside, z2, 0.0))
+    b = np.deg2rad(b0)
+    lat = np.arcsin(np.clip(y * np.cos(b) + z * np.sin(b), -1, 1))
+    lon = np.arctan2(x, z * np.cos(b) - y * np.sin(b))
+    del z
+    s2 = np.sin(lat) ** 2
+    a1, a2, a3 = sg.SNODGRASS_ULRICH
+    w = (a1 + a2 * s2 + a3 * s2 ** 2 - 0.9856) if omega is None else omega(np.rad2deg(lat))
+    lon0 = lon - np.deg2rad(w * dt)
+    del lon, s2, w
+    x0 = np.cos(lat) * np.sin(lon0)
+    y0 = np.sin(lat) * np.cos(b) - np.cos(lat) * np.cos(lon0) * np.sin(b)
+    z0 = np.sin(lat) * np.sin(b) + np.cos(lat) * np.cos(lon0) * np.cos(b)
+    i0 = np.clip(np.rint(y0 * R + c).astype(np.int32), 0, n - 1)
+    j0 = np.clip(np.rint(x0 * R + c).astype(np.int32), 0, n - 1)
+    return mask[i0, j0] & inside & (z0 > 0)
 
 
 def _key(t_rec):
@@ -167,6 +205,16 @@ def run_day(a):
         return 0
 
     thresholds = dict(noise_th=a.noise_th, B_th=a.B_th, I_th=a.I_th, A_th=a.A_th, mu_area=a.mu_area, faculae=a.faculae)
+    # variants of the quiet mask, the same frames reduced with each (one download for all), in <out>_<name>/days/<date>:
+    # --margin-px m: the quiet pixels farther than m pixels from the spots and the faculae (margin<m>px);
+    # --move-masks: the mask of the epoch moved to the time of every frame with the differential rotation (moved)
+    variants = {'margin%dpx' % m: m for m in getattr(a, 'margin_px', None) or []}
+    if getattr(a, 'move_masks', False):
+        variants['moved'] = 'moved'
+    margins = {name: os.path.join('%s_%s' % (a.out.rstrip('/'), name), 'days', a.date) for name in variants}
+    for mf in margins.values():
+        for sub in ('epochs', 'frames45'):
+            os.makedirs(os.path.join(mf, sub), exist_ok=True)
     fits_dir = tempfile.mkdtemp(prefix='hmi_', dir=a.tmp)
     failed = 0
     fetch45 = lambda t: sg.fetch_record(sg.SERIES_45S[0], t, sg.SERIES_45S[1], fits_dir)
@@ -183,9 +231,18 @@ def run_day(a):
                                       network_velocity=a.network_velocity)
                 info = {key: float(r[key]) for key in ('ff_sp_disc', 'ff_fc_disc', 'ff_nt_disc', 'n_spots', 'n_plages')}
                 info.update({key: e[key] for key in ('continuum', 'magnetogram', 'jd')})
-                np.savez(os.path.join(folder, 'epochs', _key(e['continuum']) + '.npz'), ff_sp=r['ff_sp'],
-                         ff_fc=r['ff_fc'], info=json.dumps(info))
+                for f_ep in [folder] + list(margins.values()):
+                    np.savez(os.path.join(f_ep, 'epochs', _key(e['continuum']) + '.npz'), ff_sp=r['ff_sp'],
+                             ff_fc=r['ff_fc'], info=json.dumps(info))
                 context = r['context']
+                contexts = {}
+                if any(v != 'moved' for v in variants.values()):
+                    import scipy.ndimage as nd
+                    dist = nd.distance_transform_edt(~(context['spot'] | context['facula']))
+                    contexts = {name: dict(context, quiet=context['quiet'] & (dist > m))
+                                for name, m in variants.items() if m != 'moved'}
+                    del dist
+                b0_epoch = _b0(e['jd']) if 'moved' in variants else None
                 del r
             except Exception as err:                 # e.g. an image with missing data
                 failed += 1
@@ -204,19 +261,23 @@ def run_day(a):
                     _log('%s: download failed (%s)' % (t_rec, str(f45)[:150]))
                     continue
                 try:
-                    fr = sg.frame_cell_sums(f45, context, n_rings=a.n_rings, mu_min=a.mu_min)
-                    np.savez(os.path.join(folder, 'frames45', _key(t_rec) + '.npz'), swv=fr['swv'].astype(np.float32),
-                             sw=fr['sw'].astype(np.float32), swg=fr['swg'].astype(np.float32), t_rec=t_rec,
-                             epoch=e['continuum'],
-                             info=json.dumps({key: float(fr[key]) for key in FRAME_INFO}))
-                    del fr
+                    if 'moved' in variants:
+                        dt = float(sg.jd_of_t_rec([t_rec])[0]) - e['jd']
+                        contexts['moved'] = dict(context, quiet=move_mask(context['quiet'], dt, b0_epoch))
+                    for f_ep, ctx in [(folder, context)] + [(margins[m], contexts[m]) for m in margins]:
+                        fr = sg.frame_cell_sums(f45, ctx, n_rings=a.n_rings, mu_min=a.mu_min)
+                        np.savez(os.path.join(f_ep, 'frames45', _key(t_rec) + '.npz'), swv=fr['swv'].astype(np.float32),
+                                 sw=fr['sw'].astype(np.float32), swg=fr['swg'].astype(np.float32), t_rec=t_rec,
+                                 epoch=e['continuum'],
+                                 info=json.dumps({key: float(fr[key]) for key in FRAME_INFO}))
+                        del fr
                 except Exception as err:
                     failed += 1
                     _log('%s: not processed (%s)' % (t_rec, str(err)[:150]))
                 finally:
                     if os.path.exists(f45[0]):
                         os.remove(f45[0])
-            del context
+            del context, contexts
             el = time.time() - t0
             _log('[%d/%d] epoch %s (%d frames), %.0f s, ~%.0f min left'
                  % (k, len(todo), e['continuum'], len(todo_f), el, el / k * (len(todo) - k) / 60))
@@ -230,6 +291,11 @@ def run_day(a):
                    'n_frames': n_frames, 'frames_done': n_fr, 'failed': failed, 'window': a.window,
                    'mu_min': a.mu_min, 'network_velocity': a.network_velocity, 'rotation': 'fitted per day (collect)', 'n_rings': a.n_rings, 'size': a.size,
                    'thresholds': thresholds}, open(done_file, 'w'), indent=1)
+        for name, mf in margins.items():
+            shutil.copy(exp_file, os.path.join(mf, 'exposures.npz'))
+            done = json.load(open(done_file))
+            done['quiet_mask'] = name
+            json.dump(done, open(os.path.join(mf, 'done.json'), 'w'), indent=1)
     _log('%s done: %d / %d epochs, %d / %d frames, %d failed' % (a.date, n_ep, len(epochs), n_fr, n_frames, failed))
     return 1 if failed else 0
 
@@ -431,15 +497,25 @@ def run_collect(a):
              % (clv_deg, a.clv_drift, '' if getattr(a, 'clv_remove_average', False) else ' (its average kept)',
                 c[:, 0].min(), c[:, 0].max()))
     v_exp, filled = sg.fill_empty_cells(v_exp, sw_exp, a.n_rings)
+    if getattr(a, 'save_cells', False):
+        # the velocity of every cell of every exposure given to the simulations, its weight (sum of the intensities of
+        # the quiet pixels) and the exposures (cells.npz of the results)
+        np.savez(os.path.join(res_dir, 'cells.npz'), v=v_exp.astype(np.float32), w=sw_exp.astype(np.float32),
+                 filled=filled, jd=ex['jd'], day=ex['day'].astype(str), obs_vr=ex['obs_vr'], n_rings=a.n_rings)
     _log('cells without quiet pixels (ring mean): %.1f per exposure' % filled.sum(axis=1).mean())
 
     jd_start = obs.jd_of_date(a.start)
     ex['t'] = ex['jd'] - jd_start
     n_days = len(np.unique(ex['day']))
     _log('%d exposures on %d days, %d epochs' % (len(ex['jd']), n_days, len(ep['jd'])))
-    # HARPS-N RV in the rest frame of the Sun (Haywood et al. 2016, eq. 1): the RV of the DRS (BERV applied) - v_sun (JPL)
+    # HARPS-N RV in the rest frame of the Sun (Haywood et al. 2016, eq. 1): the RV of the DRS (BERV applied) - v_sun (JPL);
+    # --diff-extinction: minus the differential extinction of the release too (as its rv)
     ex['rv_release'] = ex['rv']
     ex['rv'] = ex['rv_raw'] - ex['v_sun']
+    if getattr(a, 'diff_extinction', False):
+        ex['rv'] = ex['rv'] - ex['rv_diff_extinction']
+        _log('differential extinction removed from the HARPS-N RV: %.2f to %.2f m/s'
+             % (np.nanmin(ex['rv_diff_extinction']), np.nanmax(ex['rv_diff_extinction'])))
 
     # ---- simulations of every exposure at its own time
     e_idx = ex['epoch']
@@ -465,7 +541,8 @@ def run_collect(a):
 
     table = pd.DataFrame({'day': ex['day'], 'jd_utc': ex['jd'], 't': t, 'sdo_t_rec': ex['exp_trec'], 'dt_sdo_s': ex['exp_dt'],
                           'n_frames': n45, 'obs_vr': ex['obs_vr'], 'v_disc_mean': v_disc, 'rv_raw': ex['rv_raw'], 'v_sun_jpl': ex['v_sun'],
-                          'berv_bary_to_helio': ex['berv_bary_to_helio'], 'rv_release': ex['rv_release']})
+                          'berv_bary_to_helio': ex['berv_bary_to_helio'], 'rv_diff_extinction': ex['rv_diff_extinction'],
+                          'rv_release': ex['rv_release']})
     for k in ('obs_quality', 'airmass'):
         if k in ex:
             table[k] = ex[k]
@@ -743,6 +820,12 @@ def main(argv=None):
     d.add_argument('--faculae', default='plage', choices=('plage', 'plage+network'))
     d.add_argument('--no-network-velocity', dest='network_velocity', action='store_false',
                    help='quiet pixels: not active at all (default: neither spot nor facula)')
+    d.add_argument('--margin-px', type=int, nargs='*', default=[],
+                   help='the frames also with the quiet pixels farther than these numbers of pixels (of --size) from the '
+                        'spots and faculae, in <out>_margin<m>px (same downloads)')
+    d.add_argument('--move-masks', action='store_true',
+                   help='the frames also with the mask of the epoch moved to their time by the differential rotation, '
+                        'in <out>_moved (same downloads)')
     d.add_argument('--max-dt', type=float, default=900.0, help='[s] exposures farther from an HMI epoch are not used')
     d.add_argument('--window', type=float, default=720.0,
                    help='[s] the 45 s dopplergrams within window / 2 of the middle of every exposure are averaged')
@@ -781,6 +864,8 @@ def main(argv=None):
                    help='with --clv-deg: the average CLV removed too (already in the spectra of the grids)')
     c.add_argument('--north-south', action='store_true',
                    help='a north-south gradient ns + ns_vr OBS_VR fitted with the rotation of every day and removed')
+    c.add_argument('--diff-extinction', action='store_true',
+                   help='HARPS-N RV also minus rv_diff_extinction of the release (differential extinction)')
     c.add_argument('--min-exp', type=int, default=5, help='days with fewer exposures: not in the statistics')
     c.add_argument('--harpsn', default=None, help='csv of the release: its quality flags (data_quality = 1 kept)')
     c.add_argument('--min-obs-quality', type=float, default=None,
@@ -789,6 +874,8 @@ def main(argv=None):
                    help='with --harpsn: then also the days with fewer exposures left than this (e.g. 50)')
     c.add_argument('--results', default='results', help='folder of the results, in --out (default results)')
     c.add_argument('--no-figures', dest='figures', action='store_false', help='only the tables')
+    c.add_argument('--save-cells', action='store_true',
+                   help='also the velocity of every cell of every exposure given to the simulations (cells.npz)')
 
     a = p.parse_args(argv)
     if a.step == 'day':

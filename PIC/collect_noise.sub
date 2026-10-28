@@ -1,0 +1,15 @@
+# Condor submit file, step 5 of sweep_noise.dag: table and figures of all the sets of $(kind) and their filling
+# factors against SATIRE (after run_noise_$(kind).sub). kind comes from the VARS of the DAG.
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/collect_noise.sh
+Arguments  = "$(kind)"
+
+RequestCpus   = 1
+RequestMemory = 4GB
+RequestDisk   = 1GB
+
+Log    = logs/collect_noise_$(kind).log
+Output = logs/collect_noise_$(kind).out
+Error  = logs/collect_noise_$(kind).err
+
+Queue

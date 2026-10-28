@@ -10,18 +10,41 @@ so all the blocks write in the same folders without clash. The days already done
          --noise-th 8 --I-th 0.55 0.6 ... --A-th 1 10 ... --block 3 --n-blocks 40
   python identify_days.py ... --faculae fraction --B-sat 50 100 ...       (facular fractions, no area threshold)
   python identify_days.py ... --magnetogram 720s                           (hmi.M_720s instead of hmi.M_45s)
+  python identify_days.py ... --faculae fraction --params parameters_noise_fraction.txt \
+         --columns noise_th,B_th,I_th,B_sat,Temp                          (only the sets of the lines of the file)
 
-The sets are all the combinations of the thresholds given (sunsim.sdo.parameter_sets). After all the blocks, one run of
+The sets are all the combinations of the thresholds given (sunsim.sdo.parameter_sets), or with --params the sets of
+the lines of a parameter file (e.g. B_th tied to noise_th: no combination of the two). After all the blocks, one run of
 python -m sunsim.sdo with the same thresholds over the whole period does the days still missing and writes
 filling_factors_N<n>.npz and summary.csv of every set (aggregate_4096.sh).
 """
 import argparse
 import os
+import re
 import sys
 import time
 from datetime import datetime, timedelta
 
 import numpy as np
+
+
+def sets_of_file(path, columns, a):
+    """The sets of thresholds of the lines of a parameter file (one per distinct set; the columns that are not
+    thresholds are ignored), the thresholds that are not in the file from the options (their first value)."""
+    from sunsim import sdo
+    sets = {}
+    for line in open(path):
+        v = re.split(r'[ ,\t]+', line.strip())
+        if len(v) < len(columns) or v[0].startswith('#'):
+            continue
+        p = dict(noise_th=a.noise_th[0], B_th=a.B_th[0], I_th=a.I_th[0], A_th=a.A_th[0], mu_area=a.mu_area[0],
+                 faculae=a.faculae[0], B_sat=a.B_sat[0])
+        p.update({k: float(x) for k, x in zip(columns, v) if k in p})
+        for s in sdo.parameter_sets(**p):
+            sets[sdo.set_label(s)] = s
+    if not sets:
+        raise ValueError('no set in %s (columns %s)' % (path, ','.join(columns)))
+    return list(sets.values())
 
 
 def main(argv=None):
@@ -37,13 +60,20 @@ def main(argv=None):
     p.add_argument('--faculae', nargs='+', default=['plage'], choices=['plage', 'plage+network', 'fraction'])
     p.add_argument('--B-sat', type=float, nargs='+', default=[100.0], help="with --faculae fraction [G]")
     p.add_argument('--magnetogram', choices=['45s', '720s'], default='45s', help='hmi.M_45s (default) or hmi.M_720s')
+    p.add_argument('--params', default=None, help='parameter file: only the sets of its lines, instead of all the '
+                                                  'combinations of the values given (the other thresholds: first value)')
+    p.add_argument('--columns', default='noise_th,I_th,A_th,Temp',
+                   help='with --params: the names of its columns (those that are not thresholds, e.g. Temp, ignored)')
     p.add_argument('--block', type=int, required=True, help='index of this block (0 ... n_blocks - 1)')
     p.add_argument('--n-blocks', type=int, required=True)
     p.add_argument('--workers', type=int, default=1, help='processes working on different days')
     a = p.parse_args(argv)
 
     from sunsim import sdo
-    sets = sdo.parameter_sets(a.noise_th, a.B_th, a.I_th, a.A_th, a.mu_area, a.faculae, a.B_sat)
+    if a.params:
+        sets = sets_of_file(a.params, a.columns.split(','), a)
+    else:
+        sets = sdo.parameter_sets(a.noise_th, a.B_th, a.I_th, a.A_th, a.mu_area, a.faculae, a.B_sat)
     folders = [(os.path.join(a.out, sdo.set_label(s)), s) for s in sets]
     for folder, _ in folders:
         for sub in ['days'] + ['cells_N%d' % n for n in a.n_rings]:
