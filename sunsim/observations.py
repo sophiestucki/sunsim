@@ -36,9 +36,12 @@ import numpy as np
 __all__ = ['mad', 'rms', 'jd_of_date', 'load_harpsn', 'sun_barycentric_rv', 'daily_average', 'load_sorce', 'load_tsis', 'load_interventions',
            'match_days', 'best_shift_match', 'compare_photometry', 'compare_rv', 'compare_rv_exposures', 'print_summary',
            'photometry_offsets', 'plot_photometry_comparison', 'plot_rv_comparison', 'plot_comparison', 'plot_correlation',
-           'sweep_stats', 'load_sweep_stats', 'best_sets', 'plot_sweep_heatmaps', 'plot_sweep_parameters']
+           'sweep_stats', 'load_sweep_stats', 'best_sets', 'plot_sweep_heatmaps', 'plot_sweep_parameters', 'PARAM_LABELS']
 
 COLOURS = {'sim': '#ea8642', 'harpsn': '#102e37', 'sorce': '#102e37', 'tsis': '#918AE5', 'res': '#4d4d4d'}
+# names of the thresholds of the sweep in the figures
+PARAM_LABELS = {'T_sp': r'$\Delta T_s$', 'I_th': r'$I_{th}$', 'A_th': r'$A_{th}$', 'noise_th': r'$\mathrm{noise}_{th}$',
+                'B_sat': r'$B_{sat}$'}
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -487,7 +490,7 @@ def plot_rv_comparison(rv, ax=None, ax_res=None, t0=0.0, obs_label='HARPS-N', si
     ax.legend(ncols=2)
     if stats and rv['n']:
         scale, u = (100, 'cm/s') if q != 'contrast' else (1, '')
-        ax.text(0.01, 0.04, 'Res. RMS: %.2f %s\nRes. MAD: %.2f %s' % (rv['rms'] * scale, u, rv['mad'] * scale, u),
+        ax.text(0.01, 0.75, 'Res. RMS: %.2f %s\nRes. MAD: %.2f %s' % (rv['rms'] * scale, u, rv['mad'] * scale, u),
                 transform=ax.transAxes, color=COLOURS['sim'], fontsize='large',
                 bbox=dict(facecolor='white', edgecolor='none', pad=3))
     axes = [ax] + ([ax_res] if ax_res is not None else [])
@@ -680,10 +683,10 @@ def plot_sweep_heatmaps(df, value='rv_rms', x='A_th', y='I_th', panel='T_sp', fi
         ax.set_xticklabels(['%g' % v for v in xs], rotation=45)
         ax.set_yticks(range(len(ys)))
         ax.set_yticklabels(['%g' % v for v in ys])
-        ax.set_xlabel(x)
+        ax.set_xlabel(PARAM_LABELS.get(x, x))
         if p is not None:
-            ax.set_title('%s = %g' % (panel, p))
-    axes[0].set_ylabel(y)
+            ax.set_title('%s = %g' % (PARAM_LABELS.get(panel, panel), p))
+    axes[0].set_ylabel(PARAM_LABELS.get(y, y))
     cbar = fig.colorbar(im, ax=list(axes), fraction=0.025, pad=0.01)
     cbar.set_label('%s%s' % (value, ' [%s]' % unit if unit else ''))
     if levels:
@@ -708,7 +711,7 @@ def plot_sweep_parameters(df, value='rv_rms', parameters=('T_sp', 'noise_th', 'I
     for ax, p in zip(axes, parameters):
         ax.plot(df[p], df[value], 'o', alpha=0.35, markersize=3)
         ax.axhline(df[value].min(), ls='--', alpha=0.7)
-        ax.set_xlabel(p)
+        ax.set_xlabel(PARAM_LABELS.get(p, p))
         ax.set_ylabel('%s%s' % (value, ' [%s]' % unit if unit else ''))
     for ax in axes[n:]:
         ax.set_visible(False)

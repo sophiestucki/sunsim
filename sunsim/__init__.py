@@ -18,6 +18,9 @@ Modules
     plot_utils           figures of the outputs (import sunsim.plot_utils: it imports matplotlib)
     observations         comparison with the observed Sun: TSI (SORCE, TSIS-1), HARPS-N; MAD / RMS, plots
                          (from sunsim import observations)
+    residuals            ResidualAnalysis: GLS periodogram, prewhitening, wavelet and injection-recovery of planets in
+                         a time series, e.g. the RV residuals of observations.compare_rv (from sunsim.residuals import
+                         ResidualAnalysis; the wavelet needs pycwt)
     sdo                  SDO/HMI images -> spot and facula maps (from sunsim import sdo; terminal: sunsim-sdo-maps;
                          needs sunpy)
     local_paths          local_path: folders of the data and other codes on this computer (local_paths.ini)

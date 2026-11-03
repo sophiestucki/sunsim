@@ -1,0 +1,15 @@
+periods [d]:     5    60   115   170   225   280   335   390   445   500
+semi-amplitudes: 0.1 to 0.5 m/s (21), 100 phases, FAP <= 0.001, period tolerance 0.1
+
+HARPS-N - SunSim (rv-2) N 1983  std 0.820 m/s  (RMS 0.820, MAD 0.509 m/s)
+    GLS peak P = 30.19 d, amp 0.160 m/s, FAP 7.2e-06; recovered at the period: 87.7 % of all; rotation instead: 0.0 %
+    K [m/s] with >= 50 % recovered, per period:  0.16  0.16  0.16  0.16  0.16  0.10  0.14  0.14  0.10  0.10
+HARPS-N - SunSim (rv-3) N 1983  std 0.816 m/s  (RMS 0.816, MAD 0.507 m/s)
+    GLS peak P = 55.38 d, amp 0.168 m/s, FAP 4.2e-07; recovered at the period: 85.5 % of all; rotation instead: 2.4 %
+    K [m/s] with >= 50 % recovered, per period:  0.18  0.10  0.18  0.16  0.16  0.14  0.16  0.14  0.10  0.10
+HARPS-N - SunSim (rv-4) N 1983  std 0.822 m/s  (RMS 0.822, MAD 0.511 m/s)
+    GLS peak P = 26.48 d, amp 0.172 m/s, FAP 2.6e-07; recovered at the period: 84.6 % of all; rotation instead: 13.1 %
+    K [m/s] with >= 50 % recovered, per period:  0.18  0.16  0.18  0.18  0.16  0.14  0.16  0.14  0.12  0.10
+HARPS-N                N 1983  std 1.413 m/s
+    GLS peak P = 26.44 d, amp 0.491 m/s, FAP 7.3e-25; recovered at the period: 15.7 % of all; rotation instead: 84.3 %
+    K [m/s] with >= 50 % recovered, per period:  0.50  0.50  0.50  0.48  0.48  0.44  0.48  0.44  0.38  0.34
