@@ -1,9 +1,0 @@
-block 64 / 80: 38 days with images (2022-05-27 to 2022-07-03), 38 to do; 28 sets of thresholds, 4 worker(s)
-[1/38] 2022-05-27: 28 sets, ff_sp 0.013 %, ff_fc 9.862 % (first set) | 32 s, ~20 min left
-[2/38] 2022-05-28: 28 sets, ff_sp 0.013 %, ff_fc 9.451 % (first set) | 41 s, ~12 min left
-[3/38] 2022-05-29: 28 sets, ff_sp 0.014 %, ff_fc 9.249 % (first set) | 41 s, ~8 min left
-[4/38] 2022-05-30: 28 sets, ff_sp 0.016 %, ff_fc 9.075 % (first set) | 41 s, ~6 min left
-[5/38] 2022-05-31: 28 sets, ff_sp 0.015 %, ff_fc 8.995 % (first set) | 57 s, ~6 min left
-[6/38] 2022-06-01: 28 sets, ff_sp 0.015 %, ff_fc 8.984 % (first set) | 77 s, ~7 min left
-[7/38] 2022-06-02: 28 sets, ff_sp 0.028 %, ff_fc 8.937 % (first set) | 77 s, ~6 min left
-[8/38] 2022-06-03: 28 sets, ff_sp 0.019 %, ff_fc 8.911 % (first set) | 77 s, ~5 min left

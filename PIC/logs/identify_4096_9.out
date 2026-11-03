@@ -1,4 +1,0 @@
-block 9 / 40: 78 days with images (2017-06-25 to 2017-09-10), 2 to do; 8 sets of thresholds, 2 worker(s)
-2017-07-23: images not readable (Failed to read /data/spotless/scratch/sstucki/starsim/SDO_data/hmi.ic_nolimbdark_720s.20170723_120000_TAI.3.continuum.fi), skipped
-2017-08-03: images not readable (Failed to read /data/spotless/scratch/sstucki/starsim/SDO_data/hmi.m_45s.20170803_120045_TAI.2.magnetogram.fits), skipped
-block 9 done: 2 days in 0.0 h, 2 skipped

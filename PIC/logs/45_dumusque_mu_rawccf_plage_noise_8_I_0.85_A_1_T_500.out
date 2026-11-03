@@ -1,4 +1,0 @@
-grids: read from /data/spotless/scratch/sstucki/starsim/dumusque_mu/grids_rawccf/grids_T_500_N60.pkl
-/data/spotless/scratch/sstucki/starsim/dumusque_mu/sets_size_4096_N60_rawccf/noise_th_8.0_I_th_0.85_A_th_1.0_T_500_size_4096_N60: 3097 epochs simulated, outputs written
-noise_th=8 I_th=0.85 A_th=1 T_sp=500 n_epochs=3097 n_removed=0 rv_rms=0.793 rv_mad=0.5067 rv_n=1983 rv_obs_rms=2.412 fwhm_rms=2.072 fwhm_mad=0.8958 fwhm_n=1986 fwhm_obs_rms=3.883 bis_rms=0.8864 bis_mad=0.4878 bis_n=1986 bis_obs_rms=1.485 sorce_rms=127.9 sorce_mad=62.77 sorce_n=1639 sorce_obs_rms=196.2 tsis_rms=154.2 tsis_mad=71 tsis_n=1873 tsis_obs_rms=343
-Done: /data/spotless/scratch/sstucki/starsim/dumusque_mu/sets_size_4096_N60_rawccf/noise_th_8.0_I_th_0.85_A_th_1.0_T_500_size_4096_N60

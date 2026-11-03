@@ -19,3 +19,11 @@ CAUP/
 # paths of this computer (template: local_paths.example.ini)
 local_paths.ini
 PIC/notebook_images/
+
+# HTCondor on PIC: logs of the jobs (.log, .out, .err) and the files DAGMan writes next to the .dag
+# (.dagman.out, .dagman.log, .lib.out, .lib.err, .nodes.log, .metrics, .condor.sub, .rescue001, .lock)
+PIC/logs/
+PIC/**/*.out
+PIC/**/*.err
+PIC/**/*.log
+PIC/*.dag.*
