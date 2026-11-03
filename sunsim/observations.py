@@ -41,7 +41,7 @@ __all__ = ['mad', 'rms', 'jd_of_date', 'load_harpsn', 'sun_barycentric_rv', 'dai
 COLOURS = {'sim': '#ea8642', 'harpsn': '#102e37', 'sorce': '#102e37', 'tsis': '#918AE5', 'res': '#4d4d4d'}
 # names of the thresholds of the sweep in the figures
 PARAM_LABELS = {'T_sp': r'$\Delta T_s$', 'I_th': r'$I_{th}$', 'A_th': r'$A_{th}$', 'noise_th': r'$\mathrm{noise}_{th}$',
-                'B_sat': r'$B_{sat}$'}
+                'B_sat': r'$B_{sat}$', 'B_th': r'$B_{th}$'}
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -688,7 +688,7 @@ def plot_sweep_heatmaps(df, value='rv_rms', x='A_th', y='I_th', panel='T_sp', fi
             ax.set_title('%s = %g' % (PARAM_LABELS.get(panel, panel), p))
     axes[0].set_ylabel(PARAM_LABELS.get(y, y))
     cbar = fig.colorbar(im, ax=list(axes), fraction=0.025, pad=0.01)
-    cbar.set_label('%s%s' % (value, ' [%s]' % unit if unit else ''))
+    cbar.set_label('RMS%s' % (' [%s]' % unit if unit else ''))
     if levels:
         axes[-1].legend(handles=[Line2D([0], [0], color='red', linestyle=ls, lw=lw, label='< %g%s' % (lev, ' ' + unit if unit else ''))
                                  for lev, (ls, lw) in zip(sorted(levels)[:3], styles)], fontsize=8)
