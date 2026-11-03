@@ -1,0 +1,130 @@
+000 (2137735.051.000) 2026-10-27 00:59:46 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+040 (2137735.051.000) 2026-10-27 01:02:25 Started transferring input files
+	Transferring to host: <192.168.101.150:9618?addrs=192.168.101.150-9618+[2001-67c-1148-301--440]-9618&alias=tds440.pic.es&noUDP&sock=slot1_28_19442_65d0_6470>
+...
+040 (2137735.051.000) 2026-10-27 01:02:25 Finished transferring input files
+...
+001 (2137735.051.000) 2026-10-27 01:02:25 Job executing on host: <192.168.101.150:9618?addrs=192.168.101.150-9618+[2001-67c-1148-301--440]-9618&alias=tds440.pic.es&noUDP&sock=startd_19392_e0a5>
+	SlotName: slot1_28@tds440.pic.es
+	CondorScratchDir = "/home/execute/dir_3013873"
+	Cpus = 8
+	Disk = 1051743
+	GPUs = 0
+	Memory = 16384
+...
+006 (2137735.051.000) 2026-10-27 01:02:33 Image size of job updated: 400372
+	391  -  MemoryUsage of job (MB)
+	400372  -  ResidentSetSize of job (KB)
+...
+006 (2137735.051.000) 2026-10-27 01:02:52 Image size of job updated: 454976
+	391  -  MemoryUsage of job (MB)
+	400372  -  ResidentSetSize of job (KB)
+...
+040 (2137735.051.000) 2026-10-27 01:02:52 Finished transferring output files
+...
+005 (2137735.051.000) 2026-10-27 01:02:52 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:01:06, Sys 0 00:00:05  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:01:06, Sys 0 00:00:05  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :       23  1048576   1051743 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      391    16384     16384 
+	   TimeExecute (s)      :       27                    
+	   TimeSlotBusy (s)     :       27                    
+...
+000 (2138689.123.000) 2026-10-27 15:02:01 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+040 (2138689.123.000) 2026-10-27 15:02:09 Started transferring input files
+	Transferring to host: <192.168.101.87:9618?addrs=192.168.101.87-9618+[2001-67c-1148-301--87]-9618&alias=gpu10.pic.es&noUDP&sock=slot1_5_6242_cdb7_3013>
+...
+040 (2138689.123.000) 2026-10-27 15:02:09 Finished transferring input files
+...
+001 (2138689.123.000) 2026-10-27 15:02:09 Job executing on host: <192.168.101.87:9618?addrs=192.168.101.87-9618+[2001-67c-1148-301--87]-9618&alias=gpu10.pic.es&noUDP&sock=startd_5635_b843>
+	SlotName: slot1_5@gpu10.pic.es
+	AvailableGPUs = {  }
+	CondorScratchDir = "/home/execute/dir_2822516"
+	Cpus = 8
+	Disk = 1055159
+	GPUs = 0
+	Memory = 16384
+...
+006 (2138689.123.000) 2026-10-27 15:02:09 Image size of job updated: 264
+	0  -  MemoryUsage of job (MB)
+	0  -  ResidentSetSize of job (KB)
+...
+040 (2138689.123.000) 2026-10-27 15:02:09 Finished transferring output files
+...
+005 (2138689.123.000) 2026-10-27 15:02:10 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :                 8         8 
+	   Disk (KB)            :       17  1048576   1055159 
+	   GPUs                 :                           0 
+	   Memory (MB)          :        0    16384     16384 
+	   TimeExecute (s)      :        0                    
+	   TimeSlotBusy (s)     :        0                    
+...
+000 (2138695.123.000) 2026-10-27 15:24:42 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+040 (2138695.123.000) 2026-10-27 15:30:23 Started transferring input files
+	Transferring to host: <192.168.101.87:9618?addrs=192.168.101.87-9618+[2001-67c-1148-301--87]-9618&alias=gpu10.pic.es&noUDP&sock=slot1_5_6242_cdb7_3114>
+...
+040 (2138695.123.000) 2026-10-27 15:30:23 Finished transferring input files
+...
+001 (2138695.123.000) 2026-10-27 15:30:23 Job executing on host: <192.168.101.87:9618?addrs=192.168.101.87-9618+[2001-67c-1148-301--87]-9618&alias=gpu10.pic.es&noUDP&sock=startd_5635_b843>
+	SlotName: slot1_5@gpu10.pic.es
+	AvailableGPUs = {  }
+	CondorScratchDir = "/home/execute/dir_2926995"
+	Cpus = 8
+	Disk = 1055159
+	GPUs = 0
+	Memory = 16384
+...
+006 (2138695.123.000) 2026-10-27 15:30:31 Image size of job updated: 457696
+	105  -  MemoryUsage of job (MB)
+	106936  -  ResidentSetSize of job (KB)
+...
+006 (2138695.123.000) 2026-10-27 15:30:34 Image size of job updated: 457696
+	105  -  MemoryUsage of job (MB)
+	107256  -  ResidentSetSize of job (KB)
+...
+040 (2138695.123.000) 2026-10-27 15:30:34 Finished transferring output files
+...
+005 (2138695.123.000) 2026-10-27 15:30:34 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:23, Sys 0 00:00:03  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:23, Sys 0 00:00:03  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :                 8         8 
+	   Disk (KB)            :       18  1048576   1055159 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      105    16384     16384 
+	   TimeExecute (s)      :       11                    
+	   TimeSlotBusy (s)     :       12                    
+...

@@ -1,0 +1,48 @@
+000 (2139948.015.000) 2026-10-28 01:53:07 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: ident_fraction
+...
+040 (2139948.015.000) 2026-10-28 02:05:10 Started transferring input files
+	Transferring to host: <192.168.101.225:9618?addrs=192.168.101.225-9618+[2001-67c-1148-301--525]-9618&alias=tds525.pic.es&noUDP&sock=slot1_7_16130_cb49_22795>
+...
+040 (2139948.015.000) 2026-10-28 02:05:10 Finished transferring input files
+...
+001 (2139948.015.000) 2026-10-28 02:05:10 Job executing on host: <192.168.101.225:9618?addrs=192.168.101.225-9618+[2001-67c-1148-301--525]-9618&alias=tds525.pic.es&noUDP&sock=startd_16070_4307>
+	SlotName: slot1_7@tds525.pic.es
+	CondorScratchDir = "/home/execute/dir_226559"
+	Cpus = 4
+	Disk = 1051744
+	GPUs = 0
+	Memory = 20480
+...
+006 (2139948.015.000) 2026-10-28 02:05:19 Image size of job updated: 3287984
+	3211  -  MemoryUsage of job (MB)
+	3287984  -  ResidentSetSize of job (KB)
+...
+006 (2139948.015.000) 2026-10-28 02:10:20 Image size of job updated: 6383984
+	6062  -  MemoryUsage of job (MB)
+	6207356  -  ResidentSetSize of job (KB)
+...
+006 (2139948.015.000) 2026-10-28 02:13:00 Image size of job updated: 7028936
+	6062  -  MemoryUsage of job (MB)
+	6207356  -  ResidentSetSize of job (KB)
+...
+040 (2139948.015.000) 2026-10-28 02:13:00 Finished transferring output files
+...
+004 (2139948.015.000) 2026-10-28 02:13:00 Job was evicted. Code 1009 Subcode 0
+	(0) CPU times
+		Usr 0 00:21:39, Sys 0 00:09:10  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Reason: Claim deactivated
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :     3.96        4         4 
+	   Disk (KB)            :    23     1048576   1051744 
+	   GPUs                 :                           0 
+	   Memory (MB)          :  6062       20480     20480 
+	   TimeExecute (s)      :   470                       
+	   TimeSlotBusy (s)     :   470                       
+...
+009 (2139948.015.000) 2026-10-28 02:13:00 Job was aborted.
+	Node Error: DAG node ident_fraction (2139948.19.0) reached failure tolerance after 1 failures. (by user sstucki)
+...

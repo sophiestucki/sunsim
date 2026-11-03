@@ -1,0 +1,41 @@
+000 (2129058.027.000) 2026-10-23 01:27:56 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: ident_plage
+...
+040 (2129058.027.000) 2026-10-23 01:32:32 Started transferring input files
+	Transferring to host: <192.168.101.87:9618?addrs=192.168.101.87-9618+[2001-67c-1148-301--87]-9618&alias=gpu10.pic.es&noUDP&sock=slot1_10_6149_46d3_43446>
+...
+040 (2129058.027.000) 2026-10-23 01:32:32 Finished transferring input files
+...
+001 (2129058.027.000) 2026-10-23 01:32:32 Job executing on host: <192.168.101.87:9618?addrs=192.168.101.87-9618+[2001-67c-1148-301--87]-9618&alias=gpu10.pic.es&noUDP&sock=startd_5499_6f61>
+	SlotName: slot1_10@gpu10.pic.es
+	AvailableGPUs = {  }
+	CondorScratchDir = "/home/execute/dir_2058473"
+	Cpus = 4
+	Disk = 1055151
+	GPUs = 0
+	Memory = 20480
+...
+006 (2129058.027.000) 2026-10-23 01:32:37 Image size of job updated: 232
+	0  -  MemoryUsage of job (MB)
+	0  -  ResidentSetSize of job (KB)
+...
+040 (2129058.027.000) 2026-10-23 01:32:37 Finished transferring output files
+...
+004 (2129058.027.000) 2026-10-23 01:32:37 Job was evicted. Code 1009 Subcode 0
+	(0) CPU times
+		Usr 0 00:00:07, Sys 0 00:00:02  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Reason: Claim deactivated
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        4         4 
+	   Disk (KB)            :       26  1048576   1055151 
+	   GPUs                 :                           0 
+	   Memory (MB)          :        0    20480     20480 
+	   TimeExecute (s)      :        5                    
+	   TimeSlotBusy (s)     :        5                    
+...
+009 (2129058.027.000) 2026-10-23 01:32:37 Job was aborted.
+	Node Error: DAG node ident_plage (2129058.18.0) reached failure tolerance after 1 failures. (by user sstucki)
+...

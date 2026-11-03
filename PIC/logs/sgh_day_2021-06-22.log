@@ -1,0 +1,56 @@
+000 (2137721.052.000) 2026-10-27 05:09:01 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: days
+...
+040 (2137721.052.000) 2026-10-27 05:09:09 Started transferring input files
+	Transferring to host: <192.168.102.20:9618?addrs=192.168.102.20-9618+[2001-67c-1148-301--810]-9618&alias=td810.pic.es&noUDP&sock=slot1_9_25540_fd88_15294>
+...
+040 (2137721.052.000) 2026-10-27 05:09:09 Finished transferring input files
+...
+001 (2137721.052.000) 2026-10-27 05:09:09 Job executing on host: <192.168.102.20:9618?addrs=192.168.102.20-9618+[2001-67c-1148-301--810]-9618&alias=td810.pic.es&noUDP&sock=startd_25505_e316>
+	SlotName: slot1_9@td810.pic.es
+	CondorScratchDir = "/home/execute/dir_792543"
+	Cpus = 10
+	Disk = 2100270
+	GPUs = 0
+	Memory = 8192
+...
+006 (2137721.052.000) 2026-10-27 05:09:18 Image size of job updated: 138448
+	127  -  MemoryUsage of job (MB)
+	129636  -  ResidentSetSize of job (KB)
+...
+006 (2137721.052.000) 2026-10-27 05:14:19 Image size of job updated: 2344272
+	1854  -  MemoryUsage of job (MB)
+	1897748  -  ResidentSetSize of job (KB)
+...
+006 (2137721.052.000) 2026-10-27 05:19:20 Image size of job updated: 2569144
+	1854  -  MemoryUsage of job (MB)
+	1897748  -  ResidentSetSize of job (KB)
+...
+006 (2137721.052.000) 2026-10-27 05:24:21 Image size of job updated: 2606008
+	1867  -  MemoryUsage of job (MB)
+	1911800  -  ResidentSetSize of job (KB)
+...
+006 (2137721.052.000) 2026-10-27 05:29:22 Image size of job updated: 2606140
+	1867  -  MemoryUsage of job (MB)
+	1911800  -  ResidentSetSize of job (KB)
+...
+040 (2137721.052.000) 2026-10-27 05:43:15 Finished transferring output files
+...
+004 (2137721.052.000) 2026-10-27 05:43:15 Job was evicted. Code 1009 Subcode 0
+	(0) CPU times
+		Usr 0 00:11:13, Sys 0 00:16:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Reason: Claim deactivated
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :     1.01       10        10 
+	   Disk (KB)            : 82061     2097152   2100270 
+	   GPUs                 :                           0 
+	   Memory (MB)          :  1867        8192      8192 
+	   TimeExecute (s)      :  2046                       
+	   TimeSlotBusy (s)     :  2046                       
+...
+009 (2137721.052.000) 2026-10-27 05:43:15 Job was aborted.
+	Node Error: DAG node days (2137721.35.0) reached failure tolerance after 1 failures. (by user sstucki)
+...

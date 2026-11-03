@@ -663,7 +663,7 @@ def plot_sweep_heatmaps(df, value='rv_rms', x='A_th', y='I_th', panel='T_sp', fi
     if cmap is None:
         try:
             import cmasher as cmr
-            cmap = cmr.torch
+            cmap = cmr.get_sub_cmap(cmr.torch, 0, 0.95)
         except ImportError:
             cmap = 'inferno'
     panels = sorted(d[panel].unique()) if panel else [None]

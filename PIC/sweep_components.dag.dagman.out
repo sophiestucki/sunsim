@@ -1,0 +1,1646 @@
+10/26/26 14:22:14 ******************************************************
+10/26/26 14:22:14 ** condor_scheduniv_exec.2136987.0 (CONDOR_DAGMAN) STARTING UP
+10/26/26 14:22:14 ** /usr/bin/condor_dagman
+10/26/26 14:22:14 ** SubsystemInfo: name=DAGMAN type=DAGMAN(9) class=CLIENT(2)
+10/26/26 14:22:14 ** Configuration: subsystem:DAGMAN local:<NONE> class:CLIENT
+10/26/26 14:22:14 ** $CondorVersion: 25.0.14 2026-08-30 BuildID: 947353 PackageID: 25.0.14-1 $
+10/26/26 14:22:14 ** $CondorPlatform: x86_64_AlmaLinux9 $
+10/26/26 14:22:14 ** PID = 3677352 RealUID = 66308
+10/26/26 14:22:14 ** Log last touched time unavailable (No such file or directory)
+10/26/26 14:22:14 ******************************************************
+10/26/26 14:22:14 Using config source: /etc/condor/condor_config
+10/26/26 14:22:14 Using local config sources: 
+10/26/26 14:22:14    /etc/condor/config.d/00-security
+10/26/26 14:22:14    /etc/condor/config.d/01-schedd.conf
+10/26/26 14:22:14    /etc/condor/config.d/10-stash-plugin.conf
+10/26/26 14:22:14    /etc/condor/config.d/13-flavour.conf
+10/26/26 14:22:14    /etc/condor/config.d/14-submit_requirements.conf
+10/26/26 14:22:14    /etc/condor/config.d/15-submit_requirements_exp.conf
+10/26/26 14:22:14    /etc/condor/config.d/16-limits.conf
+10/26/26 14:22:14    /etc/condor/config.d/30-security.conf
+10/26/26 14:22:14    /etc/condor/config.d/40-epoch.conf
+10/26/26 14:22:14    /etc/condor/config.d/50-log.conf
+10/26/26 14:22:14 config Macros = 171, Sorted = 171, StringBytes = 12498, TablesBytes = 6276
+10/26/26 14:22:14 CLASSAD_CACHING is ENABLED
+10/26/26 14:22:14 Daemon Log is logging: D_ALWAYS D_ERROR D_STATUS
+10/26/26 14:22:14 Daemoncore: Listening at <0.0.0.0:10271> on TCP (ReliSock) and UDP (SafeSock).
+10/26/26 14:22:14 DaemonCore: command socket at <193.109.174.74:10271?addrs=193.109.174.74-10271&alias=submit02.pic.es>
+10/26/26 14:22:14 DaemonCore: private command socket at <193.109.174.74:10271?addrs=193.109.174.74-10271&alias=submit02.pic.es>
+10/26/26 14:22:14 DAGMAN_USE_STRICT setting: 1
+10/26/26 14:22:14 DAGMAN_VERBOSITY setting: 3
+10/26/26 14:22:14 DAGMAN_DEBUG_CACHE_SIZE setting: 5242880
+10/26/26 14:22:14 DAGMAN_DEBUG_CACHE_ENABLE setting: False
+10/26/26 14:22:14 DAGMAN_SUBMIT_DELAY setting: 0
+10/26/26 14:22:14 DAGMAN_MAX_SUBMIT_ATTEMPTS setting: 6
+10/26/26 14:22:14 DAGMAN_STARTUP_CYCLE_DETECT setting: False
+10/26/26 14:22:14 DAGMAN_USE_JOIN_NODES setting: True
+10/26/26 14:22:14 DAGMAN_REPORT_GRAPH_METRICS setting: False
+10/26/26 14:22:14 DAGMAN_MAX_SUBMITS_PER_INTERVAL setting: 100
+10/26/26 14:22:14 DAGMAN_AGGRESSIVE_SUBMIT setting: False
+10/26/26 14:22:14 DAGMAN_USER_LOG_SCAN_INTERVAL setting: 5
+10/26/26 14:22:14 DAGMAN_QUEUE_UPDATE_INTERVAL setting: 300.000000
+10/26/26 14:22:14 DAGMAN_DEFAULT_PRIORITY setting: 0
+10/26/26 14:22:14 DAGMAN_SUPPRESS_NOTIFICATION setting: False
+10/26/26 14:22:14 allow_events (DAGMAN_ALLOW_EVENTS) setting: 114
+10/26/26 14:22:14 DAGMAN_RETRY_SUBMIT_FIRST setting: True
+10/26/26 14:22:14 DAGMAN_RETRY_NODE_FIRST setting: False
+10/26/26 14:22:14 DAGMAN_MAX_JOBS_IDLE setting: 1000
+10/26/26 14:22:14 DAGMAN_MAX_JOBS_SUBMITTED setting: 0
+10/26/26 14:22:14 DAGMAN_MAX_PRE_SCRIPTS setting: 20
+10/26/26 14:22:14 DAGMAN_MAX_POST_SCRIPTS setting: 20
+10/26/26 14:22:14 DAGMAN_MAX_HOLD_SCRIPTS setting: 20
+10/26/26 14:22:14 DAGMAN_MUNGE_NODE_NAMES setting: True
+10/26/26 14:22:14 DAGMAN_ALLOW_ANY_NODE_NAME_CHARACTERS setting: False
+10/26/26 14:22:14 DAGMAN_PROHIBIT_MULTI_JOBS setting: False
+10/26/26 14:22:14 DAGMAN_SUBMIT_DEPTH_FIRST setting: False
+10/26/26 14:22:14 DAGMAN_ALWAYS_RUN_POST setting: False
+10/26/26 14:22:14 DAGMAN_CONDOR_SUBMIT_EXE setting: /usr/bin/condor_submit
+10/26/26 14:22:14 DAGMAN_CONDOR_RM_EXE setting: /usr/bin/condor_rm
+10/26/26 14:22:14 DAGMAN_USE_DIRECT_SUBMIT setting: True
+10/26/26 14:22:14 DAGMAN_PRODUCE_JOB_CREDENTIALS setting: True
+10/26/26 14:22:14 DAGMAN_DEFAULT_APPEND_VARS setting: False
+10/26/26 14:22:14 DAGMAN_INHERIT_ATTRS_PREFIX setting: 
+10/26/26 14:22:14 DAGMAN_INHERIT_ATTRS setting: 
+10/26/26 14:22:14 DAGMAN_ABORT_DUPLICATES setting: True
+10/26/26 14:22:14 DAGMAN_ABORT_ON_SCARY_SUBMIT setting: True
+10/26/26 14:22:14 DAGMAN_PENDING_REPORT_INTERVAL setting: 600
+10/26/26 14:22:14 DAGMAN_CHECK_QUEUE_INTERVAL setting: 28800
+10/26/26 14:22:14 DAGMAN_PRINT_JOB_TABLE_INTERVAL setting: 900
+10/26/26 14:22:14 DAGMAN_AUTO_RESCUE setting: True
+10/26/26 14:22:14 DAGMAN_MAX_RESCUE_NUM setting: 100
+10/26/26 14:22:14 DAGMAN_WRITE_PARTIAL_RESCUE setting: True
+10/26/26 14:22:14 DAGMAN_RESET_RETRIES_UPON_RESCUE setting: True
+10/26/26 14:22:14 DAGMAN_METRICS_FILE_VERSION setting: 2
+10/26/26 14:22:14 DAGMAN_DEFAULT_NODE_LOG setting: @(DAG_DIR)/@(DAG_FILE).nodes.log
+10/26/26 14:22:14 DAGMAN_LOG_ON_NFS_IS_ERROR setting: False
+10/26/26 14:22:14 DAGMAN_GENERATE_SUBDAG_SUBMITS setting: True
+10/26/26 14:22:14 DAGMAN_MAX_JOB_HOLDS setting: 100
+10/26/26 14:22:14 DAGMAN_NODE_JOB_FAILURE_TOLERANCE setting: 0
+10/26/26 14:22:14 DAGMAN_HOLD_CLAIM_TIME setting: 20
+10/26/26 14:22:14 DAGMAN_SUPPRESS_JOB_LOGS setting: False
+10/26/26 14:22:14 DAGMAN_REMOVE_NODE_JOBS setting: True
+10/26/26 14:22:14 DAGMAN_PUT_FAILED_JOBS_ON_HOLD setting: False
+10/26/26 14:22:14 DAGMAN_REMOVE_JOBS_AFTER_LIMIT_CHANGE setting: False
+10/26/26 14:22:14 DAGMAN will adjust edges after parsing
+10/26/26 14:22:14 argv[0] == "condor_scheduniv_exec.2136987.0"
+10/26/26 14:22:14 argv[1] == "-Lockfile"
+10/26/26 14:22:14 argv[2] == "sweep_components.dag.lock"
+10/26/26 14:22:14 argv[3] == "-Dag"
+10/26/26 14:22:14 argv[4] == "sweep_components.dag"
+10/26/26 14:22:14 argv[5] == "-CsdVersion"
+10/26/26 14:22:14 argv[6] == "$CondorVersion: 25.0.14 2026-08-30 BuildID: 947353 PackageID: 25.0.14-1 $"
+10/26/26 14:22:14 argv[7] == "-dagman"
+10/26/26 14:22:14 argv[8] == "/bin/condor_dagman"
+10/26/26 14:22:14 argv[9] == "-AutoRescue"
+10/26/26 14:22:14 argv[10] == "1"
+10/26/26 14:22:14 argv[11] == "-DoRescueFrom"
+10/26/26 14:22:14 argv[12] == "0"
+10/26/26 14:22:14 Can't open directory "/etc/condor/passwords.d" as PRIV_ROOT, errno: 13 (Permission denied)
+10/26/26 14:22:14 Can't open directory "/etc/condor/passwords.d" as PRIV_ROOT, errno: 13 (Permission denied)
+10/26/26 14:22:14 Workflow batch-id: <2136987.0>
+10/26/26 14:22:14 Workflow batch-name: <sweep_components.dag+2136987>
+10/26/26 14:22:14 Workflow accounting_group: <group_OTHER>
+10/26/26 14:22:14 Workflow accounting_group_user: <medium.spotless_score.sstucki>
+10/26/26 14:22:14 Warning: failed to get attribute DAGNodeName
+10/26/26 14:22:14 Default node log file is: </nfs/pic.es/user/s/sstucki/sunsim/PIC/./sweep_components.dag.nodes.log>
+10/26/26 14:22:14 DAG Lockfile will be written to sweep_components.dag.lock
+10/26/26 14:22:14 DAG Input file is sweep_components.dag
+10/26/26 14:22:14 Parsing 1 dagfiles
+10/26/26 14:22:14 Parsing sweep_components.dag ...
+10/26/26 14:22:14 Adjusting edges
+10/26/26 14:22:14 Dag contains 5 total nodes
+10/26/26 14:22:14 Bootstrapping...
+10/26/26 14:22:14 Number of pre-completed nodes: 0
+10/26/26 14:22:14 MultiLogFiles: truncating log file /nfs/pic.es/user/s/sstucki/sunsim/PIC/./sweep_components.dag.nodes.log
+10/26/26 14:22:14 Running PRE script of Node grids...
+10/26/26 14:22:14 DAG status: 0 (DAG_STATUS_OK)
+10/26/26 14:22:14 Of 5 nodes total:
+10/26/26 14:22:14  Done     Pre   Queued    Post   Ready   Un-Ready   Failed   Futile
+10/26/26 14:22:14   ===     ===      ===     ===     ===        ===      ===      ===
+10/26/26 14:22:14     0       1        0       0       1          3        0        0
+10/26/26 14:22:14 0 job proc(s) currently held
+10/26/26 14:22:14 DAGMan Runtime Statistics: [EventCycleTimeSum=0.000; SleepCycleTimeSum=0.000; SubmitCycleTimeSum=0.000; EventCycleTimeCount=0.000; SleepCycleTimeCount=0.000; SubmitCycleTimeCount=0.000; LogProcessCycleTimeSum=0.000; LogProcessCycleTimeCount=0.000; ]
+10/26/26 14:22:14 Registering condor_event_timer...
+10/26/26 14:22:14 PRE Script of node grids completed successfully.
+10/26/26 14:22:15 Submitting HTCondor Node ident job(s)...
+10/26/26 14:22:15 Submitting node ident from file identify_components.sub using direct job submission
+10/26/26 14:22:16 	assigned HTCondor ID (2136988.0.0)
+10/26/26 14:22:16 Submitting HTCondor Node grids job(s)...
+10/26/26 14:22:16 Submitting node grids from file build_grids_components.sub using direct job submission
+10/26/26 14:22:16 	assigned HTCondor ID (2136989.0.0)
+10/26/26 14:22:16 Just submitted 2 jobs this cycle...
+10/26/26 14:22:16 DAG status: 0 (DAG_STATUS_OK)
+10/26/26 14:22:16 Of 5 nodes total:
+10/26/26 14:22:16  Done     Pre   Queued    Post   Ready   Un-Ready   Failed   Futile
+10/26/26 14:22:16   ===     ===      ===     ===     ===        ===      ===      ===
+10/26/26 14:22:16     0       0        2       0       0          3        0        0
+10/26/26 14:22:16 0 job proc(s) currently held
+10/26/26 14:22:16 DAGMan Runtime Statistics: [EventCycleTimeSum=0.000; SleepCycleTimeSum=0.000; SubmitCycleTimeAvg=0.456; SubmitCycleTimeMax=0.456; SubmitCycleTimeMin=0.456; SubmitCycleTimeStd=0.456; SubmitCycleTimeSum=0.456; EventCycleTimeCount=0.000; SleepCycleTimeCount=0.000; SubmitCycleTimeCount=1.000; LogProcessCycleTimeSum=0.000; LogProcessCycleTimeCount=0.000; ]
+10/26/26 14:22:21 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.0.0) to (2136988.0.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.0.0) {10/26/26 14:22:15}
+10/26/26 14:22:21 Number of idle job procs: 1
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.0.0) to (2136988.1.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.1.0) {10/26/26 14:22:15}
+10/26/26 14:22:21 Number of idle job procs: 2
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.1.0) to (2136988.10.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.10.0) {10/26/26 14:22:15}
+10/26/26 14:22:21 Number of idle job procs: 3
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.10.0) to (2136988.11.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.11.0) {10/26/26 14:22:15}
+10/26/26 14:22:21 Number of idle job procs: 4
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.11.0) to (2136988.12.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.12.0) {10/26/26 14:22:15}
+10/26/26 14:22:21 Number of idle job procs: 5
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.12.0) to (2136988.13.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.13.0) {10/26/26 14:22:15}
+10/26/26 14:22:21 Number of idle job procs: 6
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.13.0) to (2136988.14.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.14.0) {10/26/26 14:22:15}
+10/26/26 14:22:21 Number of idle job procs: 7
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.14.0) to (2136988.15.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.15.0) {10/26/26 14:22:15}
+10/26/26 14:22:21 Number of idle job procs: 8
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.15.0) to (2136988.16.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.16.0) {10/26/26 14:22:15}
+10/26/26 14:22:21 Number of idle job procs: 9
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.16.0) to (2136988.17.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.17.0) {10/26/26 14:22:15}
+10/26/26 14:22:21 Number of idle job procs: 10
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.17.0) to (2136988.18.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.18.0) {10/26/26 14:22:15}
+10/26/26 14:22:21 Number of idle job procs: 11
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.18.0) to (2136988.19.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.19.0) {10/26/26 14:22:15}
+10/26/26 14:22:21 Number of idle job procs: 12
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.19.0) to (2136988.2.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.2.0) {10/26/26 14:22:15}
+10/26/26 14:22:21 Number of idle job procs: 13
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.2.0) to (2136988.20.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.20.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 14
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.20.0) to (2136988.21.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.21.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 15
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.21.0) to (2136988.22.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.22.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 16
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.22.0) to (2136988.23.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.23.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 17
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.23.0) to (2136988.24.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.24.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 18
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.24.0) to (2136988.25.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.25.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 19
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.25.0) to (2136988.26.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.26.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 20
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.26.0) to (2136988.27.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.27.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 21
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.27.0) to (2136988.28.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.28.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 22
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.28.0) to (2136988.29.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.29.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 23
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.29.0) to (2136988.3.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.3.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 24
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.3.0) to (2136988.30.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.30.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 25
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.30.0) to (2136988.31.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.31.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 26
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.31.0) to (2136988.32.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.32.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 27
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.32.0) to (2136988.33.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.33.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 28
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.33.0) to (2136988.34.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.34.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 29
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.34.0) to (2136988.35.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.35.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 30
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.35.0) to (2136988.36.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.36.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 31
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.36.0) to (2136988.37.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.37.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 32
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.37.0) to (2136988.38.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.38.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 33
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.38.0) to (2136988.39.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.39.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 34
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.39.0) to (2136988.4.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.4.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 35
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.4.0) to (2136988.40.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.40.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 36
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.40.0) to (2136988.41.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.41.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 37
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.41.0) to (2136988.42.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.42.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 38
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.42.0) to (2136988.43.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.43.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 39
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.43.0) to (2136988.44.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.44.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 40
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.44.0) to (2136988.45.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.45.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 41
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.45.0) to (2136988.46.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.46.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 42
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.46.0) to (2136988.47.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.47.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 43
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.47.0) to (2136988.48.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.48.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 44
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.48.0) to (2136988.49.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.49.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 45
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.49.0) to (2136988.5.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.5.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 46
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.5.0) to (2136988.50.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.50.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 47
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.50.0) to (2136988.51.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.51.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 48
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.51.0) to (2136988.52.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.52.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 49
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.52.0) to (2136988.53.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.53.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 50
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.53.0) to (2136988.54.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.54.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 51
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.54.0) to (2136988.55.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.55.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 52
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.55.0) to (2136988.56.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.56.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 53
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.56.0) to (2136988.57.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.57.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 54
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.57.0) to (2136988.58.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.58.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 55
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.58.0) to (2136988.59.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.59.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 56
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.59.0) to (2136988.6.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.6.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 57
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.6.0) to (2136988.60.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.60.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 58
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.60.0) to (2136988.61.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.61.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 59
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.61.0) to (2136988.62.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.62.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 60
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.62.0) to (2136988.63.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.63.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 61
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.63.0) to (2136988.64.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.64.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 62
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.64.0) to (2136988.65.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.65.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 63
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.65.0) to (2136988.66.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.66.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 64
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.66.0) to (2136988.67.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.67.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 65
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.67.0) to (2136988.68.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.68.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 66
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.68.0) to (2136988.69.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.69.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 67
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.69.0) to (2136988.7.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.7.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 68
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.7.0) to (2136988.70.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.70.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 69
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.70.0) to (2136988.71.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.71.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 70
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.71.0) to (2136988.72.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.72.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 71
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.72.0) to (2136988.73.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.73.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 72
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.73.0) to (2136988.74.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.74.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 73
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.74.0) to (2136988.75.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.75.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 74
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.75.0) to (2136988.76.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.76.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 75
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.76.0) to (2136988.77.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.77.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 76
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.77.0) to (2136988.78.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.78.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 77
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.78.0) to (2136988.79.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.79.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 78
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.79.0) to (2136988.8.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.8.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 79
+10/26/26 14:22:21 Reassigning the id of job ident from (2136988.8.0) to (2136988.9.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node ident (2136988.9.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 80
+10/26/26 14:22:21 Reassigning the id of job grids from (2136989.0.0) to (2136989.0.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node grids (2136989.0.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 81
+10/26/26 14:22:21 Reassigning the id of job grids from (2136989.0.0) to (2136989.1.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node grids (2136989.1.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 82
+10/26/26 14:22:21 Reassigning the id of job grids from (2136989.1.0) to (2136989.2.0)
+10/26/26 14:22:21 Event: ULOG_SUBMIT for HTCondor Node grids (2136989.2.0) {10/26/26 14:22:16}
+10/26/26 14:22:21 Number of idle job procs: 83
+10/26/26 14:22:41 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:22:41 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.0.0) {10/26/26 14:22:40}
+10/26/26 14:22:41 Number of idle job procs: 82
+10/26/26 14:22:41 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.1.0) {10/26/26 14:22:40}
+10/26/26 14:22:41 Number of idle job procs: 81
+10/26/26 14:22:46 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:22:46 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.2.0) {10/26/26 14:22:42}
+10/26/26 14:22:46 Number of idle job procs: 80
+10/26/26 14:23:11 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:23:11 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.6.0) {10/26/26 14:23:07}
+10/26/26 14:23:11 Number of idle job procs: 79
+10/26/26 14:23:11 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.5.0) {10/26/26 14:23:07}
+10/26/26 14:23:11 Number of idle job procs: 78
+10/26/26 14:23:11 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.3.0) {10/26/26 14:23:07}
+10/26/26 14:23:11 Number of idle job procs: 77
+10/26/26 14:23:11 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.4.0) {10/26/26 14:23:07}
+10/26/26 14:23:11 Number of idle job procs: 76
+10/26/26 14:23:36 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:23:36 Event: ULOG_EXECUTE for HTCondor Node grids (2136989.0.0) {10/26/26 14:23:33}
+10/26/26 14:23:36 Number of idle job procs: 75
+10/26/26 14:24:36 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:24:36 Event: ULOG_JOB_TERMINATED for HTCondor Node grids (2136989.0.0) {10/26/26 14:24:34}
+10/26/26 14:24:36 Number of idle job procs: 75
+10/26/26 14:24:36 Node grids job proc (2136989.0.0) completed successfully.
+10/26/26 14:24:36 Event: ULOG_EXECUTE for HTCondor Node grids (2136989.1.0) {10/26/26 14:24:34}
+10/26/26 14:24:36 Number of idle job procs: 74
+10/26/26 14:24:56 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:24:56 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.7.0) {10/26/26 14:24:54}
+10/26/26 14:24:56 Number of idle job procs: 73
+10/26/26 14:25:21 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:25:21 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.8.0) {10/26/26 14:25:20}
+10/26/26 14:25:21 Number of idle job procs: 72
+10/26/26 14:25:21 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.9.0) {10/26/26 14:25:20}
+10/26/26 14:25:21 Number of idle job procs: 71
+10/26/26 14:25:31 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:25:31 Event: ULOG_JOB_TERMINATED for HTCondor Node grids (2136989.1.0) {10/26/26 14:25:31}
+10/26/26 14:25:31 Number of idle job procs: 71
+10/26/26 14:25:31 Node grids job proc (2136989.1.0) completed successfully.
+10/26/26 14:25:36 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:25:36 Event: ULOG_EXECUTE for HTCondor Node grids (2136989.2.0) {10/26/26 14:25:31}
+10/26/26 14:25:36 Number of idle job procs: 70
+10/26/26 14:25:56 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:25:56 Event: ULOG_JOB_TERMINATED for HTCondor Node ident (2136988.0.0) {10/26/26 14:25:53}
+10/26/26 14:25:56 Number of idle job procs: 70
+10/26/26 14:25:56 Node ident job proc (2136988.0.0) completed successfully.
+10/26/26 14:25:56 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.10.0) {10/26/26 14:25:53}
+10/26/26 14:25:56 Number of idle job procs: 69
+10/26/26 14:26:16 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:26:16 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.12.0) {10/26/26 14:26:13}
+10/26/26 14:26:16 Number of idle job procs: 68
+10/26/26 14:26:16 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.11.0) {10/26/26 14:26:13}
+10/26/26 14:26:16 Number of idle job procs: 67
+10/26/26 14:26:31 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:26:31 Event: ULOG_JOB_TERMINATED for HTCondor Node ident (2136988.1.0) {10/26/26 14:26:28}
+10/26/26 14:26:31 Number of idle job procs: 67
+10/26/26 14:26:31 Node ident job proc (2136988.1.0) completed successfully.
+10/26/26 14:26:31 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.13.0) {10/26/26 14:26:28}
+10/26/26 14:26:31 Number of idle job procs: 66
+10/26/26 14:26:31 Event: ULOG_JOB_TERMINATED for HTCondor Node grids (2136989.2.0) {10/26/26 14:26:29}
+10/26/26 14:26:31 Number of idle job procs: 66
+10/26/26 14:26:31 Node grids job proc (2136989.2.0) completed successfully.
+10/26/26 14:26:31 Node grids job(s) have exited the queue
+10/26/26 14:26:31 DAG status: 0 (DAG_STATUS_OK)
+10/26/26 14:26:31 Of 5 nodes total:
+10/26/26 14:26:31  Done     Pre   Queued    Post   Ready   Un-Ready   Failed   Futile
+10/26/26 14:26:31   ===     ===      ===     ===     ===        ===      ===      ===
+10/26/26 14:26:31     1       0        1       0       0          3        0        0
+10/26/26 14:26:31 0 job proc(s) currently held
+10/26/26 14:26:31 DAGMan Runtime Statistics: [EventCycleTimeAvg=0.014; EventCycleTimeMax=0.461; EventCycleTimeMin=0.000; EventCycleTimeStd=0.069; EventCycleTimeSum=0.690; SleepCycleTimeAvg=5.005; SleepCycleTimeMax=5.006; SleepCycleTimeMin=5.000; SleepCycleTimeStd=0.001; SleepCycleTimeSum=255.250; SubmitCycleTimeAvg=0.009; SubmitCycleTimeMax=0.456; SubmitCycleTimeMin=0.000; SubmitCycleTimeStd=0.063; SubmitCycleTimeSum=0.456; EventCycleTimeCount=51.000; SleepCycleTimeCount=51.000; SubmitCycleTimeCount=52.000; LogProcessCycleTimeAvg=0.017; LogProcessCycleTimeMax=0.173; LogProcessCycleTimeMin=0.002; LogProcessCycleTimeStd=0.047; LogProcessCycleTimeSum=0.222; LogProcessCycleTimeCount=13.000; ]
+10/26/26 14:26:41 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:26:41 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.14.0) {10/26/26 14:26:39}
+10/26/26 14:26:41 Number of idle job procs: 65
+10/26/26 14:27:06 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:27:06 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.15.0) {10/26/26 14:27:05}
+10/26/26 14:27:06 Number of idle job procs: 64
+10/26/26 14:27:21 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:27:21 Event: ULOG_JOB_TERMINATED for HTCondor Node ident (2136988.5.0) {10/26/26 14:27:19}
+10/26/26 14:27:21 Number of idle job procs: 64
+10/26/26 14:27:21 Node ident job proc (2136988.5.0) completed successfully.
+10/26/26 14:27:21 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.16.0) {10/26/26 14:27:20}
+10/26/26 14:27:21 Number of idle job procs: 63
+10/26/26 14:27:41 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:27:41 Event: ULOG_JOB_TERMINATED for HTCondor Node ident (2136988.4.0) {10/26/26 14:27:37}
+10/26/26 14:27:41 Number of idle job procs: 63
+10/26/26 14:27:41 Node ident job proc (2136988.4.0) completed successfully.
+10/26/26 14:27:41 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.17.0) {10/26/26 14:27:37}
+10/26/26 14:27:41 Number of idle job procs: 62
+10/26/26 14:27:46 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:27:46 Event: ULOG_JOB_TERMINATED for HTCondor Node ident (2136988.3.0) {10/26/26 14:27:42}
+10/26/26 14:27:46 Number of idle job procs: 62
+10/26/26 14:27:46 Node ident job proc (2136988.3.0) completed successfully.
+10/26/26 14:27:46 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.18.0) {10/26/26 14:27:43}
+10/26/26 14:27:46 Number of idle job procs: 61
+10/26/26 14:27:51 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:27:51 Event: ULOG_JOB_TERMINATED for HTCondor Node ident (2136988.2.0) {10/26/26 14:27:48}
+10/26/26 14:27:51 Number of idle job procs: 61
+10/26/26 14:27:51 Node ident job proc (2136988.2.0) completed successfully.
+10/26/26 14:27:51 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.19.0) {10/26/26 14:27:49}
+10/26/26 14:27:51 Number of idle job procs: 60
+10/26/26 14:28:26 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:28:26 Event: ULOG_JOB_TERMINATED for HTCondor Node ident (2136988.6.0) {10/26/26 14:28:23}
+10/26/26 14:28:26 Number of idle job procs: 60
+10/26/26 14:28:26 Node ident job proc (2136988.6.0) completed successfully.
+10/26/26 14:28:26 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.21.0) {10/26/26 14:28:23}
+10/26/26 14:28:26 Number of idle job procs: 59
+10/26/26 14:28:26 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.20.0) {10/26/26 14:28:23}
+10/26/26 14:28:26 Number of idle job procs: 58
+10/26/26 14:28:51 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:28:51 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.22.0) {10/26/26 14:28:50}
+10/26/26 14:28:51 Number of idle job procs: 57
+10/26/26 14:28:51 Event: ULOG_JOB_TERMINATED for HTCondor Node ident (2136988.7.0) {10/26/26 14:28:51}
+10/26/26 14:28:51 Number of idle job procs: 57
+10/26/26 14:28:51 Node ident job proc (2136988.7.0) completed successfully.
+10/26/26 14:28:51 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.23.0) {10/26/26 14:28:51}
+10/26/26 14:28:51 Number of idle job procs: 56
+10/26/26 14:29:21 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:29:21 Event: ULOG_JOB_TERMINATED for HTCondor Node ident (2136988.10.0) {10/26/26 14:29:20}
+10/26/26 14:29:21 Number of idle job procs: 56
+10/26/26 14:29:21 Node ident job proc (2136988.10.0) completed successfully.
+10/26/26 14:29:21 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.24.0) {10/26/26 14:29:20}
+10/26/26 14:29:21 Number of idle job procs: 55
+10/26/26 14:29:46 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:29:46 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.26.0) {10/26/26 14:29:42}
+10/26/26 14:29:46 Number of idle job procs: 54
+10/26/26 14:29:46 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.25.0) {10/26/26 14:29:42}
+10/26/26 14:29:46 Number of idle job procs: 53
+10/26/26 14:29:46 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.27.0) {10/26/26 14:29:43}
+10/26/26 14:29:46 Number of idle job procs: 52
+10/26/26 14:29:51 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:29:51 Event: ULOG_JOB_TERMINATED for HTCondor Node ident (2136988.9.0) {10/26/26 14:29:51}
+10/26/26 14:29:51 Number of idle job procs: 52
+10/26/26 14:29:51 Node ident job proc (2136988.9.0) completed successfully.
+10/26/26 14:29:56 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:29:56 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.28.0) {10/26/26 14:29:52}
+10/26/26 14:29:56 Number of idle job procs: 51
+10/26/26 14:30:06 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:30:06 Event: ULOG_JOB_TERMINATED for HTCondor Node ident (2136988.12.0) {10/26/26 14:30:03}
+10/26/26 14:30:06 Number of idle job procs: 51
+10/26/26 14:30:06 Node ident job proc (2136988.12.0) completed successfully.
+10/26/26 14:30:06 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.29.0) {10/26/26 14:30:03}
+10/26/26 14:30:06 Number of idle job procs: 50
+10/26/26 14:30:11 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:30:11 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.30.0) {10/26/26 14:30:09}
+10/26/26 14:30:11 Number of idle job procs: 49
+10/26/26 14:30:16 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:30:16 Event: ULOG_JOB_TERMINATED for HTCondor Node ident (2136988.14.0) {10/26/26 14:30:12}
+10/26/26 14:30:16 Number of idle job procs: 49
+10/26/26 14:30:16 Node ident job proc (2136988.14.0) completed successfully.
+10/26/26 14:30:16 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.31.0) {10/26/26 14:30:12}
+10/26/26 14:30:16 Number of idle job procs: 48
+10/26/26 14:30:26 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:30:26 Event: ULOG_JOB_TERMINATED for HTCondor Node ident (2136988.13.0) {10/26/26 14:30:25}
+10/26/26 14:30:26 Number of idle job procs: 48
+10/26/26 14:30:26 Node ident job proc (2136988.13.0) completed successfully.
+10/26/26 14:30:26 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.32.0) {10/26/26 14:30:25}
+10/26/26 14:30:26 Number of idle job procs: 47
+10/26/26 14:30:32 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:30:32 Event: ULOG_JOB_TERMINATED for HTCondor Node ident (2136988.15.0) {10/26/26 14:30:28}
+10/26/26 14:30:32 Number of idle job procs: 47
+10/26/26 14:30:32 Node ident job proc (2136988.15.0) completed successfully.
+10/26/26 14:30:32 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.33.0) {10/26/26 14:30:28}
+10/26/26 14:30:32 Number of idle job procs: 46
+10/26/26 14:30:47 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:30:47 Event: ULOG_JOB_TERMINATED for HTCondor Node ident (2136988.8.0) {10/26/26 14:30:43}
+10/26/26 14:30:47 Number of idle job procs: 46
+10/26/26 14:30:47 Node ident job proc (2136988.8.0) completed successfully.
+10/26/26 14:30:47 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.34.0) {10/26/26 14:30:43}
+10/26/26 14:30:47 Number of idle job procs: 45
+10/26/26 14:30:57 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:30:57 Event: ULOG_JOB_TERMINATED for HTCondor Node ident (2136988.11.0) {10/26/26 14:30:55}
+10/26/26 14:30:57 Number of idle job procs: 45
+10/26/26 14:30:57 Node ident job proc (2136988.11.0) completed successfully.
+10/26/26 14:30:57 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.35.0) {10/26/26 14:30:56}
+10/26/26 14:30:57 Number of idle job procs: 44
+10/26/26 14:31:27 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:31:27 Event: ULOG_JOB_TERMINATED for HTCondor Node ident (2136988.16.0) {10/26/26 14:31:22}
+10/26/26 14:31:27 Number of idle job procs: 44
+10/26/26 14:31:27 Node ident job proc (2136988.16.0) completed successfully.
+10/26/26 14:31:27 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.36.0) {10/26/26 14:31:23}
+10/26/26 14:31:27 Number of idle job procs: 43
+10/26/26 14:31:37 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:31:37 Event: ULOG_JOB_TERMINATED for HTCondor Node ident (2136988.20.0) {10/26/26 14:31:33}
+10/26/26 14:31:37 Number of idle job procs: 43
+10/26/26 14:31:37 Node ident job proc (2136988.20.0) completed successfully.
+10/26/26 14:31:37 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.37.0) {10/26/26 14:31:34}
+10/26/26 14:31:37 Number of idle job procs: 42
+10/26/26 14:31:52 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:31:52 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.38.0) {10/26/26 14:31:51}
+10/26/26 14:31:52 Number of idle job procs: 41
+10/26/26 14:31:57 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:31:57 Event: ULOG_JOB_TERMINATED for HTCondor Node ident (2136988.18.0) {10/26/26 14:31:54}
+10/26/26 14:31:57 Number of idle job procs: 41
+10/26/26 14:31:57 Node ident job proc (2136988.18.0) failed with status 1.
+10/26/26 14:31:57 Running: /usr/bin/condor_rm 2136988 -const DAGManJobId==2136987 -reason Node' 'Error:' 'DAG' 'node' 'ident' '(2136988.18.0)' 'reached' 'failure' 'tolerance' 'after' '1' 'failures.
+10/26/26 14:31:57 Event: ULOG_EXECUTE for HTCondor Node ident (2136988.39.0) {10/26/26 14:31:55}
+10/26/26 14:31:57 Number of idle job procs: 40
+10/26/26 14:31:57 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.40.0) {10/26/26 14:31:57}
+10/26/26 14:31:57 Number of idle job procs: 39
+10/26/26 14:31:57 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.41.0) {10/26/26 14:31:57}
+10/26/26 14:31:57 Number of idle job procs: 38
+10/26/26 14:32:02 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.42.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 37
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.43.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 36
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.44.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 35
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.45.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 34
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.46.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 33
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.47.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 32
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.48.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 31
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.49.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 30
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.50.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 29
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.51.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 28
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.52.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 27
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.53.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 26
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.54.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 25
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.55.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 24
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.56.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 23
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.57.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 22
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.58.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 21
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.59.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 20
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.60.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 19
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.61.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 18
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.62.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 17
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.63.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 16
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.64.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 15
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.65.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 14
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.66.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 13
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.67.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 12
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.68.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 11
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.69.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 10
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.70.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 9
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.71.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 8
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.72.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 7
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.73.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 6
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.74.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 5
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.75.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 4
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.76.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 3
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.77.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 2
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.78.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 1
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.79.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.38.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.39.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.38.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.26.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.39.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.33.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.26.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.24.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.27.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.32.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.25.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.30.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.29.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.35.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.36.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.23.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.17.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.31.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.37.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.34.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.19.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.33.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.21.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.24.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.32.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.36.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.23.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.35.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.29.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.25.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.27.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.30.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.19.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.17.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.34.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.31.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.37.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.21.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.22.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.22.0) {10/26/26 14:31:57}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_EVICTED for HTCondor Node ident (2136988.28.0) {10/26/26 14:31:58}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Event: ULOG_JOB_ABORTED for HTCondor Node ident (2136988.28.0) {10/26/26 14:31:58}
+10/26/26 14:32:02 Number of idle job procs: 0
+10/26/26 14:32:02 Node ident job(s) have exited the queue
+10/26/26 14:32:02 Running POST script of Node ident...
+10/26/26 14:32:02 DAG status: 0 (DAG_STATUS_OK)
+10/26/26 14:32:02 Of 5 nodes total:
+10/26/26 14:32:02  Done     Pre   Queued    Post   Ready   Un-Ready   Failed   Futile
+10/26/26 14:32:02   ===     ===      ===     ===     ===        ===      ===      ===
+10/26/26 14:32:02     1       0        0       1       0          3        0        0
+10/26/26 14:32:02 0 job proc(s) currently held
+10/26/26 14:32:02 DAGMan Runtime Statistics: [EventCycleTimeAvg=0.007; EventCycleTimeMax=0.461; EventCycleTimeMin=0.000; EventCycleTimeStd=0.046; EventCycleTimeSum=0.856; SleepCycleTimeAvg=5.005; SleepCycleTimeMax=5.006; SleepCycleTimeMin=5.000; SleepCycleTimeStd=0.001; SleepCycleTimeSum=585.571; SubmitCycleTimeAvg=0.004; SubmitCycleTimeMax=0.456; SubmitCycleTimeMin=0.000; SubmitCycleTimeStd=0.042; SubmitCycleTimeSum=0.456; EventCycleTimeCount=117.000; SleepCycleTimeCount=117.000; SubmitCycleTimeCount=118.000; LogProcessCycleTimeAvg=0.013; LogProcessCycleTimeMax=0.173; LogProcessCycleTimeMin=0.002; LogProcessCycleTimeStd=0.033; LogProcessCycleTimeSum=0.483; LogProcessCycleTimeCount=37.000; ]
+10/26/26 14:32:02 Initializing user log writer for /nfs/pic.es/user/s/sstucki/sunsim/PIC/./sweep_components.dag.nodes.log, (2136988.0.0)
+10/26/26 14:32:07 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:32:07 Event: ULOG_POST_SCRIPT_TERMINATED for HTCondor Node ident (2136988.0.0) {10/26/26 14:32:02}
+10/26/26 14:32:07 POST Script of node ident completed successfully.
+10/26/26 14:32:07 DAG status: 0 (DAG_STATUS_OK)
+10/26/26 14:32:07 Of 5 nodes total:
+10/26/26 14:32:07  Done     Pre   Queued    Post   Ready   Un-Ready   Failed   Futile
+10/26/26 14:32:07   ===     ===      ===     ===     ===        ===      ===      ===
+10/26/26 14:32:07     2       0        0       0       1          2        0        0
+10/26/26 14:32:07 0 job proc(s) currently held
+10/26/26 14:32:07 DAGMan Runtime Statistics: [EventCycleTimeAvg=0.008; EventCycleTimeMax=0.461; EventCycleTimeMin=0.000; EventCycleTimeStd=0.047; EventCycleTimeSum=0.980; SleepCycleTimeAvg=5.005; SleepCycleTimeMax=5.006; SleepCycleTimeMin=5.000; SleepCycleTimeStd=0.001; SleepCycleTimeSum=590.577; SubmitCycleTimeAvg=0.004; SubmitCycleTimeMax=0.456; SubmitCycleTimeMin=0.000; SubmitCycleTimeStd=0.042; SubmitCycleTimeSum=0.456; EventCycleTimeCount=118.000; SleepCycleTimeCount=118.000; SubmitCycleTimeCount=119.000; LogProcessCycleTimeAvg=0.013; LogProcessCycleTimeMax=0.173; LogProcessCycleTimeMin=0.002; LogProcessCycleTimeStd=0.033; LogProcessCycleTimeSum=0.485; LogProcessCycleTimeCount=38.000; ]
+10/26/26 14:32:12 Submitting HTCondor Node aggregate job(s)...
+10/26/26 14:32:12 Submitting node aggregate from file aggregate_components.sub using direct job submission
+10/26/26 14:32:12 	assigned HTCondor ID (2136992.0.0)
+10/26/26 14:32:12 Just submitted 1 job this cycle...
+10/26/26 14:32:12 DAG status: 0 (DAG_STATUS_OK)
+10/26/26 14:32:12 Of 5 nodes total:
+10/26/26 14:32:12  Done     Pre   Queued    Post   Ready   Un-Ready   Failed   Futile
+10/26/26 14:32:12   ===     ===      ===     ===     ===        ===      ===      ===
+10/26/26 14:32:12     2       0        1       0       0          2        0        0
+10/26/26 14:32:12 0 job proc(s) currently held
+10/26/26 14:32:12 DAGMan Runtime Statistics: [EventCycleTimeAvg=0.008; EventCycleTimeMax=0.461; EventCycleTimeMin=0.000; EventCycleTimeStd=0.047; EventCycleTimeSum=0.988; SleepCycleTimeAvg=5.005; SleepCycleTimeMax=5.006; SleepCycleTimeMin=5.000; SleepCycleTimeStd=0.001; SleepCycleTimeSum=595.581; SubmitCycleTimeAvg=0.005; SubmitCycleTimeMax=0.456; SubmitCycleTimeMin=0.000; SubmitCycleTimeStd=0.042; SubmitCycleTimeSum=0.549; EventCycleTimeCount=119.000; SleepCycleTimeCount=119.000; SubmitCycleTimeCount=120.000; LogProcessCycleTimeAvg=0.013; LogProcessCycleTimeMax=0.173; LogProcessCycleTimeMin=0.002; LogProcessCycleTimeStd=0.033; LogProcessCycleTimeSum=0.485; LogProcessCycleTimeCount=38.000; ]
+10/26/26 14:32:17 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:32:17 Reassigning the id of job aggregate from (2136992.0.0) to (2136992.0.0)
+10/26/26 14:32:17 Event: ULOG_SUBMIT for HTCondor Node aggregate (2136992.0.0) {10/26/26 14:32:12}
+10/26/26 14:32:17 Number of idle job procs: 1
+10/26/26 14:32:22 Currently monitoring 1 HTCondor log file(s)
+10/26/26 14:32:22 Event: ULOG_EXECUTE for HTCondor Node aggregate (2136992.0.0) {10/26/26 14:32:18}
+10/26/26 14:32:22 Number of idle job procs: 0
+10/26/26 14:37:17 Total jobs placed to AP: 84
+10/26/26 14:37:17      Idle     Held     Running     Successful     Failed
+10/26/26 14:37:17       ===      ===         ===            ===        ===
+10/26/26 14:37:17         0        0           1             21         62
+10/26/26 14:42:23 601 seconds since last log event
+10/26/26 14:42:23 Pending DAG nodes:
+10/26/26 14:42:23   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 14:52:18 Total jobs placed to AP: 84
+10/26/26 14:52:18      Idle     Held     Running     Successful     Failed
+10/26/26 14:52:18       ===      ===         ===            ===        ===
+10/26/26 14:52:18         0        0           1             21         62
+10/26/26 14:52:23 1201 seconds since last log event
+10/26/26 14:52:23 Pending DAG nodes:
+10/26/26 14:52:23   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 15:02:24 1802 seconds since last log event
+10/26/26 15:02:24 Pending DAG nodes:
+10/26/26 15:02:24   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 15:07:19 Total jobs placed to AP: 84
+10/26/26 15:07:19      Idle     Held     Running     Successful     Failed
+10/26/26 15:07:19       ===      ===         ===            ===        ===
+10/26/26 15:07:19         0        0           1             21         62
+10/26/26 15:12:24 2402 seconds since last log event
+10/26/26 15:12:24 Pending DAG nodes:
+10/26/26 15:12:24   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 15:22:20 Total jobs placed to AP: 84
+10/26/26 15:22:20      Idle     Held     Running     Successful     Failed
+10/26/26 15:22:20       ===      ===         ===            ===        ===
+10/26/26 15:22:20         0        0           1             21         62
+10/26/26 15:22:25 3003 seconds since last log event
+10/26/26 15:22:25 Pending DAG nodes:
+10/26/26 15:22:25   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 15:32:26 3604 seconds since last log event
+10/26/26 15:32:26 Pending DAG nodes:
+10/26/26 15:32:26   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 15:37:21 Total jobs placed to AP: 84
+10/26/26 15:37:21      Idle     Held     Running     Successful     Failed
+10/26/26 15:37:21       ===      ===         ===            ===        ===
+10/26/26 15:37:21         0        0           1             21         62
+10/26/26 15:42:26 4204 seconds since last log event
+10/26/26 15:42:26 Pending DAG nodes:
+10/26/26 15:42:26   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 15:52:22 Total jobs placed to AP: 84
+10/26/26 15:52:22      Idle     Held     Running     Successful     Failed
+10/26/26 15:52:22       ===      ===         ===            ===        ===
+10/26/26 15:52:22         0        0           1             21         62
+10/26/26 15:52:27 4805 seconds since last log event
+10/26/26 15:52:27 Pending DAG nodes:
+10/26/26 15:52:27   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 16:02:28 5406 seconds since last log event
+10/26/26 16:02:28 Pending DAG nodes:
+10/26/26 16:02:28   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 16:07:23 Total jobs placed to AP: 84
+10/26/26 16:07:23      Idle     Held     Running     Successful     Failed
+10/26/26 16:07:23       ===      ===         ===            ===        ===
+10/26/26 16:07:23         0        0           1             21         62
+10/26/26 16:12:28 6006 seconds since last log event
+10/26/26 16:12:28 Pending DAG nodes:
+10/26/26 16:12:28   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 16:22:24 Total jobs placed to AP: 84
+10/26/26 16:22:24      Idle     Held     Running     Successful     Failed
+10/26/26 16:22:24       ===      ===         ===            ===        ===
+10/26/26 16:22:24         0        0           1             21         62
+10/26/26 16:22:29 6607 seconds since last log event
+10/26/26 16:22:29 Pending DAG nodes:
+10/26/26 16:22:29   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 16:32:30 7208 seconds since last log event
+10/26/26 16:32:30 Pending DAG nodes:
+10/26/26 16:32:30   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 16:37:25 Total jobs placed to AP: 84
+10/26/26 16:37:25      Idle     Held     Running     Successful     Failed
+10/26/26 16:37:25       ===      ===         ===            ===        ===
+10/26/26 16:37:25         0        0           1             21         62
+10/26/26 16:42:30 7808 seconds since last log event
+10/26/26 16:42:30 Pending DAG nodes:
+10/26/26 16:42:30   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 16:52:26 Total jobs placed to AP: 84
+10/26/26 16:52:26      Idle     Held     Running     Successful     Failed
+10/26/26 16:52:26       ===      ===         ===            ===        ===
+10/26/26 16:52:26         0        0           1             21         62
+10/26/26 16:52:31 8409 seconds since last log event
+10/26/26 16:52:31 Pending DAG nodes:
+10/26/26 16:52:31   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 17:02:31 9009 seconds since last log event
+10/26/26 17:02:31 Pending DAG nodes:
+10/26/26 17:02:31   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 17:07:26 Total jobs placed to AP: 84
+10/26/26 17:07:26      Idle     Held     Running     Successful     Failed
+10/26/26 17:07:26       ===      ===         ===            ===        ===
+10/26/26 17:07:26         0        0           1             21         62
+10/26/26 17:12:31 9609 seconds since last log event
+10/26/26 17:12:31 Pending DAG nodes:
+10/26/26 17:12:31   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 17:22:26 Total jobs placed to AP: 84
+10/26/26 17:22:26      Idle     Held     Running     Successful     Failed
+10/26/26 17:22:26       ===      ===         ===            ===        ===
+10/26/26 17:22:26         0        0           1             21         62
+10/26/26 17:22:31 10209 seconds since last log event
+10/26/26 17:22:31 Pending DAG nodes:
+10/26/26 17:22:31   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 17:32:31 10809 seconds since last log event
+10/26/26 17:32:31 Pending DAG nodes:
+10/26/26 17:32:31   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 17:37:27 Total jobs placed to AP: 84
+10/26/26 17:37:27      Idle     Held     Running     Successful     Failed
+10/26/26 17:37:27       ===      ===         ===            ===        ===
+10/26/26 17:37:27         0        0           1             21         62
+10/26/26 17:42:32 11410 seconds since last log event
+10/26/26 17:42:32 Pending DAG nodes:
+10/26/26 17:42:32   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 17:52:28 Total jobs placed to AP: 84
+10/26/26 17:52:28      Idle     Held     Running     Successful     Failed
+10/26/26 17:52:28       ===      ===         ===            ===        ===
+10/26/26 17:52:28         0        0           1             21         62
+10/26/26 17:52:33 12011 seconds since last log event
+10/26/26 17:52:33 Pending DAG nodes:
+10/26/26 17:52:33   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 18:02:33 12611 seconds since last log event
+10/26/26 18:02:33 Pending DAG nodes:
+10/26/26 18:02:33   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 18:07:29 Total jobs placed to AP: 84
+10/26/26 18:07:29      Idle     Held     Running     Successful     Failed
+10/26/26 18:07:29       ===      ===         ===            ===        ===
+10/26/26 18:07:29         0        0           1             21         62
+10/26/26 18:12:34 13212 seconds since last log event
+10/26/26 18:12:34 Pending DAG nodes:
+10/26/26 18:12:34   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 18:22:29 Total jobs placed to AP: 84
+10/26/26 18:22:29      Idle     Held     Running     Successful     Failed
+10/26/26 18:22:29       ===      ===         ===            ===        ===
+10/26/26 18:22:29         0        0           1             21         62
+10/26/26 18:22:34 13812 seconds since last log event
+10/26/26 18:22:34 Pending DAG nodes:
+10/26/26 18:22:34   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 18:32:34 14412 seconds since last log event
+10/26/26 18:32:34 Pending DAG nodes:
+10/26/26 18:32:34   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 18:37:30 Total jobs placed to AP: 84
+10/26/26 18:37:30      Idle     Held     Running     Successful     Failed
+10/26/26 18:37:30       ===      ===         ===            ===        ===
+10/26/26 18:37:30         0        0           1             21         62
+10/26/26 18:42:35 15013 seconds since last log event
+10/26/26 18:42:35 Pending DAG nodes:
+10/26/26 18:42:35   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 18:52:31 Total jobs placed to AP: 84
+10/26/26 18:52:31      Idle     Held     Running     Successful     Failed
+10/26/26 18:52:31       ===      ===         ===            ===        ===
+10/26/26 18:52:31         0        0           1             21         62
+10/26/26 18:52:36 15614 seconds since last log event
+10/26/26 18:52:36 Pending DAG nodes:
+10/26/26 18:52:36   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 19:02:36 16214 seconds since last log event
+10/26/26 19:02:36 Pending DAG nodes:
+10/26/26 19:02:36   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 19:07:32 Total jobs placed to AP: 84
+10/26/26 19:07:32      Idle     Held     Running     Successful     Failed
+10/26/26 19:07:32       ===      ===         ===            ===        ===
+10/26/26 19:07:32         0        0           1             21         62
+10/26/26 19:12:37 16815 seconds since last log event
+10/26/26 19:12:37 Pending DAG nodes:
+10/26/26 19:12:37   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 19:22:33 Total jobs placed to AP: 84
+10/26/26 19:22:33      Idle     Held     Running     Successful     Failed
+10/26/26 19:22:33       ===      ===         ===            ===        ===
+10/26/26 19:22:33         0        0           1             21         62
+10/26/26 19:22:38 17416 seconds since last log event
+10/26/26 19:22:38 Pending DAG nodes:
+10/26/26 19:22:38   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 19:32:38 18016 seconds since last log event
+10/26/26 19:32:38 Pending DAG nodes:
+10/26/26 19:32:38   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 19:37:34 Total jobs placed to AP: 84
+10/26/26 19:37:34      Idle     Held     Running     Successful     Failed
+10/26/26 19:37:34       ===      ===         ===            ===        ===
+10/26/26 19:37:34         0        0           1             21         62
+10/26/26 19:42:39 18617 seconds since last log event
+10/26/26 19:42:39 Pending DAG nodes:
+10/26/26 19:42:39   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 19:52:35 Total jobs placed to AP: 84
+10/26/26 19:52:35      Idle     Held     Running     Successful     Failed
+10/26/26 19:52:35       ===      ===         ===            ===        ===
+10/26/26 19:52:35         0        0           1             21         62
+10/26/26 19:52:40 19218 seconds since last log event
+10/26/26 19:52:40 Pending DAG nodes:
+10/26/26 19:52:40   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 20:02:40 19818 seconds since last log event
+10/26/26 20:02:40 Pending DAG nodes:
+10/26/26 20:02:40   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 20:07:36 Total jobs placed to AP: 84
+10/26/26 20:07:36      Idle     Held     Running     Successful     Failed
+10/26/26 20:07:36       ===      ===         ===            ===        ===
+10/26/26 20:07:36         0        0           1             21         62
+10/26/26 20:12:41 20419 seconds since last log event
+10/26/26 20:12:41 Pending DAG nodes:
+10/26/26 20:12:41   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 20:22:36 Total jobs placed to AP: 84
+10/26/26 20:22:36      Idle     Held     Running     Successful     Failed
+10/26/26 20:22:36       ===      ===         ===            ===        ===
+10/26/26 20:22:36         0        0           1             21         62
+10/26/26 20:22:41 21019 seconds since last log event
+10/26/26 20:22:41 Pending DAG nodes:
+10/26/26 20:22:41   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 20:32:42 21620 seconds since last log event
+10/26/26 20:32:42 Pending DAG nodes:
+10/26/26 20:32:42   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 20:37:37 Total jobs placed to AP: 84
+10/26/26 20:37:37      Idle     Held     Running     Successful     Failed
+10/26/26 20:37:37       ===      ===         ===            ===        ===
+10/26/26 20:37:37         0        0           1             21         62
+10/26/26 20:42:43 22221 seconds since last log event
+10/26/26 20:42:43 Pending DAG nodes:
+10/26/26 20:42:43   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 20:52:39 Total jobs placed to AP: 84
+10/26/26 20:52:39      Idle     Held     Running     Successful     Failed
+10/26/26 20:52:39       ===      ===         ===            ===        ===
+10/26/26 20:52:39         0        0           1             21         62
+10/26/26 20:52:44 22822 seconds since last log event
+10/26/26 20:52:44 Pending DAG nodes:
+10/26/26 20:52:44   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 21:02:44 23422 seconds since last log event
+10/26/26 21:02:44 Pending DAG nodes:
+10/26/26 21:02:44   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 21:07:39 Total jobs placed to AP: 84
+10/26/26 21:07:39      Idle     Held     Running     Successful     Failed
+10/26/26 21:07:39       ===      ===         ===            ===        ===
+10/26/26 21:07:40         0        0           1             21         62
+10/26/26 21:12:45 24023 seconds since last log event
+10/26/26 21:12:45 Pending DAG nodes:
+10/26/26 21:12:45   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 21:22:40 Total jobs placed to AP: 84
+10/26/26 21:22:40      Idle     Held     Running     Successful     Failed
+10/26/26 21:22:40       ===      ===         ===            ===        ===
+10/26/26 21:22:40         0        0           1             21         62
+10/26/26 21:22:45 24623 seconds since last log event
+10/26/26 21:22:45 Pending DAG nodes:
+10/26/26 21:22:45   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 21:32:46 25224 seconds since last log event
+10/26/26 21:32:46 Pending DAG nodes:
+10/26/26 21:32:46   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 21:37:41 Total jobs placed to AP: 84
+10/26/26 21:37:41      Idle     Held     Running     Successful     Failed
+10/26/26 21:37:41       ===      ===         ===            ===        ===
+10/26/26 21:37:41         0        0           1             21         62
+10/26/26 21:42:46 25824 seconds since last log event
+10/26/26 21:42:46 Pending DAG nodes:
+10/26/26 21:42:46   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 21:52:41 Total jobs placed to AP: 84
+10/26/26 21:52:41      Idle     Held     Running     Successful     Failed
+10/26/26 21:52:41       ===      ===         ===            ===        ===
+10/26/26 21:52:41         0        0           1             21         62
+10/26/26 21:52:46 26424 seconds since last log event
+10/26/26 21:52:46 Pending DAG nodes:
+10/26/26 21:52:46   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 22:02:47 27025 seconds since last log event
+10/26/26 22:02:47 Pending DAG nodes:
+10/26/26 22:02:47   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 22:07:42 Total jobs placed to AP: 84
+10/26/26 22:07:42      Idle     Held     Running     Successful     Failed
+10/26/26 22:07:42       ===      ===         ===            ===        ===
+10/26/26 22:07:42         0        0           1             21         62
+10/26/26 22:12:48 27626 seconds since last log event
+10/26/26 22:12:48 Pending DAG nodes:
+10/26/26 22:12:48   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 22:22:43 Total jobs placed to AP: 84
+10/26/26 22:22:43      Idle     Held     Running     Successful     Failed
+10/26/26 22:22:43       ===      ===         ===            ===        ===
+10/26/26 22:22:43         0        0           1             21         62
+10/26/26 22:22:48 28226 seconds since last log event
+10/26/26 22:22:48 Pending DAG nodes:
+10/26/26 22:22:48   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 22:32:49 28827 seconds since last log event
+10/26/26 22:32:49 Pending DAG nodes:
+10/26/26 22:32:49   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 22:32:49 Querying local schedd for associated jobs in queue
+10/26/26 22:32:49 All pending job states validated
+10/26/26 22:37:45 Total jobs placed to AP: 84
+10/26/26 22:37:45      Idle     Held     Running     Successful     Failed
+10/26/26 22:37:45       ===      ===         ===            ===        ===
+10/26/26 22:37:45         0        0           1             21         62
+10/26/26 22:42:50 29428 seconds since last log event
+10/26/26 22:42:50 Pending DAG nodes:
+10/26/26 22:42:50   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 22:52:46 Total jobs placed to AP: 84
+10/26/26 22:52:46      Idle     Held     Running     Successful     Failed
+10/26/26 22:52:46       ===      ===         ===            ===        ===
+10/26/26 22:52:46         0        0           1             21         62
+10/26/26 22:52:51 30029 seconds since last log event
+10/26/26 22:52:51 Pending DAG nodes:
+10/26/26 22:52:51   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 23:02:51 30629 seconds since last log event
+10/26/26 23:02:51 Pending DAG nodes:
+10/26/26 23:02:51   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 23:07:47 Total jobs placed to AP: 84
+10/26/26 23:07:47      Idle     Held     Running     Successful     Failed
+10/26/26 23:07:47       ===      ===         ===            ===        ===
+10/26/26 23:07:47         0        0           1             21         62
+10/26/26 23:12:52 31230 seconds since last log event
+10/26/26 23:12:52 Pending DAG nodes:
+10/26/26 23:12:52   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 23:22:48 Total jobs placed to AP: 84
+10/26/26 23:22:48      Idle     Held     Running     Successful     Failed
+10/26/26 23:22:48       ===      ===         ===            ===        ===
+10/26/26 23:22:48         0        0           1             21         62
+10/26/26 23:22:53 31831 seconds since last log event
+10/26/26 23:22:53 Pending DAG nodes:
+10/26/26 23:22:53   Node aggregate, HTCondor ID 2136992, status STATUS_SUBMITTED
+10/26/26 23:26:43 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:26:43 Event: ULOG_JOB_TERMINATED for HTCondor Node aggregate (2136992.0.0) {10/26/26 23:26:38}
+10/26/26 23:26:43 Number of idle job procs: 0
+10/26/26 23:26:43 Node aggregate job proc (2136992.0.0) completed successfully.
+10/26/26 23:26:43 Node aggregate job(s) have exited the queue
+10/26/26 23:26:43 DAG status: 0 (DAG_STATUS_OK)
+10/26/26 23:26:43 Of 5 nodes total:
+10/26/26 23:26:43  Done     Pre   Queued    Post   Ready   Un-Ready   Failed   Futile
+10/26/26 23:26:43   ===     ===      ===     ===     ===        ===      ===      ===
+10/26/26 23:26:43     3       0        0       0       1          1        0        0
+10/26/26 23:26:43 0 job proc(s) currently held
+10/26/26 23:26:43 DAGMan Runtime Statistics: [EventCycleTimeAvg=0.001; EventCycleTimeMax=0.461; EventCycleTimeMin=0.000; EventCycleTimeStd=0.008; EventCycleTimeSum=4.451; SleepCycleTimeAvg=5.004; SleepCycleTimeMax=5.011; SleepCycleTimeMin=4.004; SleepCycleTimeStd=0.025; SleepCycleTimeSum=32663.134; SubmitCycleTimeAvg=0.000; SubmitCycleTimeMax=0.456; SubmitCycleTimeMin=0.000; SubmitCycleTimeStd=0.006; SubmitCycleTimeSum=0.558; EventCycleTimeCount=6527.000; SleepCycleTimeCount=6527.000; SubmitCycleTimeCount=6528.000; LogProcessCycleTimeAvg=0.012; LogProcessCycleTimeMax=0.173; LogProcessCycleTimeMin=0.002; LogProcessCycleTimeStd=0.032; LogProcessCycleTimeSum=0.495; LogProcessCycleTimeCount=41.000; ]
+10/26/26 23:26:48 Submitting HTCondor Node sets job(s)...
+10/26/26 23:26:48 Submitting node sets from file run_components.sub using direct job submission
+10/26/26 23:26:48 	assigned HTCondor ID (2137700.0.0)
+10/26/26 23:26:48 Just submitted 1 job this cycle...
+10/26/26 23:26:48 DAG status: 0 (DAG_STATUS_OK)
+10/26/26 23:26:48 Of 5 nodes total:
+10/26/26 23:26:48  Done     Pre   Queued    Post   Ready   Un-Ready   Failed   Futile
+10/26/26 23:26:48   ===     ===      ===     ===     ===        ===      ===      ===
+10/26/26 23:26:48     3       0        1       0       0          1        0        0
+10/26/26 23:26:48 0 job proc(s) currently held
+10/26/26 23:26:48 DAGMan Runtime Statistics: [EventCycleTimeAvg=0.001; EventCycleTimeMax=0.461; EventCycleTimeMin=0.000; EventCycleTimeStd=0.008; EventCycleTimeSum=4.460; SleepCycleTimeAvg=5.004; SleepCycleTimeMax=5.011; SleepCycleTimeMin=4.004; SleepCycleTimeStd=0.025; SleepCycleTimeSum=32668.139; SubmitCycleTimeAvg=0.000; SubmitCycleTimeMax=0.456; SubmitCycleTimeMin=0.000; SubmitCycleTimeStd=0.007; SubmitCycleTimeSum=0.863; EventCycleTimeCount=6528.000; SleepCycleTimeCount=6528.000; SubmitCycleTimeCount=6529.000; LogProcessCycleTimeAvg=0.012; LogProcessCycleTimeMax=0.173; LogProcessCycleTimeMin=0.002; LogProcessCycleTimeStd=0.032; LogProcessCycleTimeSum=0.495; LogProcessCycleTimeCount=41.000; ]
+10/26/26 23:26:53 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:26:53 Event: ULOG_CLUSTER_SUBMIT for HTCondor Node sets (2137700.-1.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.0.0) to (2137700.0.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.0.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 1
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.0.0) to (2137700.1.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.1.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 2
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.1.0) to (2137700.10.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.10.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 3
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.10.0) to (2137700.11.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.11.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 4
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.11.0) to (2137700.12.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.12.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 5
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.12.0) to (2137700.13.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.13.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 6
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.13.0) to (2137700.14.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.14.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 7
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.14.0) to (2137700.15.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.15.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 8
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.15.0) to (2137700.16.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.16.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 9
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.16.0) to (2137700.17.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.17.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 10
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.17.0) to (2137700.18.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.18.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 11
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.18.0) to (2137700.19.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.19.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 12
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.19.0) to (2137700.2.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.2.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 13
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.2.0) to (2137700.20.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.20.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 14
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.20.0) to (2137700.21.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.21.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 15
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.21.0) to (2137700.22.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.22.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 16
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.22.0) to (2137700.23.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.23.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 17
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.23.0) to (2137700.24.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.24.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 18
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.24.0) to (2137700.25.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.25.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 19
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.25.0) to (2137700.26.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.26.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 20
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.26.0) to (2137700.27.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.27.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 21
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.27.0) to (2137700.28.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.28.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 22
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.28.0) to (2137700.29.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.29.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 23
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.29.0) to (2137700.3.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.3.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 24
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.3.0) to (2137700.30.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.30.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 25
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.30.0) to (2137700.31.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.31.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 26
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.31.0) to (2137700.32.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.32.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 27
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.32.0) to (2137700.33.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.33.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 28
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.33.0) to (2137700.34.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.34.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 29
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.34.0) to (2137700.35.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.35.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 30
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.35.0) to (2137700.36.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.36.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 31
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.36.0) to (2137700.37.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.37.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 32
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.37.0) to (2137700.38.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.38.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 33
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.38.0) to (2137700.39.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.39.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 34
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.39.0) to (2137700.4.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.4.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 35
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.4.0) to (2137700.40.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.40.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 36
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.40.0) to (2137700.41.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.41.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 37
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.41.0) to (2137700.42.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.42.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 38
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.42.0) to (2137700.43.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.43.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 39
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.43.0) to (2137700.44.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.44.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 40
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.44.0) to (2137700.45.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.45.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 41
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.45.0) to (2137700.46.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.46.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 42
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.46.0) to (2137700.47.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.47.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 43
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.47.0) to (2137700.48.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.48.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 44
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.48.0) to (2137700.49.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.49.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 45
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.49.0) to (2137700.5.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.5.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 46
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.5.0) to (2137700.6.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.6.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 47
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.6.0) to (2137700.7.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.7.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 48
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.7.0) to (2137700.8.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.8.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 49
+10/26/26 23:26:53 Reassigning the id of job sets from (2137700.8.0) to (2137700.9.0)
+10/26/26 23:26:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.9.0) {10/26/26 23:26:48}
+10/26/26 23:26:53 Number of idle job procs: 50
+10/26/26 23:27:23 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:27:23 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.0.0) {10/26/26 23:27:20}
+10/26/26 23:27:23 Number of idle job procs: 49
+10/26/26 23:27:43 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:27:43 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.0.0) {10/26/26 23:27:38}
+10/26/26 23:27:43 Number of idle job procs: 49
+10/26/26 23:27:43 Node sets job proc (2137700.0.0) completed successfully.
+10/26/26 23:27:43 Reassigning the id of job sets from (2137700.9.0) to (2137700.50.0)
+10/26/26 23:27:43 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.50.0) {10/26/26 23:27:38}
+10/26/26 23:27:43 Number of idle job procs: 50
+10/26/26 23:27:43 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.1.0) {10/26/26 23:27:38}
+10/26/26 23:27:43 Number of idle job procs: 49
+10/26/26 23:27:48 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:27:48 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.3.0) {10/26/26 23:27:47}
+10/26/26 23:27:48 Number of idle job procs: 48
+10/26/26 23:27:48 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.2.0) {10/26/26 23:27:47}
+10/26/26 23:27:48 Number of idle job procs: 47
+10/26/26 23:27:48 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.4.0) {10/26/26 23:27:47}
+10/26/26 23:27:48 Number of idle job procs: 46
+10/26/26 23:27:53 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:27:53 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.1.0) {10/26/26 23:27:50}
+10/26/26 23:27:53 Number of idle job procs: 46
+10/26/26 23:27:53 Node sets job proc (2137700.1.0) completed successfully.
+10/26/26 23:27:53 Reassigning the id of job sets from (2137700.50.0) to (2137700.51.0)
+10/26/26 23:27:53 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.51.0) {10/26/26 23:27:50}
+10/26/26 23:27:53 Number of idle job procs: 47
+10/26/26 23:27:53 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.5.0) {10/26/26 23:27:51}
+10/26/26 23:27:53 Number of idle job procs: 46
+10/26/26 23:28:03 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:28:03 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.3.0) {10/26/26 23:28:02}
+10/26/26 23:28:03 Number of idle job procs: 46
+10/26/26 23:28:03 Node sets job proc (2137700.3.0) completed successfully.
+10/26/26 23:28:03 Reassigning the id of job sets from (2137700.51.0) to (2137700.52.0)
+10/26/26 23:28:03 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.52.0) {10/26/26 23:28:02}
+10/26/26 23:28:03 Number of idle job procs: 47
+10/26/26 23:28:03 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.6.0) {10/26/26 23:28:02}
+10/26/26 23:28:03 Number of idle job procs: 46
+10/26/26 23:28:03 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.5.0) {10/26/26 23:28:02}
+10/26/26 23:28:03 Number of idle job procs: 46
+10/26/26 23:28:03 Node sets job proc (2137700.5.0) completed successfully.
+10/26/26 23:28:03 Reassigning the id of job sets from (2137700.52.0) to (2137700.53.0)
+10/26/26 23:28:03 Event: ULOG_SUBMIT for HTCondor Node sets (2137700.53.0) {10/26/26 23:28:02}
+10/26/26 23:28:03 Number of idle job procs: 47
+10/26/26 23:28:03 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.7.0) {10/26/26 23:28:02}
+10/26/26 23:28:03 Number of idle job procs: 46
+10/26/26 23:28:13 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:28:13 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.4.0) {10/26/26 23:28:09}
+10/26/26 23:28:13 Number of idle job procs: 46
+10/26/26 23:28:13 Node sets job proc (2137700.4.0) completed successfully.
+10/26/26 23:28:13 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.8.0) {10/26/26 23:28:10}
+10/26/26 23:28:13 Number of idle job procs: 45
+10/26/26 23:28:13 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.9.0) {10/26/26 23:28:11}
+10/26/26 23:28:13 Number of idle job procs: 44
+10/26/26 23:28:13 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.7.0) {10/26/26 23:28:13}
+10/26/26 23:28:13 Number of idle job procs: 44
+10/26/26 23:28:13 Node sets job proc (2137700.7.0) completed successfully.
+10/26/26 23:28:13 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.10.0) {10/26/26 23:28:13}
+10/26/26 23:28:13 Number of idle job procs: 43
+10/26/26 23:28:18 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:28:18 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.6.0) {10/26/26 23:28:14}
+10/26/26 23:28:18 Number of idle job procs: 43
+10/26/26 23:28:18 Node sets job proc (2137700.6.0) completed successfully.
+10/26/26 23:28:18 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.11.0) {10/26/26 23:28:14}
+10/26/26 23:28:18 Number of idle job procs: 42
+10/26/26 23:28:28 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:28:28 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.11.0) {10/26/26 23:28:28}
+10/26/26 23:28:28 Number of idle job procs: 42
+10/26/26 23:28:28 Node sets job proc (2137700.11.0) completed successfully.
+10/26/26 23:28:28 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.10.0) {10/26/26 23:28:28}
+10/26/26 23:28:28 Number of idle job procs: 42
+10/26/26 23:28:28 Node sets job proc (2137700.10.0) completed successfully.
+10/26/26 23:28:28 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.12.0) {10/26/26 23:28:28}
+10/26/26 23:28:28 Number of idle job procs: 41
+10/26/26 23:28:28 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.13.0) {10/26/26 23:28:28}
+10/26/26 23:28:28 Number of idle job procs: 40
+10/26/26 23:28:33 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:28:33 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.8.0) {10/26/26 23:28:29}
+10/26/26 23:28:33 Number of idle job procs: 40
+10/26/26 23:28:33 Node sets job proc (2137700.8.0) completed successfully.
+10/26/26 23:28:33 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.14.0) {10/26/26 23:28:30}
+10/26/26 23:28:33 Number of idle job procs: 39
+10/26/26 23:28:33 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.9.0) {10/26/26 23:28:33}
+10/26/26 23:28:33 Number of idle job procs: 39
+10/26/26 23:28:33 Node sets job proc (2137700.9.0) completed successfully.
+10/26/26 23:28:33 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.15.0) {10/26/26 23:28:33}
+10/26/26 23:28:33 Number of idle job procs: 38
+10/26/26 23:28:38 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:28:38 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.16.0) {10/26/26 23:28:36}
+10/26/26 23:28:38 Number of idle job procs: 37
+10/26/26 23:28:43 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:28:43 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.13.0) {10/26/26 23:28:40}
+10/26/26 23:28:43 Number of idle job procs: 37
+10/26/26 23:28:43 Node sets job proc (2137700.13.0) completed successfully.
+10/26/26 23:28:43 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.17.0) {10/26/26 23:28:40}
+10/26/26 23:28:43 Number of idle job procs: 36
+10/26/26 23:28:43 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.12.0) {10/26/26 23:28:40}
+10/26/26 23:28:43 Number of idle job procs: 36
+10/26/26 23:28:43 Node sets job proc (2137700.12.0) completed successfully.
+10/26/26 23:28:43 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.18.0) {10/26/26 23:28:40}
+10/26/26 23:28:43 Number of idle job procs: 35
+10/26/26 23:28:43 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.2.0) {10/26/26 23:28:41}
+10/26/26 23:28:43 Number of idle job procs: 35
+10/26/26 23:28:43 Node sets job proc (2137700.2.0) completed successfully.
+10/26/26 23:28:43 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.19.0) {10/26/26 23:28:41}
+10/26/26 23:28:43 Number of idle job procs: 34
+10/26/26 23:28:53 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:28:53 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.14.0) {10/26/26 23:28:50}
+10/26/26 23:28:53 Number of idle job procs: 34
+10/26/26 23:28:53 Node sets job proc (2137700.14.0) completed successfully.
+10/26/26 23:28:53 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.20.0) {10/26/26 23:28:50}
+10/26/26 23:28:53 Number of idle job procs: 33
+10/26/26 23:28:53 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.17.0) {10/26/26 23:28:51}
+10/26/26 23:28:53 Number of idle job procs: 33
+10/26/26 23:28:53 Node sets job proc (2137700.17.0) completed successfully.
+10/26/26 23:28:53 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.21.0) {10/26/26 23:28:52}
+10/26/26 23:28:53 Number of idle job procs: 32
+10/26/26 23:28:53 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.15.0) {10/26/26 23:28:53}
+10/26/26 23:28:53 Number of idle job procs: 32
+10/26/26 23:28:53 Node sets job proc (2137700.15.0) completed successfully.
+10/26/26 23:28:53 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.22.0) {10/26/26 23:28:53}
+10/26/26 23:28:53 Number of idle job procs: 31
+10/26/26 23:28:59 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:28:59 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.16.0) {10/26/26 23:28:57}
+10/26/26 23:28:59 Number of idle job procs: 31
+10/26/26 23:28:59 Node sets job proc (2137700.16.0) completed successfully.
+10/26/26 23:28:59 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.18.0) {10/26/26 23:28:57}
+10/26/26 23:28:59 Number of idle job procs: 31
+10/26/26 23:28:59 Node sets job proc (2137700.18.0) completed successfully.
+10/26/26 23:28:59 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.23.0) {10/26/26 23:28:57}
+10/26/26 23:28:59 Number of idle job procs: 30
+10/26/26 23:28:59 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.24.0) {10/26/26 23:28:57}
+10/26/26 23:28:59 Number of idle job procs: 29
+10/26/26 23:29:04 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:29:04 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.25.0) {10/26/26 23:29:01}
+10/26/26 23:29:04 Number of idle job procs: 28
+10/26/26 23:29:09 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:29:09 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.21.0) {10/26/26 23:29:04}
+10/26/26 23:29:09 Number of idle job procs: 28
+10/26/26 23:29:09 Node sets job proc (2137700.21.0) completed successfully.
+10/26/26 23:29:09 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.26.0) {10/26/26 23:29:04}
+10/26/26 23:29:09 Number of idle job procs: 27
+10/26/26 23:29:14 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:29:14 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.20.0) {10/26/26 23:29:11}
+10/26/26 23:29:14 Number of idle job procs: 27
+10/26/26 23:29:14 Node sets job proc (2137700.20.0) completed successfully.
+10/26/26 23:29:14 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.27.0) {10/26/26 23:29:12}
+10/26/26 23:29:14 Number of idle job procs: 26
+10/26/26 23:29:14 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.24.0) {10/26/26 23:29:12}
+10/26/26 23:29:14 Number of idle job procs: 26
+10/26/26 23:29:14 Node sets job proc (2137700.24.0) completed successfully.
+10/26/26 23:29:14 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.28.0) {10/26/26 23:29:12}
+10/26/26 23:29:14 Number of idle job procs: 25
+10/26/26 23:29:19 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:29:19 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.22.0) {10/26/26 23:29:14}
+10/26/26 23:29:19 Number of idle job procs: 25
+10/26/26 23:29:19 Node sets job proc (2137700.22.0) completed successfully.
+10/26/26 23:29:19 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.29.0) {10/26/26 23:29:14}
+10/26/26 23:29:19 Number of idle job procs: 24
+10/26/26 23:29:19 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.26.0) {10/26/26 23:29:15}
+10/26/26 23:29:19 Number of idle job procs: 24
+10/26/26 23:29:19 Node sets job proc (2137700.26.0) completed successfully.
+10/26/26 23:29:19 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.30.0) {10/26/26 23:29:15}
+10/26/26 23:29:19 Number of idle job procs: 23
+10/26/26 23:29:19 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.23.0) {10/26/26 23:29:17}
+10/26/26 23:29:19 Number of idle job procs: 23
+10/26/26 23:29:19 Node sets job proc (2137700.23.0) completed successfully.
+10/26/26 23:29:19 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.31.0) {10/26/26 23:29:17}
+10/26/26 23:29:19 Number of idle job procs: 22
+10/26/26 23:29:24 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:29:24 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.19.0) {10/26/26 23:29:20}
+10/26/26 23:29:24 Number of idle job procs: 22
+10/26/26 23:29:24 Node sets job proc (2137700.19.0) completed successfully.
+10/26/26 23:29:24 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.32.0) {10/26/26 23:29:21}
+10/26/26 23:29:24 Number of idle job procs: 21
+10/26/26 23:29:29 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:29:29 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.33.0) {10/26/26 23:29:25}
+10/26/26 23:29:29 Number of idle job procs: 20
+10/26/26 23:29:29 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.34.0) {10/26/26 23:29:25}
+10/26/26 23:29:29 Number of idle job procs: 19
+10/26/26 23:29:34 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:29:34 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.30.0) {10/26/26 23:29:30}
+10/26/26 23:29:34 Number of idle job procs: 19
+10/26/26 23:29:34 Node sets job proc (2137700.30.0) completed successfully.
+10/26/26 23:29:34 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.35.0) {10/26/26 23:29:30}
+10/26/26 23:29:34 Number of idle job procs: 18
+10/26/26 23:29:34 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.28.0) {10/26/26 23:29:31}
+10/26/26 23:29:34 Number of idle job procs: 18
+10/26/26 23:29:34 Node sets job proc (2137700.28.0) completed successfully.
+10/26/26 23:29:34 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.36.0) {10/26/26 23:29:31}
+10/26/26 23:29:34 Number of idle job procs: 17
+10/26/26 23:29:39 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:29:39 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.29.0) {10/26/26 23:29:35}
+10/26/26 23:29:39 Number of idle job procs: 17
+10/26/26 23:29:39 Node sets job proc (2137700.29.0) completed successfully.
+10/26/26 23:29:39 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.33.0) {10/26/26 23:29:36}
+10/26/26 23:29:39 Number of idle job procs: 17
+10/26/26 23:29:39 Node sets job proc (2137700.33.0) completed successfully.
+10/26/26 23:29:39 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.38.0) {10/26/26 23:29:36}
+10/26/26 23:29:39 Number of idle job procs: 16
+10/26/26 23:29:39 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.27.0) {10/26/26 23:29:36}
+10/26/26 23:29:39 Number of idle job procs: 16
+10/26/26 23:29:39 Node sets job proc (2137700.27.0) completed successfully.
+10/26/26 23:29:39 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.25.0) {10/26/26 23:29:36}
+10/26/26 23:29:39 Number of idle job procs: 16
+10/26/26 23:29:39 Node sets job proc (2137700.25.0) completed successfully.
+10/26/26 23:29:39 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.40.0) {10/26/26 23:29:36}
+10/26/26 23:29:39 Number of idle job procs: 15
+10/26/26 23:29:39 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.31.0) {10/26/26 23:29:37}
+10/26/26 23:29:39 Number of idle job procs: 15
+10/26/26 23:29:39 Node sets job proc (2137700.31.0) completed successfully.
+10/26/26 23:29:39 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.37.0) {10/26/26 23:29:38}
+10/26/26 23:29:39 Number of idle job procs: 14
+10/26/26 23:29:39 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.39.0) {10/26/26 23:29:38}
+10/26/26 23:29:39 Number of idle job procs: 13
+10/26/26 23:29:39 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.41.0) {10/26/26 23:29:38}
+10/26/26 23:29:39 Number of idle job procs: 12
+10/26/26 23:29:44 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:29:44 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.35.0) {10/26/26 23:29:40}
+10/26/26 23:29:44 Number of idle job procs: 12
+10/26/26 23:29:44 Node sets job proc (2137700.35.0) completed successfully.
+10/26/26 23:29:44 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.42.0) {10/26/26 23:29:40}
+10/26/26 23:29:44 Number of idle job procs: 11
+10/26/26 23:29:44 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.34.0) {10/26/26 23:29:40}
+10/26/26 23:29:44 Number of idle job procs: 11
+10/26/26 23:29:44 Node sets job proc (2137700.34.0) completed successfully.
+10/26/26 23:29:44 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.43.0) {10/26/26 23:29:41}
+10/26/26 23:29:44 Number of idle job procs: 10
+10/26/26 23:29:49 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:29:49 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.38.0) {10/26/26 23:29:47}
+10/26/26 23:29:49 Number of idle job procs: 10
+10/26/26 23:29:49 Node sets job proc (2137700.38.0) completed successfully.
+10/26/26 23:29:49 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.44.0) {10/26/26 23:29:47}
+10/26/26 23:29:49 Number of idle job procs: 9
+10/26/26 23:29:49 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.36.0) {10/26/26 23:29:47}
+10/26/26 23:29:49 Number of idle job procs: 9
+10/26/26 23:29:49 Node sets job proc (2137700.36.0) completed successfully.
+10/26/26 23:29:49 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.45.0) {10/26/26 23:29:47}
+10/26/26 23:29:49 Number of idle job procs: 8
+10/26/26 23:29:54 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:29:54 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.42.0) {10/26/26 23:29:50}
+10/26/26 23:29:54 Number of idle job procs: 8
+10/26/26 23:29:54 Node sets job proc (2137700.42.0) completed successfully.
+10/26/26 23:29:54 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.46.0) {10/26/26 23:29:50}
+10/26/26 23:29:54 Number of idle job procs: 7
+10/26/26 23:29:54 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.48.0) {10/26/26 23:29:50}
+10/26/26 23:29:54 Number of idle job procs: 6
+10/26/26 23:29:54 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.47.0) {10/26/26 23:29:50}
+10/26/26 23:29:54 Number of idle job procs: 5
+10/26/26 23:29:59 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:29:59 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.43.0) {10/26/26 23:29:54}
+10/26/26 23:29:59 Number of idle job procs: 5
+10/26/26 23:29:59 Node sets job proc (2137700.43.0) completed successfully.
+10/26/26 23:29:59 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.49.0) {10/26/26 23:29:54}
+10/26/26 23:29:59 Number of idle job procs: 4
+10/26/26 23:29:59 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.44.0) {10/26/26 23:29:56}
+10/26/26 23:29:59 Number of idle job procs: 4
+10/26/26 23:29:59 Node sets job proc (2137700.44.0) completed successfully.
+10/26/26 23:29:59 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.50.0) {10/26/26 23:29:56}
+10/26/26 23:29:59 Number of idle job procs: 3
+10/26/26 23:29:59 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.32.0) {10/26/26 23:29:58}
+10/26/26 23:29:59 Number of idle job procs: 3
+10/26/26 23:29:59 Node sets job proc (2137700.32.0) completed successfully.
+10/26/26 23:29:59 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.39.0) {10/26/26 23:29:58}
+10/26/26 23:29:59 Number of idle job procs: 3
+10/26/26 23:29:59 Node sets job proc (2137700.39.0) completed successfully.
+10/26/26 23:29:59 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.51.0) {10/26/26 23:29:58}
+10/26/26 23:29:59 Number of idle job procs: 2
+10/26/26 23:30:04 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:30:04 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.37.0) {10/26/26 23:29:59}
+10/26/26 23:30:04 Number of idle job procs: 2
+10/26/26 23:30:04 Node sets job proc (2137700.37.0) completed successfully.
+10/26/26 23:30:04 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.41.0) {10/26/26 23:30:00}
+10/26/26 23:30:04 Number of idle job procs: 2
+10/26/26 23:30:04 Node sets job proc (2137700.41.0) completed successfully.
+10/26/26 23:30:04 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.52.0) {10/26/26 23:30:00}
+10/26/26 23:30:04 Number of idle job procs: 1
+10/26/26 23:30:04 Event: ULOG_EXECUTE for HTCondor Node sets (2137700.53.0) {10/26/26 23:30:00}
+10/26/26 23:30:04 Number of idle job procs: 0
+10/26/26 23:30:04 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.46.0) {10/26/26 23:30:02}
+10/26/26 23:30:04 Number of idle job procs: 0
+10/26/26 23:30:04 Node sets job proc (2137700.46.0) completed successfully.
+10/26/26 23:30:04 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.45.0) {10/26/26 23:30:03}
+10/26/26 23:30:04 Number of idle job procs: 0
+10/26/26 23:30:04 Node sets job proc (2137700.45.0) completed successfully.
+10/26/26 23:30:04 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.40.0) {10/26/26 23:30:03}
+10/26/26 23:30:04 Number of idle job procs: 0
+10/26/26 23:30:04 Node sets job proc (2137700.40.0) completed successfully.
+10/26/26 23:30:09 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:30:09 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.47.0) {10/26/26 23:30:05}
+10/26/26 23:30:09 Number of idle job procs: 0
+10/26/26 23:30:09 Node sets job proc (2137700.47.0) completed successfully.
+10/26/26 23:30:09 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.48.0) {10/26/26 23:30:05}
+10/26/26 23:30:09 Number of idle job procs: 0
+10/26/26 23:30:09 Node sets job proc (2137700.48.0) completed successfully.
+10/26/26 23:30:09 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.50.0) {10/26/26 23:30:06}
+10/26/26 23:30:09 Number of idle job procs: 0
+10/26/26 23:30:09 Node sets job proc (2137700.50.0) completed successfully.
+10/26/26 23:30:09 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.49.0) {10/26/26 23:30:07}
+10/26/26 23:30:09 Number of idle job procs: 0
+10/26/26 23:30:09 Node sets job proc (2137700.49.0) completed successfully.
+10/26/26 23:30:24 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:30:24 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.53.0) {10/26/26 23:30:21}
+10/26/26 23:30:24 Number of idle job procs: 0
+10/26/26 23:30:24 Node sets job proc (2137700.53.0) completed successfully.
+10/26/26 23:30:24 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.52.0) {10/26/26 23:30:22}
+10/26/26 23:30:24 Number of idle job procs: 0
+10/26/26 23:30:24 Node sets job proc (2137700.52.0) completed successfully.
+10/26/26 23:30:39 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:30:39 Event: ULOG_JOB_TERMINATED for HTCondor Node sets (2137700.51.0) {10/26/26 23:30:36}
+10/26/26 23:30:39 Number of idle job procs: 0
+10/26/26 23:30:39 Node sets job proc (2137700.51.0) completed successfully.
+10/26/26 23:30:39 Event: ULOG_CLUSTER_REMOVE for HTCondor Node sets (2137700.-1.0) {10/26/26 23:30:36}
+10/26/26 23:30:39 Node sets job completed
+10/26/26 23:30:39 Running POST script of Node sets...
+10/26/26 23:30:39 DAG status: 0 (DAG_STATUS_OK)
+10/26/26 23:30:39 Of 5 nodes total:
+10/26/26 23:30:39  Done     Pre   Queued    Post   Ready   Un-Ready   Failed   Futile
+10/26/26 23:30:39   ===     ===      ===     ===     ===        ===      ===      ===
+10/26/26 23:30:39     3       0        0       1       0          1        0        0
+10/26/26 23:30:39 0 job proc(s) currently held
+10/26/26 23:30:39 DAGMan Runtime Statistics: [EventCycleTimeAvg=0.001; EventCycleTimeMax=0.461; EventCycleTimeMin=0.000; EventCycleTimeStd=0.009; EventCycleTimeSum=5.138; SleepCycleTimeAvg=5.004; SleepCycleTimeMax=5.011; SleepCycleTimeMin=4.004; SleepCycleTimeStd=0.025; SleepCycleTimeSum=32898.367; SubmitCycleTimeAvg=0.000; SubmitCycleTimeMax=0.456; SubmitCycleTimeMin=0.000; SubmitCycleTimeStd=0.007; SubmitCycleTimeSum=0.863; EventCycleTimeCount=6574.000; SleepCycleTimeCount=6574.000; SubmitCycleTimeCount=6575.000; LogProcessCycleTimeAvg=0.012; LogProcessCycleTimeMax=0.173; LogProcessCycleTimeMin=0.002; LogProcessCycleTimeStd=0.027; LogProcessCycleTimeSum=0.830; LogProcessCycleTimeCount=71.000; ]
+10/26/26 23:30:39 Initializing user log writer for /nfs/pic.es/user/s/sstucki/sunsim/PIC/./sweep_components.dag.nodes.log, (2137700.0.0)
+10/26/26 23:30:44 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:30:44 Event: ULOG_POST_SCRIPT_TERMINATED for HTCondor Node sets (2137700.0.0) {10/26/26 23:30:39}
+10/26/26 23:30:44 POST Script of node sets completed successfully.
+10/26/26 23:30:44 DAG status: 0 (DAG_STATUS_OK)
+10/26/26 23:30:44 Of 5 nodes total:
+10/26/26 23:30:44  Done     Pre   Queued    Post   Ready   Un-Ready   Failed   Futile
+10/26/26 23:30:44   ===     ===      ===     ===     ===        ===      ===      ===
+10/26/26 23:30:44     4       0        0       0       1          0        0        0
+10/26/26 23:30:44 0 job proc(s) currently held
+10/26/26 23:30:44 DAGMan Runtime Statistics: [EventCycleTimeAvg=0.001; EventCycleTimeMax=0.461; EventCycleTimeMin=0.000; EventCycleTimeStd=0.009; EventCycleTimeSum=5.150; SleepCycleTimeAvg=5.004; SleepCycleTimeMax=5.011; SleepCycleTimeMin=4.004; SleepCycleTimeStd=0.025; SleepCycleTimeSum=32903.373; SubmitCycleTimeAvg=0.000; SubmitCycleTimeMax=0.456; SubmitCycleTimeMin=0.000; SubmitCycleTimeStd=0.007; SubmitCycleTimeSum=0.863; EventCycleTimeCount=6575.000; SleepCycleTimeCount=6575.000; SubmitCycleTimeCount=6576.000; LogProcessCycleTimeAvg=0.012; LogProcessCycleTimeMax=0.173; LogProcessCycleTimeMin=0.002; LogProcessCycleTimeStd=0.026; LogProcessCycleTimeSum=0.833; LogProcessCycleTimeCount=72.000; ]
+10/26/26 23:30:49 Submitting HTCondor Node collect job(s)...
+10/26/26 23:30:49 Submitting node collect from file collect_components.sub using direct job submission
+10/26/26 23:30:49 	assigned HTCondor ID (2137703.0.0)
+10/26/26 23:30:49 Just submitted 1 job this cycle...
+10/26/26 23:30:49 DAG status: 0 (DAG_STATUS_OK)
+10/26/26 23:30:49 Of 5 nodes total:
+10/26/26 23:30:49  Done     Pre   Queued    Post   Ready   Un-Ready   Failed   Futile
+10/26/26 23:30:49   ===     ===      ===     ===     ===        ===      ===      ===
+10/26/26 23:30:49     4       0        1       0       0          0        0        0
+10/26/26 23:30:49 0 job proc(s) currently held
+10/26/26 23:30:49 DAGMan Runtime Statistics: [EventCycleTimeAvg=0.001; EventCycleTimeMax=0.461; EventCycleTimeMin=0.000; EventCycleTimeStd=0.009; EventCycleTimeSum=5.158; SleepCycleTimeAvg=5.004; SleepCycleTimeMax=5.011; SleepCycleTimeMin=4.004; SleepCycleTimeStd=0.025; SleepCycleTimeSum=32908.379; SubmitCycleTimeAvg=0.000; SubmitCycleTimeMax=0.456; SubmitCycleTimeMin=0.000; SubmitCycleTimeStd=0.007; SubmitCycleTimeSum=0.884; EventCycleTimeCount=6576.000; SleepCycleTimeCount=6576.000; SubmitCycleTimeCount=6577.000; LogProcessCycleTimeAvg=0.012; LogProcessCycleTimeMax=0.173; LogProcessCycleTimeMin=0.002; LogProcessCycleTimeStd=0.026; LogProcessCycleTimeSum=0.833; LogProcessCycleTimeCount=72.000; ]
+10/26/26 23:30:54 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:30:54 Reassigning the id of job collect from (2137703.0.0) to (2137703.0.0)
+10/26/26 23:30:54 Event: ULOG_SUBMIT for HTCondor Node collect (2137703.0.0) {10/26/26 23:30:49}
+10/26/26 23:30:54 Number of idle job procs: 1
+10/26/26 23:31:04 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:31:04 Event: ULOG_EXECUTE for HTCondor Node collect (2137703.0.0) {10/26/26 23:31:03}
+10/26/26 23:31:04 Number of idle job procs: 0
+10/26/26 23:32:04 Currently monitoring 1 HTCondor log file(s)
+10/26/26 23:32:04 Event: ULOG_JOB_TERMINATED for HTCondor Node collect (2137703.0.0) {10/26/26 23:32:02}
+10/26/26 23:32:04 Number of idle job procs: 0
+10/26/26 23:32:04 Node collect job proc (2137703.0.0) completed successfully.
+10/26/26 23:32:04 Node collect job(s) have exited the queue
+10/26/26 23:32:04 DAG status: 0 (DAG_STATUS_OK)
+10/26/26 23:32:04 Of 5 nodes total:
+10/26/26 23:32:04  Done     Pre   Queued    Post   Ready   Un-Ready   Failed   Futile
+10/26/26 23:32:04   ===     ===      ===     ===     ===        ===      ===      ===
+10/26/26 23:32:04     5       0        0       0       0          0        0        0
+10/26/26 23:32:04 0 job proc(s) currently held
+10/26/26 23:32:04 DAGMan Runtime Statistics: [EventCycleTimeAvg=0.001; EventCycleTimeMax=0.461; EventCycleTimeMin=0.000; EventCycleTimeStd=0.009; EventCycleTimeSum=5.192; SleepCycleTimeAvg=5.004; SleepCycleTimeMax=5.011; SleepCycleTimeMin=4.004; SleepCycleTimeStd=0.025; SleepCycleTimeSum=32983.456; SubmitCycleTimeAvg=0.000; SubmitCycleTimeMax=0.456; SubmitCycleTimeMin=0.000; SubmitCycleTimeStd=0.007; SubmitCycleTimeSum=0.884; EventCycleTimeCount=6591.000; SleepCycleTimeCount=6591.000; SubmitCycleTimeCount=6592.000; LogProcessCycleTimeAvg=0.011; LogProcessCycleTimeMax=0.173; LogProcessCycleTimeMin=0.002; LogProcessCycleTimeStd=0.026; LogProcessCycleTimeSum=0.843; LogProcessCycleTimeCount=75.000; ]
+10/26/26 23:32:04 All jobs Completed!
+10/26/26 23:32:04 Note: 0 total node deferrals because of -MaxJobs limit (0)
+10/26/26 23:32:04 Note: 0 total node deferrals because of -MaxIdle limit (1000)
+10/26/26 23:32:04 Note: 0 total node deferrals because of node category throttles
+10/26/26 23:32:04 Note: 0 total PRE script deferrals because of -MaxPre limit (20) or DEFER
+10/26/26 23:32:04 Note: 0 total POST script deferrals because of -MaxPost limit (20) or DEFER
+10/26/26 23:32:04 Note: 0 total HOLD script deferrals because of -MaxHold limit (20) or DEFER
+10/26/26 23:32:04 DAG status: 0 (DAG_STATUS_OK)
+10/26/26 23:32:04 Of 5 nodes total:
+10/26/26 23:32:04  Done     Pre   Queued    Post   Ready   Un-Ready   Failed   Futile
+10/26/26 23:32:04   ===     ===      ===     ===     ===        ===      ===      ===
+10/26/26 23:32:04     5       0        0       0       0          0        0        0
+10/26/26 23:32:04 0 job proc(s) currently held
+10/26/26 23:32:04 DAGMan Runtime Statistics: [EventCycleTimeAvg=0.001; EventCycleTimeMax=0.461; EventCycleTimeMin=0.000; EventCycleTimeStd=0.009; EventCycleTimeSum=5.192; SleepCycleTimeAvg=5.004; SleepCycleTimeMax=5.011; SleepCycleTimeMin=4.004; SleepCycleTimeStd=0.025; SleepCycleTimeSum=32983.456; SubmitCycleTimeAvg=0.000; SubmitCycleTimeMax=0.456; SubmitCycleTimeMin=0.000; SubmitCycleTimeStd=0.007; SubmitCycleTimeSum=0.884; EventCycleTimeCount=6591.000; SleepCycleTimeCount=6591.000; SubmitCycleTimeCount=6592.000; LogProcessCycleTimeAvg=0.011; LogProcessCycleTimeMax=0.173; LogProcessCycleTimeMin=0.002; LogProcessCycleTimeStd=0.026; LogProcessCycleTimeSum=0.843; LogProcessCycleTimeCount=75.000; ]
+10/26/26 23:32:04 Wrote metrics file sweep_components.dag.metrics.
+10/26/26 23:32:04 DAGMan Runtime Statistics: [EventCycleTimeAvg=0.001; EventCycleTimeMax=0.461; EventCycleTimeMin=0.000; EventCycleTimeStd=0.009; EventCycleTimeSum=5.192; SleepCycleTimeAvg=5.004; SleepCycleTimeMax=5.011; SleepCycleTimeMin=4.004; SleepCycleTimeStd=0.025; SleepCycleTimeSum=32983.456; SubmitCycleTimeAvg=0.000; SubmitCycleTimeMax=0.456; SubmitCycleTimeMin=0.000; SubmitCycleTimeStd=0.007; SubmitCycleTimeSum=0.884; EventCycleTimeCount=6591.000; SleepCycleTimeCount=6591.000; SubmitCycleTimeCount=6592.000; LogProcessCycleTimeAvg=0.011; LogProcessCycleTimeMax=0.173; LogProcessCycleTimeMin=0.002; LogProcessCycleTimeStd=0.026; LogProcessCycleTimeSum=0.843; LogProcessCycleTimeCount=75.000; ]
+10/26/26 23:32:04 **** condor_scheduniv_exec.2136987.0 (condor_DAGMAN) pid 3677352 EXITING WITH STATUS 0

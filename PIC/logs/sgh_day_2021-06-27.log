@@ -1,0 +1,44 @@
+000 (2137721.057.000) 2026-10-27 05:39:22 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: days
+...
+040 (2137721.057.000) 2026-10-27 05:39:43 Started transferring input files
+	Transferring to host: <192.168.101.231:9618?addrs=192.168.101.231-9618+[2001-67c-1148-301--531]-9618&alias=tds531.pic.es&noUDP&sock=slot1_12_15906_f740_22361>
+...
+040 (2137721.057.000) 2026-10-27 05:39:43 Finished transferring input files
+...
+001 (2137721.057.000) 2026-10-27 05:39:43 Job executing on host: <192.168.101.231:9618?addrs=192.168.101.231-9618+[2001-67c-1148-301--531]-9618&alias=tds531.pic.es&noUDP&sock=startd_15871_c3ae>
+	SlotName: slot1_12@tds531.pic.es
+	CondorScratchDir = "/home/execute/dir_128816"
+	Cpus = 10
+	Disk = 2100325
+	GPUs = 0
+	Memory = 8192
+...
+006 (2137721.057.000) 2026-10-27 05:39:51 Image size of job updated: 130712
+	128  -  MemoryUsage of job (MB)
+	130712  -  ResidentSetSize of job (KB)
+...
+006 (2137721.057.000) 2026-10-27 05:43:15 Image size of job updated: 2041476
+	128  -  MemoryUsage of job (MB)
+	130712  -  ResidentSetSize of job (KB)
+...
+040 (2137721.057.000) 2026-10-27 05:43:15 Finished transferring output files
+...
+004 (2137721.057.000) 2026-10-27 05:43:15 Job was evicted. Code 1009 Subcode 0
+	(0) CPU times
+		Usr 0 00:01:19, Sys 0 00:00:24  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Reason: Claim deactivated
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :     0.47       10        10 
+	   Disk (KB)            : 60993     2097152   2100325 
+	   GPUs                 :                           0 
+	   Memory (MB)          :   128        8192      8192 
+	   TimeExecute (s)      :   212                       
+	   TimeSlotBusy (s)     :   212                       
+...
+009 (2137721.057.000) 2026-10-27 05:43:15 Job was aborted.
+	Node Error: DAG node days (2137721.35.0) reached failure tolerance after 1 failures. (by user sstucki)
+...

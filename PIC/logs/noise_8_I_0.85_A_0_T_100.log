@@ -1,0 +1,52 @@
+000 (2118456.066.000) 2026-10-20 11:49:35 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+040 (2118456.066.000) 2026-10-20 15:24:37 Started transferring input files
+	Transferring to host: <192.168.101.225:9618?addrs=192.168.101.225-9618+[2001-67c-1148-301--525]-9618&alias=tds525.pic.es&noUDP&sock=slot1_6_16130_cb49_19357>
+...
+040 (2118456.066.000) 2026-10-20 15:24:37 Finished transferring input files
+...
+001 (2118456.066.000) 2026-10-20 15:24:37 Job executing on host: <192.168.101.225:9618?addrs=192.168.101.225-9618+[2001-67c-1148-301--525]-9618&alias=tds525.pic.es&noUDP&sock=startd_16070_4307>
+	SlotName: slot1_6@tds525.pic.es
+	CondorScratchDir = "/home/execute/dir_2013615"
+	Cpus = 50
+	Disk = 1051744
+	GPUs = 0
+	Memory = 4096
+...
+006 (2118456.066.000) 2026-10-20 15:24:46 Image size of job updated: 512692
+	501  -  MemoryUsage of job (MB)
+	512692  -  ResidentSetSize of job (KB)
+...
+006 (2118456.066.000) 2026-10-20 15:29:47 Image size of job updated: 595660
+	501  -  MemoryUsage of job (MB)
+	512692  -  ResidentSetSize of job (KB)
+...
+006 (2118456.066.000) 2026-10-20 15:39:47 Image size of job updated: 597824
+	501  -  MemoryUsage of job (MB)
+	512692  -  ResidentSetSize of job (KB)
+...
+006 (2118456.066.000) 2026-10-20 15:54:47 Image size of job updated: 597824
+	520  -  MemoryUsage of job (MB)
+	532288  -  ResidentSetSize of job (KB)
+...
+040 (2118456.066.000) 2026-10-20 15:55:43 Finished transferring output files
+...
+005 (2118456.066.000) 2026-10-20 15:55:44 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:22:47, Sys 0 00:02:04  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:22:47, Sys 0 00:02:04  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :     1.00       50        50 
+	   Disk (KB)            :    23     1048576   1051744 
+	   GPUs                 :                           0 
+	   Memory (MB)          :   520        4096      4096 
+	   TimeExecute (s)      :  1866                       
+	   TimeSlotBusy (s)     :  1867                       
+...

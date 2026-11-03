@@ -1,0 +1,45 @@
+000 (2129059.001.000) 2026-10-23 01:27:57 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: ident_fraction
+...
+040 (2129059.001.000) 2026-10-23 01:32:37 Started transferring input files
+	Transferring to host: <192.168.101.87:9618?addrs=192.168.101.87-9618+[2001-67c-1148-301--87]-9618&alias=gpu10.pic.es&noUDP&sock=slot1_9_6149_46d3_43448>
+...
+040 (2129059.001.000) 2026-10-23 01:32:37 Finished transferring input files
+...
+001 (2129059.001.000) 2026-10-23 01:32:37 Job executing on host: <192.168.101.87:9618?addrs=192.168.101.87-9618+[2001-67c-1148-301--87]-9618&alias=gpu10.pic.es&noUDP&sock=startd_5499_6f61>
+	SlotName: slot1_9@gpu10.pic.es
+	AvailableGPUs = {  }
+	CondorScratchDir = "/home/execute/dir_2058532"
+	Cpus = 4
+	Disk = 1055151
+	GPUs = 0
+	Memory = 20480
+...
+006 (2129059.001.000) 2026-10-23 01:32:46 Image size of job updated: 3175484
+	3102  -  MemoryUsage of job (MB)
+	3175484  -  ResidentSetSize of job (KB)
+...
+006 (2129059.001.000) 2026-10-23 01:35:17 Image size of job updated: 7031280
+	3112  -  MemoryUsage of job (MB)
+	3185724  -  ResidentSetSize of job (KB)
+...
+040 (2129059.001.000) 2026-10-23 01:35:17 Finished transferring output files
+...
+005 (2129059.001.000) 2026-10-23 01:35:17 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:08:14, Sys 0 00:01:43  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:08:14, Sys 0 00:01:43  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        4         4 
+	   Disk (KB)            :       26  1048576   1055151 
+	   GPUs                 :                           0 
+	   Memory (MB)          :     3112    20480     20480 
+	   TimeExecute (s)      :      160                    
+	   TimeSlotBusy (s)     :      160                    
+...

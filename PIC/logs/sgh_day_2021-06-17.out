@@ -1,0 +1,44 @@
+04:23:22 2021-06-17: 84 exposures
+04:23:27 84 exposures matched to 39 epochs (|dt| max 357 s)
+04:23:29 to do: 39 of 39 epochs (~1.4 GB), 625 of 625 frames of 45 s (~11.2 GB); all deleted after processing
+04:23:33 JPL: v_sun -13.057 to -13.016 m/s, minus berv_bary_to_helio: 0.0008 m/s at most
+04:25:07 [1/39] epoch 2021.06.17_10:00:00_TAI (20 frames), 94 s, ~60 min left
+04:26:09 [2/39] epoch 2021.06.17_10:12:00_TAI (17 frames), 156 s, ~48 min left
+04:27:05 [3/39] epoch 2021.06.17_10:24:00_TAI (16 frames), 212 s, ~42 min left
+04:28:02 [4/39] epoch 2021.06.17_10:36:00_TAI (16 frames), 269 s, ~39 min left
+04:29:01 [5/39] epoch 2021.06.17_10:48:00_TAI (16 frames), 328 s, ~37 min left
+04:29:57 [6/39] epoch 2021.06.17_11:00:00_TAI (16 frames), 385 s, ~35 min left
+04:31:19 [7/39] epoch 2021.06.17_11:12:00_TAI (16 frames), 466 s, ~36 min left
+04:32:37 [8/39] epoch 2021.06.17_11:24:00_TAI (16 frames), 545 s, ~35 min left
+04:33:55 [9/39] epoch 2021.06.17_11:36:00_TAI (16 frames), 622 s, ~35 min left
+04:34:54 [10/39] epoch 2021.06.17_11:48:00_TAI (15 frames), 682 s, ~33 min left
+04:35:56 [11/39] epoch 2021.06.17_12:00:00_TAI (16 frames), 743 s, ~32 min left
+04:36:54 [12/39] epoch 2021.06.17_12:12:00_TAI (16 frames), 801 s, ~30 min left
+04:37:51 [13/39] epoch 2021.06.17_12:24:00_TAI (16 frames), 858 s, ~29 min left
+04:38:55 [14/39] epoch 2021.06.17_12:36:00_TAI (16 frames), 922 s, ~27 min left
+04:39:57 [15/39] epoch 2021.06.17_12:48:00_TAI (16 frames), 985 s, ~26 min left
+04:41:10 [16/39] epoch 2021.06.17_13:00:00_TAI (16 frames), 1057 s, ~25 min left
+04:42:20 [17/39] epoch 2021.06.17_13:12:00_TAI (17 frames), 1127 s, ~24 min left
+04:43:32 [18/39] epoch 2021.06.17_13:24:00_TAI (16 frames), 1200 s, ~23 min left
+04:44:32 [19/39] epoch 2021.06.17_13:36:00_TAI (16 frames), 1259 s, ~22 min left
+04:45:36 [20/39] epoch 2021.06.17_13:48:00_TAI (16 frames), 1323 s, ~21 min left
+04:46:37 [21/39] epoch 2021.06.17_14:00:00_TAI (16 frames), 1384 s, ~20 min left
+04:47:36 [22/39] epoch 2021.06.17_14:12:00_TAI (16 frames), 1443 s, ~19 min left
+04:48:32 [23/39] epoch 2021.06.17_14:24:00_TAI (16 frames), 1499 s, ~17 min left
+04:49:28 [24/39] epoch 2021.06.17_14:36:00_TAI (16 frames), 1556 s, ~16 min left
+04:50:32 [25/39] epoch 2021.06.17_14:48:00_TAI (15 frames), 1619 s, ~15 min left
+04:51:48 [26/39] epoch 2021.06.17_15:00:00_TAI (16 frames), 1696 s, ~14 min left
+04:52:54 [27/39] epoch 2021.06.17_15:12:00_TAI (16 frames), 1762 s, ~13 min left
+04:54:02 [28/39] epoch 2021.06.17_15:24:00_TAI (16 frames), 1830 s, ~12 min left
+04:55:06 [29/39] epoch 2021.06.17_15:36:00_TAI (16 frames), 1893 s, ~11 min left
+04:56:14 [30/39] epoch 2021.06.17_15:48:00_TAI (16 frames), 1961 s, ~10 min left
+04:57:24 [31/39] epoch 2021.06.17_16:00:00_TAI (16 frames), 2031 s, ~9 min left
+04:58:28 [32/39] epoch 2021.06.17_16:12:00_TAI (17 frames), 2095 s, ~8 min left
+04:59:29 [33/39] epoch 2021.06.17_16:24:00_TAI (16 frames), 2156 s, ~7 min left
+05:00:44 [34/39] epoch 2021.06.17_16:36:00_TAI (16 frames), 2231 s, ~5 min left
+05:02:02 [35/39] epoch 2021.06.17_16:48:00_TAI (16 frames), 2309 s, ~4 min left
+05:03:37 [36/39] epoch 2021.06.17_17:00:00_TAI (16 frames), 2404 s, ~3 min left
+05:05:51 [37/39] epoch 2021.06.17_17:12:00_TAI (16 frames), 2538 s, ~2 min left
+05:06:54 [38/39] epoch 2021.06.17_17:24:00_TAI (16 frames), 2601 s, ~1 min left
+05:07:43 [39/39] epoch 2021.06.17_17:36:00_TAI (12 frames), 2650 s, ~0 min left
+05:07:43 2021-06-17 done: 39 / 39 epochs, 625 / 625 frames, 0 failed

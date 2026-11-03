@@ -1,0 +1,27 @@
+block 20 / 80: 39 days with images (2017-09-11 to 2017-10-19), 39 to do; 28 sets of thresholds, 4 worker(s)
+[1/39] 2017-09-11: 28 sets, ff_sp 0.006 %, ff_fc 9.168 % (first set) | 153 s, ~97 min left
+[2/39] 2017-09-12: 28 sets, ff_sp 0.006 %, ff_fc 7.453 % (first set) | 154 s, ~48 min left
+[3/39] 2017-09-13: 28 sets, ff_sp 0.007 %, ff_fc 7.098 % (first set) | 155 s, ~31 min left
+[4/39] 2017-09-14: 28 sets, ff_sp 0.007 %, ff_fc 7.031 % (first set) | 155 s, ~23 min left
+[5/39] 2017-09-15: 28 sets, ff_sp 0.008 %, ff_fc 6.929 % (first set) | 216 s, ~25 min left
+[6/39] 2017-09-16: 28 sets, ff_sp 0.007 %, ff_fc 6.921 % (first set) | 216 s, ~20 min left
+[7/39] 2017-09-17: 28 sets, ff_sp 0.006 %, ff_fc 6.918 % (first set) | 216 s, ~16 min left
+[8/39] 2017-09-18: 28 sets, ff_sp 0.005 %, ff_fc 7.009 % (first set) | 216 s, ~14 min left
+[9/39] 2017-09-19: 28 sets, ff_sp 0.004 %, ff_fc 6.982 % (first set) | 236 s, ~13 min left
+[10/39] 2017-09-20: 28 sets, ff_sp 0.003 %, ff_fc 7.003 % (first set) | 237 s, ~11 min left
+[11/39] 2017-09-21: 28 sets, ff_sp 0.004 %, ff_fc 7.026 % (first set) | 253 s, ~11 min left
+[12/39] 2017-09-22: 28 sets, ff_sp 0.005 %, ff_fc 7.022 % (first set) | 254 s, ~10 min left
+[13/39] 2017-09-23: 28 sets, ff_sp 0.006 %, ff_fc 6.953 % (first set) | 262 s, ~9 min left
+[14/39] 2017-09-24: 28 sets, ff_sp 0.008 %, ff_fc 6.970 % (first set) | 262 s, ~8 min left
+[15/39] 2017-09-25: 28 sets, ff_sp 0.014 %, ff_fc 7.233 % (first set) | 289 s, ~8 min left
+[16/39] 2017-09-26: 28 sets, ff_sp 0.024 %, ff_fc 7.470 % (first set) | 290 s, ~7 min left
+[17/39] 2017-09-27: 28 sets, ff_sp 0.031 %, ff_fc 7.719 % (first set) | 290 s, ~6 min left
+[18/39] 2017-09-28: 28 sets, ff_sp 0.035 %, ff_fc 7.893 % (first set) | 290 s, ~6 min left
+[19/39] 2017-09-29: 28 sets, ff_sp 0.039 %, ff_fc 7.985 % (first set) | 313 s, ~5 min left
+[20/39] 2017-09-30: 28 sets, ff_sp 0.040 %, ff_fc 8.043 % (first set) | 314 s, ~5 min left
+[21/39] 2017-10-01: 28 sets, ff_sp 0.038 %, ff_fc 8.002 % (first set) | 317 s, ~5 min left
+[22/39] 2017-10-02: 28 sets, ff_sp 0.036 %, ff_fc 7.918 % (first set) | 318 s, ~4 min left
+[23/39] 2017-10-03: 28 sets, ff_sp 0.029 %, ff_fc 7.851 % (first set) | 339 s, ~4 min left
+[24/39] 2017-10-04: 28 sets, ff_sp 0.026 %, ff_fc 7.679 % (first set) | 339 s, ~4 min left
+[25/39] 2017-10-05: 28 sets, ff_sp 0.018 %, ff_fc 7.521 % (first set) | 348 s, ~3 min left
+[26/39] 2017-10-06: 28 sets, ff_sp 0.012 %, ff_fc 7.322 % (first set) | 349 s, ~3 min left

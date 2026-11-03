@@ -1,0 +1,13 @@
+block 60 / 80: 38 days with images (2021-12-25 to 2022-01-31), 38 to do; 28 sets of thresholds, 4 worker(s)
+[1/38] 2021-12-25: 28 sets, ff_sp 0.047 %, ff_fc 9.285 % (first set) | 30 s, ~18 min left
+[2/38] 2021-12-26: 28 sets, ff_sp 0.056 %, ff_fc 9.201 % (first set) | 30 s, ~9 min left
+[3/38] 2021-12-27: 28 sets, ff_sp 0.062 %, ff_fc 9.248 % (first set) | 30 s, ~6 min left
+[4/38] 2021-12-28: 28 sets, ff_sp 0.053 %, ff_fc 9.166 % (first set) | 30 s, ~4 min left
+[5/38] 2021-12-29: 28 sets, ff_sp 0.048 %, ff_fc 9.133 % (first set) | 55 s, ~6 min left
+[6/38] 2021-12-30: 28 sets, ff_sp 0.032 %, ff_fc 8.807 % (first set) | 56 s, ~5 min left
+[7/38] 2021-12-31: 28 sets, ff_sp 0.019 %, ff_fc 8.454 % (first set) | 56 s, ~4 min left
+[8/38] 2022-01-01: 28 sets, ff_sp 0.015 %, ff_fc 8.184 % (first set) | 56 s, ~3 min left
+[9/38] 2022-01-02: 28 sets, ff_sp 0.006 %, ff_fc 8.019 % (first set) | 82 s, ~4 min left
+[10/38] 2022-01-03: 28 sets, ff_sp 0.002 %, ff_fc 7.711 % (first set) | 82 s, ~4 min left
+[11/38] 2022-01-04: 28 sets, ff_sp 0.000 %, ff_fc 7.521 % (first set) | 83 s, ~3 min left
+[12/38] 2022-01-05: 28 sets, ff_sp 0.002 %, ff_fc 7.523 % (first set) | 83 s, ~3 min left

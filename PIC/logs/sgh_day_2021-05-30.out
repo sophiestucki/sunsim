@@ -1,0 +1,27 @@
+02:48:05 2021-05-30: 44 exposures
+02:48:10 44 exposures matched to 22 epochs (|dt| max 349 s)
+02:48:12 to do: 22 of 22 epochs (~0.8 GB), 357 of 357 frames of 45 s (~6.4 GB); all deleted after processing
+02:48:14 JPL: v_sun -14.905 to -14.893 m/s, minus berv_bary_to_helio: 0.0002 m/s at most
+02:50:03 [1/22] epoch 2021.05.30_12:00:00_TAI (22 frames), 109 s, ~38 min left
+02:51:18 [2/22] epoch 2021.05.30_12:12:00_TAI (15 frames), 185 s, ~31 min left
+02:52:29 [3/22] epoch 2021.05.30_12:24:00_TAI (16 frames), 255 s, ~27 min left
+02:53:28 [4/22] epoch 2021.05.30_12:36:00_TAI (16 frames), 315 s, ~24 min left
+02:54:31 [5/22] epoch 2021.05.30_12:48:00_TAI (16 frames), 378 s, ~21 min left
+02:55:38 [6/22] epoch 2021.05.30_13:00:00_TAI (16 frames), 445 s, ~20 min left
+02:56:39 [7/22] epoch 2021.05.30_13:12:00_TAI (16 frames), 505 s, ~18 min left
+02:57:41 [8/22] epoch 2021.05.30_13:24:00_TAI (16 frames), 567 s, ~17 min left
+02:59:05 [9/22] epoch 2021.05.30_13:36:00_TAI (17 frames), 651 s, ~16 min left
+03:00:09 [10/22] epoch 2021.05.30_13:48:00_TAI (16 frames), 715 s, ~14 min left
+03:01:11 [11/22] epoch 2021.05.30_14:00:00_TAI (16 frames), 777 s, ~13 min left
+03:02:29 [12/22] epoch 2021.05.30_14:12:00_TAI (16 frames), 855 s, ~12 min left
+03:03:41 [13/22] epoch 2021.05.30_14:24:00_TAI (16 frames), 927 s, ~11 min left
+03:04:52 [14/22] epoch 2021.05.30_14:36:00_TAI (16 frames), 999 s, ~10 min left
+03:06:05 [15/22] epoch 2021.05.30_14:48:00_TAI (16 frames), 1071 s, ~8 min left
+03:07:18 [16/22] epoch 2021.05.30_15:00:00_TAI (16 frames), 1144 s, ~7 min left
+03:08:18 [17/22] epoch 2021.05.30_15:12:00_TAI (15 frames), 1205 s, ~6 min left
+03:10:27 [18/22] epoch 2021.05.30_15:24:00_TAI (16 frames), 1334 s, ~5 min left
+03:11:35 [19/22] epoch 2021.05.30_15:36:00_TAI (16 frames), 1401 s, ~4 min left
+03:13:47 [20/22] epoch 2021.05.30_15:48:00_TAI (16 frames), 1533 s, ~3 min left
+03:15:02 [21/22] epoch 2021.05.30_16:00:00_TAI (16 frames), 1608 s, ~1 min left
+03:16:32 [22/22] epoch 2021.05.30_16:12:00_TAI (16 frames), 1698 s, ~0 min left
+03:16:32 2021-05-30 done: 22 / 22 epochs, 357 / 357 frames, 0 failed

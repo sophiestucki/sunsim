@@ -1,0 +1,8 @@
+3099 days with images, 2 to do (3097 already done), 18 without images; 1 set(s) of thresholds; 8 worker(s)
+2017-07-23: images not readable (Failed to read /data/spotless/scratch/sstucki/starsim/SDO_data/hmi.ic_nolimbdark_720s.20170723_120000_TAI.3.continuum.fi), skipped
+2017-08-03: images not readable (Failed to read /data/spotless/scratch/sstucki/starsim/SDO_data/hmi.m_45s.20170803_120045_TAI.2.magnetogram.fits), skipped
+3097 epochs written in /data/spotless/scratch/sstucki/starsim/sets/noise_th_8.0_I_th_0.97_A_th_0.0_T_700_size_512 (20 days skipped)
+grids: read from /data/spotless/scratch/sstucki/starsim/grids/grids_T_700.pkl
+/data/spotless/scratch/sstucki/starsim/sets/noise_th_8.0_I_th_0.97_A_th_0.0_T_700_size_512: already simulated (outputs read)
+noise_th=8 I_th=0.97 A_th=0 T_sp=700 n_epochs=3097 n_removed=0 rv_rms=0.8537 rv_mad=0.5162 rv_n=1983 rv_obs_rms=2.411 fwhm_rms=2.21 fwhm_mad=0.9196 fwhm_n=1987 fwhm_obs_rms=3.884 bis_rms=1.004 bis_mad=0.5155 bis_n=1986 bis_obs_rms=1.486 sorce_rms=430.1 sorce_mad=151.2 sorce_n=1639 sorce_obs_rms=196.2 tsis_rms=759.7 tsis_mad=212.2 tsis_n=1873 tsis_obs_rms=343
+Done: /data/spotless/scratch/sstucki/starsim/sets/noise_th_8.0_I_th_0.97_A_th_0.0_T_700_size_512

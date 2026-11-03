@@ -1,0 +1,80 @@
+000 (2118881.047.000) 2026-10-20 18:02:52 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: ident
+...
+009 (2118881.047.000) 2026-10-20 18:15:18 Job was aborted.
+	Node Error: DAG node ident (2118881.18.0) reached failure tolerance after 1 failures. (by user sstucki)
+...
+000 (2125791.047.000) 2026-10-21 14:52:00 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: ident
+...
+009 (2125791.047.000) 2026-10-21 14:52:40 Job was aborted.
+	Node Error: DAG node ident (2125791.18.0) reached failure tolerance after 1 failures. (by user sstucki)
+...
+000 (2125799.047.000) 2026-10-21 14:58:17 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: ident
+...
+009 (2125799.047.000) 2026-10-21 14:59:02 Job was aborted.
+	Node Error: DAG node ident (2125799.18.0) reached failure tolerance after 1 failures. (by user sstucki)
+...
+000 (2125825.047.000) 2026-10-21 15:25:45 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: ident
+...
+009 (2125825.047.000) 2026-10-21 15:31:51 Job was aborted.
+	Node Error: DAG node ident (2125825.18.0) reached failure tolerance after 1 failures. (by user sstucki)
+...
+000 (2125861.047.000) 2026-10-21 16:03:31 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: ident
+...
+009 (2125861.047.000) 2026-10-21 16:11:22 Job was aborted.
+	Node Error: DAG node ident (2125861.18.0) reached failure tolerance after 1 failures. (by user sstucki)
+...
+000 (2127183.047.000) 2026-10-22 00:31:46 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: ident
+...
+040 (2127183.047.000) 2026-10-22 00:41:21 Started transferring input files
+	Transferring to host: <192.168.100.2:9618?addrs=192.168.100.2-9618+[2001-67c-1148-301--100]-9618&alias=td100.pic.es&noUDP&sock=slot1_31_10715_6fcd_24890>
+...
+040 (2127183.047.000) 2026-10-22 00:41:21 Finished transferring input files
+...
+001 (2127183.047.000) 2026-10-22 00:41:21 Job executing on host: <192.168.100.2:9618?addrs=192.168.100.2-9618+[2001-67c-1148-301--100]-9618&alias=td100.pic.es&noUDP&sock=startd_9422_496a>
+	SlotName: slot1_31@td100.pic.es
+	CondorScratchDir = "/home/execute/dir_2581526"
+	Cpus = 4
+	Disk = 1061645
+	GPUs = 0
+	Memory = 16384
+...
+006 (2127183.047.000) 2026-10-22 00:41:29 Image size of job updated: 3774476
+	3687  -  MemoryUsage of job (MB)
+	3774476  -  ResidentSetSize of job (KB)
+...
+006 (2127183.047.000) 2026-10-22 00:44:12 Image size of job updated: 6550788
+	3740  -  MemoryUsage of job (MB)
+	3829012  -  ResidentSetSize of job (KB)
+...
+040 (2127183.047.000) 2026-10-22 00:44:12 Finished transferring output files
+...
+004 (2127183.047.000) 2026-10-22 00:44:13 Job was evicted. Code 1009 Subcode 0
+	(0) CPU times
+		Usr 0 00:10:04, Sys 0 00:00:47  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Reason: Claim deactivated
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :     3.50        4         4 
+	   Disk (KB)            :    23     1048576   1061645 
+	   GPUs                 :                           0 
+	   Memory (MB)          :  3740       16384     16384 
+	   TimeExecute (s)      :   171                       
+	   TimeSlotBusy (s)     :   172                       
+...
+009 (2127183.047.000) 2026-10-22 00:44:13 Job was aborted.
+	Node Error: DAG node ident (2127183.18.0) reached failure tolerance after 1 failures. (by user sstucki)
+...
+000 (2129037.047.000) 2026-10-23 00:15:27 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: ident
+...
+009 (2129037.047.000) 2026-10-23 00:16:15 Job was aborted.
+	removed because <OtherJobRemoveRequirements = DAGManJobId =?= 2129035> fired when job (2129035.0) was removed
+...

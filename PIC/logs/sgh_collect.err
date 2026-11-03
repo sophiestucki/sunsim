@@ -1,0 +1,4 @@
+/nfs/pic.es/user/s/sstucki/sunsim/sunsim/sdo.py:402: UserWarning: 2 cells of the grid of 30 rings have no pixel in 512 x 512 maps (taken as quiet): use larger maps or fewer rings (max_rings)
+  warnings.warn('%d cells of the grid of %d rings have no pixel in %d x %d maps (taken as quiet): use larger '
+/nfs/pic.es/user/s/sstucki/sunsim/sunsim/sdo.py:402: UserWarning: 2 cells of the grid of 30 rings have no pixel in 512 x 512 maps (taken as quiet): use larger maps or fewer rings (max_rings)
+  warnings.warn('%d cells of the grid of %d rings have no pixel in %d x %d maps (taken as quiet): use larger '

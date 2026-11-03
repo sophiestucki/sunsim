@@ -1,0 +1,74 @@
+000 (2112636.345.000) 2026-10-18 23:16:26 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+040 (2112636.345.000) 2026-10-18 23:16:33 Started transferring input files
+	Transferring to host: <192.168.101.145:9618?addrs=192.168.101.145-9618+[2001-67c-1148-301--435]-9618&alias=tds435.pic.es&noUDP&sock=slot1_14_20497_bd9b_3958>
+...
+040 (2112636.345.000) 2026-10-18 23:16:33 Finished transferring input files
+...
+001 (2112636.345.000) 2026-10-18 23:16:33 Job executing on host: <192.168.101.145:9618?addrs=192.168.101.145-9618+[2001-67c-1148-301--435]-9618&alias=tds435.pic.es&noUDP&sock=startd_20296_f242>
+	SlotName: slot1_14@tds435.pic.es
+	CondorScratchDir = "/home/execute/dir_3507609"
+	Cpus = 1
+	Disk = 1051726
+	GPUs = 0
+	Memory = 4096
+...
+006 (2112636.345.000) 2026-10-18 23:16:42 Image size of job updated: 255064
+	250  -  MemoryUsage of job (MB)
+	255064  -  ResidentSetSize of job (KB)
+...
+006 (2112636.345.000) 2026-10-18 23:21:42 Image size of job updated: 598992
+	265  -  MemoryUsage of job (MB)
+	271300  -  ResidentSetSize of job (KB)
+...
+006 (2112636.345.000) 2026-10-18 23:26:43 Image size of job updated: 599128
+	283  -  MemoryUsage of job (MB)
+	289188  -  ResidentSetSize of job (KB)
+...
+006 (2112636.345.000) 2026-10-18 23:31:44 Image size of job updated: 599128
+	285  -  MemoryUsage of job (MB)
+	291412  -  ResidentSetSize of job (KB)
+...
+006 (2112636.345.000) 2026-10-18 23:36:45 Image size of job updated: 599128
+	298  -  MemoryUsage of job (MB)
+	304644  -  ResidentSetSize of job (KB)
+...
+006 (2112636.345.000) 2026-10-18 23:41:45 Image size of job updated: 600064
+	354  -  MemoryUsage of job (MB)
+	361480  -  ResidentSetSize of job (KB)
+...
+006 (2112636.345.000) 2026-10-18 23:46:46 Image size of job updated: 600064
+	503  -  MemoryUsage of job (MB)
+	514780  -  ResidentSetSize of job (KB)
+...
+006 (2112636.345.000) 2026-10-18 23:51:46 Image size of job updated: 600064
+	527  -  MemoryUsage of job (MB)
+	539356  -  ResidentSetSize of job (KB)
+...
+040 (2112636.345.000) 2026-10-19 00:22:08 Finished transferring output files
+...
+005 (2112636.345.000) 2026-10-19 00:22:08 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:58:07, Sys 0 00:06:09  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:58:07, Sys 0 00:06:09  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :     0.99        1         1 
+	   Disk (KB)            :    23     1048576   1051726 
+	   GPUs                 :                           0 
+	   Memory (MB)          :   527        4096      4096 
+	   TimeExecute (s)      :  3935                       
+	   TimeSlotBusy (s)     :  3935                       
+...
+000 (2129038.028.000) 2026-10-23 00:15:48 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+009 (2129038.028.000) 2026-10-23 00:16:16 Job was aborted.
+	removed because <OtherJobRemoveRequirements = DAGManJobId =?= 2129033> fired when job (2129033.0) was removed
+...

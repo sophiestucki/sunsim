@@ -1,0 +1,60 @@
+000 (2118651.041.000) 2026-10-20 18:16:36 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: days
+...
+040 (2118651.041.000) 2026-10-20 18:31:52 Started transferring input files
+	Transferring to host: <192.168.101.116:9618?addrs=192.168.101.116-9618+[2001-67c-1148-301--406]-9618&alias=tds406.pic.es&noUDP&sock=slot1_26_19509_9af2_4445>
+...
+040 (2118651.041.000) 2026-10-20 18:31:52 Finished transferring input files
+...
+001 (2118651.041.000) 2026-10-20 18:31:52 Job executing on host: <192.168.101.116:9618?addrs=192.168.101.116-9618+[2001-67c-1148-301--406]-9618&alias=tds406.pic.es&noUDP&sock=startd_19457_764c>
+	SlotName: slot1_26@tds406.pic.es
+	CondorScratchDir = "/home/execute/dir_39746"
+	Cpus = 10
+	Disk = 2100294
+	GPUs = 0
+	Memory = 8192
+...
+006 (2118651.041.000) 2026-10-20 18:32:01 Image size of job updated: 38688
+	38  -  MemoryUsage of job (MB)
+	38688  -  ResidentSetSize of job (KB)
+...
+006 (2118651.041.000) 2026-10-20 18:37:02 Image size of job updated: 135552
+	133  -  MemoryUsage of job (MB)
+	135552  -  ResidentSetSize of job (KB)
+...
+006 (2118651.041.000) 2026-10-20 18:42:02 Image size of job updated: 136580
+	134  -  MemoryUsage of job (MB)
+	136580  -  ResidentSetSize of job (KB)
+...
+006 (2118651.041.000) 2026-10-20 18:47:03 Image size of job updated: 1447848
+	955  -  MemoryUsage of job (MB)
+	977680  -  ResidentSetSize of job (KB)
+...
+006 (2118651.041.000) 2026-10-20 18:52:03 Image size of job updated: 1453016
+	955  -  MemoryUsage of job (MB)
+	977892  -  ResidentSetSize of job (KB)
+...
+006 (2118651.041.000) 2026-10-20 18:57:04 Image size of job updated: 1792456
+	956  -  MemoryUsage of job (MB)
+	978008  -  ResidentSetSize of job (KB)
+...
+040 (2118651.041.000) 2026-10-20 18:58:01 Finished transferring output files
+...
+004 (2118651.041.000) 2026-10-20 18:58:01 Job was evicted. Code 1009 Subcode 0
+	(0) CPU times
+		Usr 0 00:00:31, Sys 0 00:00:13  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Reason: Claim deactivated
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :     0.01       10        10 
+	   Disk (KB)            : 65234     2097152   2100294 
+	   GPUs                 :                           0 
+	   Memory (MB)          :   956        8192      8192 
+	   TimeExecute (s)      :  1569                       
+	   TimeSlotBusy (s)     :  1569                       
+...
+009 (2118651.041.000) 2026-10-20 18:58:01 Job was aborted.
+	Node Error: DAG node days (2118651.47.0) reached failure tolerance after 1 failures. (by user sstucki)
+...

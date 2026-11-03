@@ -1,0 +1,595 @@
+000 (2137717.000.000) 2026-10-27 00:11:59 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: grids
+...
+001 (2137717.000.000) 2026-10-27 00:16:52 Job executing on host: <192.168.100.7:9618?addrs=192.168.100.7-9618+[2001-67c-1148-301--105]-9618&alias=td105.pic.es&noUDP&sock=startd_9619_6993>
+	SlotName: slot1_9@td105.pic.es
+	CondorScratchDir = "/home/execute/dir_2608866"
+	Cpus = 10
+	Disk = 10498135
+	GPUs = 0
+	Memory = 16384
+...
+005 (2137717.000.000) 2026-10-27 00:18:12 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:01:08, Sys 0 00:00:09  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:01:08, Sys 0 00:00:09  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	692  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	692  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0       10        10 
+	   Disk (KB)            :       23 10485760  10498135 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      314    16384     16384 
+	   TimeExecute (s)      :       79                    
+	   TimeSlotBusy (s)     :       79                    
+...
+035 (2137718.-01.000) 2026-10-27 00:18:19 Cluster submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2137718.000.000) 2026-10-27 00:18:20 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2137718.001.000) 2026-10-27 00:18:20 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2137718.010.000) 2026-10-27 00:18:20 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2137718.011.000) 2026-10-27 00:18:20 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2137718.012.000) 2026-10-27 00:18:20 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2137718.013.000) 2026-10-27 00:18:20 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2137718.014.000) 2026-10-27 00:18:20 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2137718.015.000) 2026-10-27 00:18:20 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2137718.016.000) 2026-10-27 00:18:20 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2137718.017.000) 2026-10-27 00:18:20 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2137718.002.000) 2026-10-27 00:18:20 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2137718.003.000) 2026-10-27 00:18:20 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2137718.004.000) 2026-10-27 00:18:20 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2137718.005.000) 2026-10-27 00:18:20 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2137718.006.000) 2026-10-27 00:18:20 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2137718.007.000) 2026-10-27 00:18:20 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2137718.008.000) 2026-10-27 00:18:20 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2137718.009.000) 2026-10-27 00:18:20 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+001 (2137718.000.000) 2026-10-27 00:18:20 Job executing on host: <192.168.100.7:9618?addrs=192.168.100.7-9618+[2001-67c-1148-301--105]-9618&alias=td105.pic.es&noUDP&sock=startd_9619_6993>
+	SlotName: slot1_9@td105.pic.es
+	CondorScratchDir = "/home/execute/dir_2646102"
+	Cpus = 10
+	Disk = 10498135
+	GPUs = 0
+	Memory = 16384
+...
+001 (2137718.001.000) 2026-10-27 00:18:32 Job executing on host: <192.168.100.7:9618?addrs=192.168.100.7-9618+[2001-67c-1148-301--105]-9618&alias=td105.pic.es&noUDP&sock=startd_9619_6993>
+	SlotName: slot1_40@td105.pic.es
+	CondorScratchDir = "/home/execute/dir_2653950"
+	Cpus = 8
+	Disk = 1060951
+	GPUs = 0
+	Memory = 16384
+...
+005 (2137718.001.000) 2026-10-27 00:19:30 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:42, Sys 0 00:00:39  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:42, Sys 0 00:00:39  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :       23  1048576   1060951 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      250    16384     16384 
+	   TimeExecute (s)      :       57                    
+	   TimeSlotBusy (s)     :       57                    
+...
+001 (2137718.002.000) 2026-10-27 00:19:31 Job executing on host: <192.168.100.7:9618?addrs=192.168.100.7-9618+[2001-67c-1148-301--105]-9618&alias=td105.pic.es&noUDP&sock=startd_9619_6993>
+	SlotName: slot1_40@td105.pic.es
+	CondorScratchDir = "/home/execute/dir_2675267"
+	Cpus = 8
+	Disk = 1060951
+	GPUs = 0
+	Memory = 16384
+...
+005 (2137718.000.000) 2026-10-27 00:19:41 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:52, Sys 0 00:00:59  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:52, Sys 0 00:00:59  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :     2.50        8        10 
+	   Disk (KB)            :    23     1048576  10498135 
+	   GPUs                 :                           0 
+	   Memory (MB)          :   394       16384     16384 
+	   TimeExecute (s)      :    80                       
+	   TimeSlotBusy (s)     :    80                       
+...
+001 (2137718.003.000) 2026-10-27 00:19:41 Job executing on host: <192.168.100.7:9618?addrs=192.168.100.7-9618+[2001-67c-1148-301--105]-9618&alias=td105.pic.es&noUDP&sock=startd_9619_6993>
+	SlotName: slot1_9@td105.pic.es
+	CondorScratchDir = "/home/execute/dir_2676448"
+	Cpus = 10
+	Disk = 10498135
+	GPUs = 0
+	Memory = 16384
+...
+005 (2137718.002.000) 2026-10-27 00:19:56 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:56, Sys 0 00:00:04  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:56, Sys 0 00:00:04  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :                 8         8 
+	   Disk (KB)            :       16  1048576   1060951 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      375    16384     16384 
+	   TimeExecute (s)      :       24                    
+	   TimeSlotBusy (s)     :       25                    
+...
+001 (2137718.004.000) 2026-10-27 00:19:56 Job executing on host: <192.168.100.7:9618?addrs=192.168.100.7-9618+[2001-67c-1148-301--105]-9618&alias=td105.pic.es&noUDP&sock=startd_9619_6993>
+	SlotName: slot1_40@td105.pic.es
+	CondorScratchDir = "/home/execute/dir_2677778"
+	Cpus = 8
+	Disk = 1060951
+	GPUs = 0
+	Memory = 16384
+...
+005 (2137718.003.000) 2026-10-27 00:20:07 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:51, Sys 0 00:00:03  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:51, Sys 0 00:00:03  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8        10 
+	   Disk (KB)            :       23  1048576  10498135 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      450    16384     16384 
+	   TimeExecute (s)      :       25                    
+	   TimeSlotBusy (s)     :       25                    
+...
+001 (2137718.005.000) 2026-10-27 00:20:07 Job executing on host: <192.168.100.7:9618?addrs=192.168.100.7-9618+[2001-67c-1148-301--105]-9618&alias=td105.pic.es&noUDP&sock=startd_9619_6993>
+	SlotName: slot1_9@td105.pic.es
+	CondorScratchDir = "/home/execute/dir_2678519"
+	Cpus = 10
+	Disk = 10498135
+	GPUs = 0
+	Memory = 16384
+...
+005 (2137718.004.000) 2026-10-27 00:20:19 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:55, Sys 0 00:00:03  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:55, Sys 0 00:00:03  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :       23  1048576   1060951 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      375    16384     16384 
+	   TimeExecute (s)      :       22                    
+	   TimeSlotBusy (s)     :       22                    
+...
+001 (2137718.006.000) 2026-10-27 00:20:19 Job executing on host: <192.168.100.7:9618?addrs=192.168.100.7-9618+[2001-67c-1148-301--105]-9618&alias=td105.pic.es&noUDP&sock=startd_9619_6993>
+	SlotName: slot1_40@td105.pic.es
+	CondorScratchDir = "/home/execute/dir_2679739"
+	Cpus = 8
+	Disk = 1060951
+	GPUs = 0
+	Memory = 16384
+...
+005 (2137718.005.000) 2026-10-27 00:20:28 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:49, Sys 0 00:00:02  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:49, Sys 0 00:00:02  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8        10 
+	   Disk (KB)            :       23  1048576  10498135 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      448    16384     16384 
+	   TimeExecute (s)      :       20                    
+	   TimeSlotBusy (s)     :       20                    
+...
+001 (2137718.007.000) 2026-10-27 00:20:28 Job executing on host: <192.168.100.7:9618?addrs=192.168.100.7-9618+[2001-67c-1148-301--105]-9618&alias=td105.pic.es&noUDP&sock=startd_9619_6993>
+	SlotName: slot1_9@td105.pic.es
+	CondorScratchDir = "/home/execute/dir_2680443"
+	Cpus = 10
+	Disk = 10498135
+	GPUs = 0
+	Memory = 16384
+...
+001 (2137718.009.000) 2026-10-27 00:20:37 Job executing on host: <192.168.101.86:9618?addrs=192.168.101.86-9618+[2001-67c-1148-301--86]-9618&alias=gpu09.pic.es&noUDP&sock=startd_2299_8052>
+	SlotName: slot1_1@gpu09.pic.es
+	AvailableGPUs = {  }
+	CondorScratchDir = "/home/execute/dir_64519"
+	Cpus = 8
+	Disk = 1050053
+	GPUs = 0
+	Memory = 16384
+...
+001 (2137718.008.000) 2026-10-27 00:20:37 Job executing on host: <192.168.102.26:9618?addrs=192.168.102.26-9618+[2001-67c-1148-301--816]-9618&alias=td816.pic.es&noUDP&sock=startd_23936_aefe>
+	SlotName: slot1_8@td816.pic.es
+	CondorScratchDir = "/home/execute/dir_3327632"
+	Cpus = 8
+	Disk = 1051682
+	GPUs = 0
+	Memory = 16384
+...
+005 (2137718.006.000) 2026-10-27 00:20:43 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:45, Sys 0 00:00:03  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:45, Sys 0 00:00:03  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :     1.50        8         8 
+	   Disk (KB)            :    23     1048576   1060951 
+	   GPUs                 :                           0 
+	   Memory (MB)          :   448       16384     16384 
+	   TimeExecute (s)      :    24                       
+	   TimeSlotBusy (s)     :    24                       
+...
+001 (2137718.010.000) 2026-10-27 00:20:44 Job executing on host: <192.168.100.7:9618?addrs=192.168.100.7-9618+[2001-67c-1148-301--105]-9618&alias=td105.pic.es&noUDP&sock=startd_9619_6993>
+	SlotName: slot1_40@td105.pic.es
+	CondorScratchDir = "/home/execute/dir_2683445"
+	Cpus = 8
+	Disk = 1060951
+	GPUs = 0
+	Memory = 16384
+...
+005 (2137718.007.000) 2026-10-27 00:20:50 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:52, Sys 0 00:00:03  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:52, Sys 0 00:00:03  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8        10 
+	   Disk (KB)            :       23  1048576  10498135 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      375    16384     16384 
+	   TimeExecute (s)      :       21                    
+	   TimeSlotBusy (s)     :       22                    
+...
+001 (2137718.011.000) 2026-10-27 00:20:51 Job executing on host: <192.168.100.7:9618?addrs=192.168.100.7-9618+[2001-67c-1148-301--105]-9618&alias=td105.pic.es&noUDP&sock=startd_9619_6993>
+	SlotName: slot1_9@td105.pic.es
+	CondorScratchDir = "/home/execute/dir_2684432"
+	Cpus = 10
+	Disk = 10498135
+	GPUs = 0
+	Memory = 16384
+...
+005 (2137718.009.000) 2026-10-27 00:20:53 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:30, Sys 0 00:00:03  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:30, Sys 0 00:00:03  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :       25  1048576   1050053 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      431    16384     16384 
+	   TimeExecute (s)      :       16                    
+	   TimeSlotBusy (s)     :       16                    
+...
+001 (2137718.012.000) 2026-10-27 00:20:53 Job executing on host: <192.168.101.86:9618?addrs=192.168.101.86-9618+[2001-67c-1148-301--86]-9618&alias=gpu09.pic.es&noUDP&sock=startd_2299_8052>
+	SlotName: slot1_1@gpu09.pic.es
+	AvailableGPUs = {  }
+	CondorScratchDir = "/home/execute/dir_64841"
+	Cpus = 8
+	Disk = 1050053
+	GPUs = 0
+	Memory = 16384
+...
+001 (2137718.014.000) 2026-10-27 00:21:02 Job executing on host: <192.168.101.86:9618?addrs=192.168.101.86-9618+[2001-67c-1148-301--86]-9618&alias=gpu09.pic.es&noUDP&sock=startd_2299_8052>
+	SlotName: slot1_3@gpu09.pic.es
+	AvailableGPUs = {  }
+	CondorScratchDir = "/home/execute/dir_64988"
+	Cpus = 8
+	Disk = 1050053
+	GPUs = 0
+	Memory = 16384
+...
+001 (2137718.013.000) 2026-10-27 00:21:02 Job executing on host: <192.168.101.87:9618?addrs=192.168.101.87-9618+[2001-67c-1148-301--87]-9618&alias=gpu10.pic.es&noUDP&sock=startd_5635_b843>
+	SlotName: slot1_17@gpu10.pic.es
+	AvailableGPUs = {  }
+	CondorScratchDir = "/home/execute/dir_2836136"
+	Cpus = 8
+	Disk = 1055159
+	GPUs = 0
+	Memory = 16384
+...
+005 (2137718.010.000) 2026-10-27 00:21:06 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:41, Sys 0 00:00:04  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:41, Sys 0 00:00:04  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :                 8         8 
+	   Disk (KB)            :       16  1048576   1060951 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      478    16384     16384 
+	   TimeExecute (s)      :       21                    
+	   TimeSlotBusy (s)     :       21                    
+...
+001 (2137718.015.000) 2026-10-27 00:21:07 Job executing on host: <192.168.100.7:9618?addrs=192.168.100.7-9618+[2001-67c-1148-301--105]-9618&alias=td105.pic.es&noUDP&sock=startd_9619_6993>
+	SlotName: slot1_40@td105.pic.es
+	CondorScratchDir = "/home/execute/dir_2686342"
+	Cpus = 8
+	Disk = 1060951
+	GPUs = 0
+	Memory = 16384
+...
+005 (2137718.012.000) 2026-10-27 00:21:09 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:29, Sys 0 00:00:02  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:29, Sys 0 00:00:02  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :       25  1048576   1050053 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      376    16384     16384 
+	   TimeExecute (s)      :       16                    
+	   TimeSlotBusy (s)     :       16                    
+...
+001 (2137718.016.000) 2026-10-27 00:21:09 Job executing on host: <192.168.101.86:9618?addrs=192.168.101.86-9618+[2001-67c-1148-301--86]-9618&alias=gpu09.pic.es&noUDP&sock=startd_2299_8052>
+	SlotName: slot1_1@gpu09.pic.es
+	AvailableGPUs = {  }
+	CondorScratchDir = "/home/execute/dir_65149"
+	Cpus = 8
+	Disk = 1050053
+	GPUs = 0
+	Memory = 16384
+...
+005 (2137718.011.000) 2026-10-27 00:21:12 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:45, Sys 0 00:00:04  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:45, Sys 0 00:00:04  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :                 8        10 
+	   Disk (KB)            :       16  1048576  10498135 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      519    16384     16384 
+	   TimeExecute (s)      :       20                    
+	   TimeSlotBusy (s)     :       20                    
+...
+001 (2137718.017.000) 2026-10-27 00:21:13 Job executing on host: <192.168.100.7:9618?addrs=192.168.100.7-9618+[2001-67c-1148-301--105]-9618&alias=td105.pic.es&noUDP&sock=startd_9619_6993>
+	SlotName: slot1_9@td105.pic.es
+	CondorScratchDir = "/home/execute/dir_2687371"
+	Cpus = 10
+	Disk = 10498135
+	GPUs = 0
+	Memory = 16384
+...
+005 (2137718.014.000) 2026-10-27 00:21:15 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:29, Sys 0 00:00:02  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:29, Sys 0 00:00:02  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :     4.19        8         8 
+	   Disk (KB)            :    25     1048576   1050053 
+	   GPUs                 :                           0 
+	   Memory (MB)          :    77       16384     16384 
+	   TimeExecute (s)      :    12                       
+	   TimeSlotBusy (s)     :    12                       
+...
+005 (2137718.013.000) 2026-10-27 00:21:15 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:23, Sys 0 00:00:02  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:23, Sys 0 00:00:02  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :       25  1048576   1055159 
+	   GPUs                 :                           0 
+	   Memory (MB)          :       61    16384     16384 
+	   TimeExecute (s)      :       12                    
+	   TimeSlotBusy (s)     :       13                    
+...
+005 (2137718.016.000) 2026-10-27 00:21:24 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:31, Sys 0 00:00:03  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:31, Sys 0 00:00:03  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :       25  1048576   1050053 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      376    16384     16384 
+	   TimeExecute (s)      :       15                    
+	   TimeSlotBusy (s)     :       15                    
+...
+005 (2137718.015.000) 2026-10-27 00:21:31 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:50, Sys 0 00:00:04  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:50, Sys 0 00:00:04  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :     1.44        8         8 
+	   Disk (KB)            :    23     1048576   1060951 
+	   GPUs                 :                           0 
+	   Memory (MB)          :   407       16384     16384 
+	   TimeExecute (s)      :    23                       
+	   TimeSlotBusy (s)     :    24                       
+...
+005 (2137718.017.000) 2026-10-27 00:21:35 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:50, Sys 0 00:00:03  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:50, Sys 0 00:00:03  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8        10 
+	   Disk (KB)            :       23  1048576  10498135 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      362    16384     16384 
+	   TimeExecute (s)      :       21                    
+	   TimeSlotBusy (s)     :       22                    
+...
+005 (2137718.008.000) 2026-10-27 00:21:42 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:01:48, Sys 0 00:00:28  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:01:48, Sys 0 00:00:28  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :       23  1048576   1051682 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      274    16384     16384 
+	   TimeExecute (s)      :       64                    
+	   TimeSlotBusy (s)     :       64                    
+...
+036 (2137718.-01.000) 2026-10-27 00:21:42 Cluster removed
+	Materialized 18 jobs from -1 items.	Complete
+...
+016 (2137718.000.000) 2026-10-27 00:21:45 POST Script terminated.
+	(1) Normal termination (return value 0)
+    DAG Node: sets
+...
+000 (2137719.000.000) 2026-10-27 00:21:55 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: collect
+...
+001 (2137719.000.000) 2026-10-27 00:22:18 Job executing on host: <192.168.102.29:9618?addrs=192.168.102.29-9618+[2001-67c-1148-301--819]-9618&alias=td819.pic.es&noUDP&sock=startd_24505_f861>
+	SlotName: slot1_38@td819.pic.es
+	CondorScratchDir = "/home/execute/dir_1786268"
+	Cpus = 1
+	Disk = 1051699
+	GPUs = 0
+	Memory = 4096
+...
+005 (2137719.000.000) 2026-10-27 00:22:38 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:12, Sys 0 00:00:02  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:12, Sys 0 00:00:02  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	4817  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	4817  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        1         1 
+	   Disk (KB)            :       27  1048576   1051699 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      166     4096      4096 
+	   TimeExecute (s)      :       19                    
+	   TimeSlotBusy (s)     :       19                    
+...

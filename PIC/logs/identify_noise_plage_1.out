@@ -1,0 +1,27 @@
+block 1 / 80: 39 days with images (2015-08-26 to 2015-10-03), 39 to do; 28 sets of thresholds, 4 worker(s)
+[1/39] 2015-08-26: 28 sets, ff_sp 0.086 %, ff_fc 8.916 % (first set) | 87 s, ~55 min left
+[2/39] 2015-08-27: 28 sets, ff_sp 0.059 %, ff_fc 9.071 % (first set) | 88 s, ~27 min left
+[3/39] 2015-08-28: 28 sets, ff_sp 0.034 %, ff_fc 8.977 % (first set) | 88 s, ~18 min left
+[4/39] 2015-08-29: 28 sets, ff_sp 0.014 %, ff_fc 8.862 % (first set) | 88 s, ~13 min left
+[5/39] 2015-08-30: 28 sets, ff_sp 0.001 %, ff_fc 8.652 % (first set) | 163 s, ~19 min left
+[6/39] 2015-08-31: 28 sets, ff_sp 0.001 %, ff_fc 8.526 % (first set) | 164 s, ~15 min left
+[7/39] 2015-09-01: 28 sets, ff_sp 0.001 %, ff_fc 8.476 % (first set) | 169 s, ~13 min left
+[8/39] 2015-09-02: 28 sets, ff_sp 0.003 %, ff_fc 8.367 % (first set) | 170 s, ~11 min left
+[9/39] 2015-09-03: 28 sets, ff_sp 0.002 %, ff_fc 8.255 % (first set) | 242 s, ~13 min left
+[10/39] 2015-09-04: 28 sets, ff_sp 0.003 %, ff_fc 8.117 % (first set) | 242 s, ~12 min left
+[11/39] 2015-09-05: 28 sets, ff_sp 0.003 %, ff_fc 8.036 % (first set) | 253 s, ~11 min left
+[12/39] 2015-09-06: 28 sets, ff_sp 0.002 %, ff_fc 7.911 % (first set) | 253 s, ~9 min left
+[13/39] 2015-09-07: 28 sets, ff_sp 0.004 %, ff_fc 7.934 % (first set) | 321 s, ~11 min left
+[14/39] 2015-09-08: 28 sets, ff_sp 0.006 %, ff_fc 7.842 % (first set) | 321 s, ~10 min left
+[15/39] 2015-09-09: 28 sets, ff_sp 0.005 %, ff_fc 7.735 % (first set) | 335 s, ~9 min left
+[16/39] 2015-09-10: 28 sets, ff_sp 0.005 %, ff_fc 7.643 % (first set) | 339 s, ~8 min left
+[17/39] 2015-09-11: 28 sets, ff_sp 0.003 %, ff_fc 7.587 % (first set) | 399 s, ~9 min left
+[18/39] 2015-09-12: 28 sets, ff_sp 0.030 %, ff_fc 7.691 % (first set) | 400 s, ~8 min left
+[19/39] 2015-09-13: 28 sets, ff_sp 0.027 %, ff_fc 7.627 % (first set) | 414 s, ~7 min left
+[20/39] 2015-09-14: 28 sets, ff_sp 0.025 %, ff_fc 7.740 % (first set) | 421 s, ~7 min left
+[21/39] 2015-09-15: 28 sets, ff_sp 0.028 %, ff_fc 7.794 % (first set) | 479 s, ~7 min left
+[22/39] 2015-09-16: 28 sets, ff_sp 0.034 %, ff_fc 7.941 % (first set) | 480 s, ~6 min left
+[23/39] 2015-09-17: 28 sets, ff_sp 0.041 %, ff_fc 8.061 % (first set) | 492 s, ~6 min left
+[24/39] 2015-09-18: 28 sets, ff_sp 0.041 %, ff_fc 8.174 % (first set) | 498 s, ~5 min left
+[25/39] 2015-09-19: 28 sets, ff_sp 0.040 %, ff_fc 8.463 % (first set) | 560 s, ~5 min left
+[26/39] 2015-09-20: 28 sets, ff_sp 0.032 %, ff_fc 8.654 % (first set) | 560 s, ~5 min left

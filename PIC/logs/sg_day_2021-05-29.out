@@ -1,0 +1,11 @@
+17:00:20 2021-05-29: 13 exposures
+17:00:29 13 exposures matched to 8 epochs (|dt| max 346 s)
+17:00:32 to do: 8 of 8 epochs (~0.4 GB), 283 of 283 frames of 45 s (~5.1 GB); all deleted after processing
+17:02:09 [8/8] epochs, 97 s, ~0 min left
+17:05:08 [50/283] frames, 179 s, ~14 min left
+17:09:55 [100/283] frames, 466 s, ~14 min left
+17:12:46 [150/283] frames, 637 s, ~9 min left
+17:15:19 [200/283] frames, 791 s, ~5 min left
+17:17:58 [250/283] frames, 950 s, ~2 min left
+17:21:43 [283/283] frames, 1174 s, ~0 min left
+17:21:43 2021-05-29 done: 8 / 8 epochs, 283 / 283 frames, 0 failed

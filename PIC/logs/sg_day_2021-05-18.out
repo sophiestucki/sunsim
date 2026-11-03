@@ -1,0 +1,10 @@
+16:13:10 2021-05-18: 6 exposures
+16:13:16 6 exposures matched to 5 epochs (|dt| max 291 s)
+16:13:18 to do: 5 of 5 epochs (~0.2 GB), 204 of 204 frames of 45 s (~3.7 GB); all deleted after processing
+16:14:21 [5/5] epochs, 63 s, ~0 min left
+16:17:26 [50/204] frames, 185 s, ~10 min left
+16:20:01 [100/204] frames, 340 s, ~6 min left
+16:22:48 [150/204] frames, 507 s, ~3 min left
+16:25:33 [200/204] frames, 672 s, ~0 min left
+16:25:49 [204/204] frames, 688 s, ~0 min left
+16:25:49 2021-05-18 done: 5 / 5 epochs, 204 / 204 frames, 0 failed

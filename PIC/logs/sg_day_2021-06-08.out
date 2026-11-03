@@ -1,0 +1,8 @@
+17:50:11 2021-06-08: 6 exposures
+17:50:17 6 exposures matched to 4 epochs (|dt| max 338 s)
+17:50:19 to do: 4 of 4 epochs (~0.2 GB), 117 of 117 frames of 45 s (~2.1 GB); all deleted after processing
+17:51:09 [4/4] epochs, 50 s, ~0 min left
+17:53:52 [50/117] frames, 164 s, ~4 min left
+18:00:02 [100/117] frames, 534 s, ~2 min left
+18:01:04 [117/117] frames, 595 s, ~0 min left
+18:01:04 2021-06-08 done: 4 / 4 epochs, 117 / 117 frames, 0 failed

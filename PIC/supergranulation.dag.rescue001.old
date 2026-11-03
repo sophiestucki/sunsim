@@ -1,0 +1,11 @@
+# Rescue DAG file, created after running
+#   the supergranulation.dag DAG file
+# Created 10/19/2026 20:27:13 UTC
+# Rescue DAG version: 2.0.1 (partial)
+#
+# Total number of Nodes: 2
+# Nodes premarked DONE: 1
+# Nodes that failed: 1
+#   collect,<ENDLIST>
+
+DONE days

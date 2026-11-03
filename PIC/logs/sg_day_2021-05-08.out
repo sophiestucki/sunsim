@@ -1,0 +1,17 @@
+14:41:46 2021-05-08: 61 exposures
+14:41:52 60 exposures matched to 28 epochs (|dt| max 756 s)
+14:41:55 to do: 28 of 28 epochs (~1.4 GB), 498 of 498 frames of 45 s (~9.0 GB); all deleted after processing
+14:44:06 [10/28] epochs, 131 s, ~4 min left
+14:46:46 [20/28] epochs, 292 s, ~2 min left
+14:49:46 [28/28] epochs, 472 s, ~0 min left
+14:52:40 [50/498] frames, 174 s, ~26 min left
+14:55:31 [100/498] frames, 344 s, ~23 min left
+14:58:20 [150/498] frames, 513 s, ~20 min left
+15:01:18 [200/498] frames, 692 s, ~17 min left
+15:04:27 [250/498] frames, 881 s, ~15 min left
+15:07:12 [300/498] frames, 1045 s, ~11 min left
+15:10:48 [350/498] frames, 1262 s, ~9 min left
+15:13:32 [400/498] frames, 1425 s, ~6 min left
+15:16:05 [450/498] frames, 1579 s, ~3 min left
+15:18:51 [498/498] frames, 1745 s, ~0 min left
+15:18:51 2021-05-08 done: 28 / 28 epochs, 498 / 498 frames, 0 failed

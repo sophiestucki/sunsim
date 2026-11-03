@@ -1,0 +1,46 @@
+000 (2125833.056.000) 2026-10-21 15:36:08 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+009 (2125833.056.000) 2026-10-21 15:36:34 Job was aborted.
+	Node Error: DAG node sets (2125833.18.0) reached failure tolerance after 1 failures. (by user sstucki)
+...
+000 (2126756.056.000) 2026-10-21 19:44:45 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+040 (2126756.056.000) 2026-10-21 19:49:40 Started transferring input files
+	Transferring to host: <192.168.101.230:9618?addrs=192.168.101.230-9618+[2001-67c-1148-301--530]-9618&alias=tds530.pic.es&noUDP&sock=slot1_10_17700_0049_17864>
+...
+040 (2126756.056.000) 2026-10-21 19:49:40 Finished transferring input files
+...
+001 (2126756.056.000) 2026-10-21 19:49:40 Job executing on host: <192.168.101.230:9618?addrs=192.168.101.230-9618+[2001-67c-1148-301--530]-9618&alias=tds530.pic.es&noUDP&sock=startd_17665_4c96>
+	SlotName: slot1_10@tds530.pic.es
+	CondorScratchDir = "/home/execute/dir_3185699"
+	Cpus = 1
+	Disk = 1051732
+	GPUs = 0
+	Memory = 2048
+...
+006 (2126756.056.000) 2026-10-21 19:49:49 Image size of job updated: 446916
+	146  -  MemoryUsage of job (MB)
+	148552  -  ResidentSetSize of job (KB)
+...
+040 (2126756.056.000) 2026-10-21 19:49:50 Finished transferring output files
+...
+005 (2126756.056.000) 2026-10-21 19:49:50 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:06, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:06, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        1         1 
+	   Disk (KB)            :       23  1048576   1051732 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      146     2048      2048 
+	   TimeExecute (s)      :       10                    
+	   TimeSlotBusy (s)     :       10                    
+...

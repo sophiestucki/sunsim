@@ -1,0 +1,11 @@
+# Rescue DAG file, created after running
+#   the sweep_fraction.dag DAG file
+# Created 10/22/2026 22:16:15 UTC
+# Rescue DAG version: 2.0.1 (partial)
+#
+# Total number of Nodes: 5
+# Nodes premarked DONE: 1
+# Nodes that failed: 0
+#   <ENDLIST>
+
+DONE grids

@@ -1,0 +1,41 @@
+block 18 / 80: 39 days with images (2017-06-25 to 2017-08-02), 39 to do; 28 sets of thresholds, 4 worker(s)
+[1/39] 2017-06-25: 28 sets, ff_sp 0.007 %, ff_fc 6.760 % (first set) | 55 s, ~35 min left
+[2/39] 2017-06-26: 28 sets, ff_sp 0.008 %, ff_fc 6.762 % (first set) | 69 s, ~21 min left
+[3/39] 2017-06-27: 28 sets, ff_sp 0.008 %, ff_fc 6.730 % (first set) | 69 s, ~14 min left
+[4/39] 2017-06-28: 28 sets, ff_sp 0.006 %, ff_fc 6.755 % (first set) | 69 s, ~10 min left
+[5/39] 2017-06-29: 28 sets, ff_sp 0.004 %, ff_fc 6.697 % (first set) | 69 s, ~8 min left
+[6/39] 2017-06-30: 28 sets, ff_sp 0.003 %, ff_fc 6.725 % (first set) | 108 s, ~10 min left
+[7/39] 2017-07-01: 28 sets, ff_sp 0.002 %, ff_fc 6.710 % (first set) | 108 s, ~8 min left
+[8/39] 2017-07-02: 28 sets, ff_sp 0.001 %, ff_fc 6.694 % (first set) | 124 s, ~8 min left
+[9/39] 2017-07-03: 28 sets, ff_sp 0.000 %, ff_fc 6.686 % (first set) | 124 s, ~7 min left
+[10/39] 2017-07-04: 28 sets, ff_sp 0.000 %, ff_fc 6.591 % (first set) | 124 s, ~6 min left
+[11/39] 2017-07-05: 28 sets, ff_sp 0.000 %, ff_fc 6.660 % (first set) | 126 s, ~5 min left
+[12/39] 2017-07-06: 28 sets, ff_sp 0.002 %, ff_fc 6.717 % (first set) | 166 s, ~6 min left
+[13/39] 2017-07-07: 28 sets, ff_sp 0.009 %, ff_fc 6.835 % (first set) | 181 s, ~6 min left
+[14/39] 2017-07-08: 28 sets, ff_sp 0.020 %, ff_fc 6.851 % (first set) | 181 s, ~5 min left
+[15/39] 2017-07-09: 28 sets, ff_sp 0.043 %, ff_fc 6.965 % (first set) | 181 s, ~5 min left
+[16/39] 2017-07-10: 28 sets, ff_sp 0.055 %, ff_fc 7.059 % (first set) | 181 s, ~4 min left
+[17/39] 2017-07-11: 28 sets, ff_sp 0.053 %, ff_fc 7.226 % (first set) | 214 s, ~5 min left
+[18/39] 2017-07-12: 28 sets, ff_sp 0.050 %, ff_fc 7.351 % (first set) | 214 s, ~4 min left
+[19/39] 2017-07-13: 28 sets, ff_sp 0.047 %, ff_fc 7.520 % (first set) | 229 s, ~4 min left
+[20/39] 2017-07-14: 28 sets, ff_sp 0.044 %, ff_fc 7.685 % (first set) | 229 s, ~4 min left
+[21/39] 2017-07-15: 28 sets, ff_sp 0.034 %, ff_fc 7.637 % (first set) | 229 s, ~3 min left
+[22/39] 2017-07-16: 28 sets, ff_sp 0.023 %, ff_fc 7.475 % (first set) | 263 s, ~3 min left
+[23/39] 2017-07-17: 28 sets, ff_sp 0.011 %, ff_fc 7.267 % (first set) | 263 s, ~3 min left
+[24/39] 2017-07-18: 28 sets, ff_sp 0.002 %, ff_fc 7.005 % (first set) | 272 s, ~3 min left
+[25/39] 2017-07-19: 28 sets, ff_sp 0.000 %, ff_fc 6.849 % (first set) | 272 s, ~3 min left
+[26/39] 2017-07-20: 28 sets, ff_sp 0.000 %, ff_fc 6.827 % (first set) | 272 s, ~2 min left
+[27/39] 2017-07-21: 28 sets, ff_sp 0.000 %, ff_fc 6.777 % (first set) | 284 s, ~2 min left
+[28/39] 2017-07-22: 28 sets, ff_sp 0.000 %, ff_fc 6.738 % (first set) | 286 s, ~2 min left
+2017-07-23: images not readable (Failed to read /data/spotless/scratch/sstucki/starsim/SDO_data/hmi.ic_nolimbdark_720s.20170723_120000_TAI.3.continuum.fi), skipped
+[30/39] 2017-07-24: 28 sets, ff_sp 0.000 %, ff_fc 6.668 % (first set) | 321 s, ~2 min left
+[31/39] 2017-07-25: 28 sets, ff_sp 0.000 %, ff_fc 6.713 % (first set) | 333 s, ~1 min left
+[32/39] 2017-07-26: 28 sets, ff_sp 0.000 %, ff_fc 6.768 % (first set) | 333 s, ~1 min left
+[33/39] 2017-07-27: 28 sets, ff_sp 0.000 %, ff_fc 6.729 % (first set) | 333 s, ~1 min left
+[34/39] 2017-07-28: 28 sets, ff_sp 0.000 %, ff_fc 6.770 % (first set) | 338 s, ~1 min left
+[35/39] 2017-07-29: 28 sets, ff_sp 0.000 %, ff_fc 6.762 % (first set) | 340 s, ~1 min left
+[36/39] 2017-07-30: 28 sets, ff_sp 0.001 %, ff_fc 6.713 % (first set) | 368 s, ~1 min left
+[37/39] 2017-07-31: 28 sets, ff_sp 0.000 %, ff_fc 6.664 % (first set) | 374 s, ~0 min left
+[38/39] 2017-08-01: 28 sets, ff_sp 0.000 %, ff_fc 6.662 % (first set) | 377 s, ~0 min left
+[39/39] 2017-08-02: 28 sets, ff_sp 0.004 %, ff_fc 6.790 % (first set) | 379 s, ~0 min left
+block 18 done: 39 days in 0.1 h, 1 skipped

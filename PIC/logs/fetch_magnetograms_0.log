@@ -1,0 +1,70 @@
+035 (2129044.-01.000) 2026-10-23 00:17:16 Cluster submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: download
+...
+000 (2129044.000.000) 2026-10-23 00:17:16 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: download
+...
+040 (2129044.000.000) 2026-10-23 00:17:32 Started transferring input files
+	Transferring to host: <192.168.101.118:9618?addrs=192.168.101.118-9618+[2001-67c-1148-301--408]-9618&alias=tds408.pic.es&noUDP&sock=slot1_58_19458_abd0_13920>
+...
+040 (2129044.000.000) 2026-10-23 00:17:32 Finished transferring input files
+...
+001 (2129044.000.000) 2026-10-23 00:17:32 Job executing on host: <192.168.101.118:9618?addrs=192.168.101.118-9618+[2001-67c-1148-301--408]-9618&alias=tds408.pic.es&noUDP&sock=startd_19424_d3ac>
+	SlotName: slot1_58@tds408.pic.es
+	CondorScratchDir = "/home/execute/dir_311028"
+	Cpus = 1
+	Disk = 1051730
+	GPUs = 0
+	Memory = 2048
+...
+006 (2129044.000.000) 2026-10-23 00:17:41 Image size of job updated: 66172
+	65  -  MemoryUsage of job (MB)
+	66172  -  ResidentSetSize of job (KB)
+...
+006 (2129044.000.000) 2026-10-23 00:22:41 Image size of job updated: 247712
+	242  -  MemoryUsage of job (MB)
+	247712  -  ResidentSetSize of job (KB)
+...
+006 (2129044.000.000) 2026-10-23 00:27:41 Image size of job updated: 271408
+	243  -  MemoryUsage of job (MB)
+	247884  -  ResidentSetSize of job (KB)
+...
+006 (2129044.000.000) 2026-10-23 00:32:42 Image size of job updated: 271408
+	243  -  MemoryUsage of job (MB)
+	247936  -  ResidentSetSize of job (KB)
+...
+006 (2129044.000.000) 2026-10-23 00:37:43 Image size of job updated: 271408
+	243  -  MemoryUsage of job (MB)
+	248196  -  ResidentSetSize of job (KB)
+...
+006 (2129044.000.000) 2026-10-23 00:42:44 Image size of job updated: 271408
+	243  -  MemoryUsage of job (MB)
+	248432  -  ResidentSetSize of job (KB)
+...
+006 (2129044.000.000) 2026-10-23 00:45:37 Image size of job updated: 314084
+	243  -  MemoryUsage of job (MB)
+	248432  -  ResidentSetSize of job (KB)
+...
+040 (2129044.000.000) 2026-10-23 00:45:37 Finished transferring output files
+...
+005 (2129044.000.000) 2026-10-23 00:45:37 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:01:34, Sys 0 00:00:49  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:01:34, Sys 0 00:00:49  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :     0.07        1         1 
+	   Disk (KB)            :    23     1048576   1051730 
+	   GPUs                 :                           0 
+	   Memory (MB)          :   243        2048      2048 
+	   TimeExecute (s)      :  1685                       
+	   TimeSlotBusy (s)     :  1685                       
+...
+036 (2129044.-01.000) 2026-10-23 01:27:47 Cluster removed
+	Materialized 30 jobs from 0 items.	Complete
+...

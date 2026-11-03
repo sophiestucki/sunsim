@@ -1,0 +1,5 @@
+01:23:13 2021-05-15: 71 exposures
+01:23:18 71 exposures matched to 33 epochs (|dt| max 706 s)
+01:23:36 to do: 0 of 33 epochs (~0.0 GB), 0 of 545 frames of 45 s (~0.0 GB); all deleted after processing
+01:23:39 JPL: v_sun -15.590 to -15.585 m/s, minus berv_bary_to_helio: 0.0003 m/s at most
+01:23:39 2021-05-15 done: 33 / 33 epochs, 545 / 545 frames, 0 failed

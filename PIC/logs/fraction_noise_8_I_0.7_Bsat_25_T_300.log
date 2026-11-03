@@ -1,0 +1,142 @@
+035 (2125793.-01.000) 2026-10-21 14:56:02 Cluster submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2125793.000.000) 2026-10-21 14:56:02 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+040 (2125793.000.000) 2026-10-21 14:56:30 Started transferring input files
+	Transferring to host: <192.168.101.149:9618?addrs=192.168.101.149-9618+[2001-67c-1148-301--439]-9618&alias=tds439.pic.es&noUDP&sock=slot1_19_21545_26c5_4566>
+...
+040 (2125793.000.000) 2026-10-21 14:56:30 Finished transferring input files
+...
+001 (2125793.000.000) 2026-10-21 14:56:30 Job executing on host: <192.168.101.149:9618?addrs=192.168.101.149-9618+[2001-67c-1148-301--439]-9618&alias=tds439.pic.es&noUDP&sock=startd_21483_212d>
+	SlotName: slot1_19@tds439.pic.es
+	CondorScratchDir = "/home/execute/dir_1657612"
+	Cpus = 1
+	Disk = 1051741
+	GPUs = 0
+	Memory = 2048
+...
+006 (2125793.000.000) 2026-10-21 14:56:33 Image size of job updated: 88
+	0  -  MemoryUsage of job (MB)
+	0  -  ResidentSetSize of job (KB)
+...
+040 (2125793.000.000) 2026-10-21 14:56:33 Finished transferring output files
+...
+005 (2125793.000.000) 2026-10-21 14:56:33 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        1         1 
+	   Disk (KB)            :       22  1048576   1051741 
+	   GPUs                 :                           0 
+	   Memory (MB)          :        0     2048      2048 
+	   TimeExecute (s)      :        3                    
+	   TimeSlotBusy (s)     :        3                    
+...
+036 (2125793.-01.000) 2026-10-21 14:56:33 Cluster removed
+	Materialized 1 jobs from -1 items.	Complete
+...
+035 (2125802.-01.000) 2026-10-21 15:01:58 Cluster submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2125802.000.000) 2026-10-21 15:01:58 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+040 (2125802.000.000) 2026-10-21 15:02:23 Started transferring input files
+	Transferring to host: <192.168.101.148:9618?addrs=192.168.101.148-9618+[2001-67c-1148-301--438]-9618&alias=tds438.pic.es&noUDP&sock=slot1_94_19357_81ec_4799>
+...
+040 (2125802.000.000) 2026-10-21 15:02:23 Finished transferring input files
+...
+001 (2125802.000.000) 2026-10-21 15:02:23 Job executing on host: <192.168.101.148:9618?addrs=192.168.101.148-9618+[2001-67c-1148-301--438]-9618&alias=tds438.pic.es&noUDP&sock=startd_19307_9318>
+	SlotName: slot1_94@tds438.pic.es
+	CondorScratchDir = "/home/execute/dir_712613"
+	Cpus = 1
+	Disk = 1051747
+	GPUs = 0
+	Memory = 2048
+...
+006 (2125802.000.000) 2026-10-21 15:02:26 Image size of job updated: 16
+	0  -  MemoryUsage of job (MB)
+	0  -  ResidentSetSize of job (KB)
+...
+040 (2125802.000.000) 2026-10-21 15:02:26 Finished transferring output files
+...
+005 (2125802.000.000) 2026-10-21 15:02:26 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        1         1 
+	   Disk (KB)            :       23  1048576   1051747 
+	   GPUs                 :                           0 
+	   Memory (MB)          :        0     2048      2048 
+	   TimeExecute (s)      :        3                    
+	   TimeSlotBusy (s)     :        3                    
+...
+036 (2125802.-01.000) 2026-10-21 15:02:26 Cluster removed
+	Materialized 1 jobs from -1 items.	Complete
+...
+035 (2125815.-01.000) 2026-10-21 15:09:48 Cluster submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+000 (2125815.000.000) 2026-10-21 15:09:48 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+040 (2125815.000.000) 2026-10-21 15:09:56 Started transferring input files
+	Transferring to host: <192.168.101.134:9618?addrs=192.168.101.134-9618+[2001-67c-1148-301--424]-9618&alias=tds424.pic.es&noUDP&sock=slot1_85_3812_a614_13893>
+...
+040 (2125815.000.000) 2026-10-21 15:09:56 Finished transferring input files
+...
+001 (2125815.000.000) 2026-10-21 15:09:56 Job executing on host: <192.168.101.134:9618?addrs=192.168.101.134-9618+[2001-67c-1148-301--424]-9618&alias=tds424.pic.es&noUDP&sock=startd_3227_0835>
+	SlotName: slot1_85@tds424.pic.es
+	CondorScratchDir = "/home/execute/dir_256078"
+	Cpus = 1
+	Disk = 1051726
+	GPUs = 0
+	Memory = 2048
+...
+006 (2125815.000.000) 2026-10-21 15:10:05 Image size of job updated: 398760
+	390  -  MemoryUsage of job (MB)
+	398760  -  ResidentSetSize of job (KB)
+...
+006 (2125815.000.000) 2026-10-21 15:10:15 Image size of job updated: 440088
+	394  -  MemoryUsage of job (MB)
+	402796  -  ResidentSetSize of job (KB)
+...
+040 (2125815.000.000) 2026-10-21 15:10:15 Finished transferring output files
+...
+005 (2125815.000.000) 2026-10-21 15:10:16 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:12, Sys 0 00:00:02  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:12, Sys 0 00:00:02  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        1         1 
+	   Disk (KB)            :       23  1048576   1051726 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      394     2048      2048 
+	   TimeExecute (s)      :       19                    
+	   TimeSlotBusy (s)     :       19                    
+...
+036 (2125815.-01.000) 2026-10-21 15:10:16 Cluster removed
+	Materialized 1 jobs from -1 items.	Complete
+...

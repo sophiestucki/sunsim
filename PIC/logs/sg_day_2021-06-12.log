@@ -1,0 +1,52 @@
+000 (2118651.042.000) 2026-10-20 18:28:42 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: days
+...
+040 (2118651.042.000) 2026-10-20 18:31:51 Started transferring input files
+	Transferring to host: <192.168.100.2:9618?addrs=192.168.100.2-9618+[2001-67c-1148-301--100]-9618&alias=td100.pic.es&noUDP&sock=slot1_60_10715_6fcd_23948>
+...
+040 (2118651.042.000) 2026-10-20 18:31:51 Finished transferring input files
+...
+001 (2118651.042.000) 2026-10-20 18:31:51 Job executing on host: <192.168.100.2:9618?addrs=192.168.100.2-9618+[2001-67c-1148-301--100]-9618&alias=td100.pic.es&noUDP&sock=startd_9422_496a>
+	SlotName: slot1_60@td100.pic.es
+	CondorScratchDir = "/home/execute/dir_303375"
+	Cpus = 10
+	Disk = 2110221
+	GPUs = 0
+	Memory = 8192
+...
+006 (2118651.042.000) 2026-10-20 18:32:00 Image size of job updated: 132840
+	130  -  MemoryUsage of job (MB)
+	132840  -  ResidentSetSize of job (KB)
+...
+006 (2118651.042.000) 2026-10-20 18:37:01 Image size of job updated: 1967044
+	1040  -  MemoryUsage of job (MB)
+	1064748  -  ResidentSetSize of job (KB)
+...
+006 (2118651.042.000) 2026-10-20 18:47:02 Image size of job updated: 1967044
+	1040  -  MemoryUsage of job (MB)
+	1064764  -  ResidentSetSize of job (KB)
+...
+006 (2118651.042.000) 2026-10-20 18:52:02 Image size of job updated: 1967044
+	1040  -  MemoryUsage of job (MB)
+	1064768  -  ResidentSetSize of job (KB)
+...
+040 (2118651.042.000) 2026-10-20 18:56:34 Finished transferring output files
+...
+005 (2118651.042.000) 2026-10-20 18:56:35 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:05:36, Sys 0 00:02:48  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:05:36, Sys 0 00:02:48  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :     0.46       10        10 
+	   Disk (KB)            : 16407     2097152   2110221 
+	   GPUs                 :                           0 
+	   Memory (MB)          :  1040        8192      8192 
+	   TimeExecute (s)      :  1483                       
+	   TimeSlotBusy (s)     :  1483                       
+...

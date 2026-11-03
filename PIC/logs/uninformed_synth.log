@@ -1,0 +1,45 @@
+000 (2139924.000.000) 2026-10-27 22:44:33 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: synth
+...
+040 (2139924.000.000) 2026-10-27 22:44:35 Started transferring input files
+	Transferring to host: <192.168.101.87:9618?addrs=192.168.101.87-9618+[2001-67c-1148-301--87]-9618&alias=gpu10.pic.es&noUDP&sock=slot1_12_6242_cdb7_4345>
+...
+040 (2139924.000.000) 2026-10-27 22:44:35 Finished transferring input files
+...
+001 (2139924.000.000) 2026-10-27 22:44:35 Job executing on host: <192.168.101.87:9618?addrs=192.168.101.87-9618+[2001-67c-1148-301--87]-9618&alias=gpu10.pic.es&noUDP&sock=startd_5635_b843>
+	SlotName: slot1_12@gpu10.pic.es
+	AvailableGPUs = {  }
+	CondorScratchDir = "/home/execute/dir_1850778"
+	Cpus = 16
+	Disk = 2103735
+	GPUs = 0
+	Memory = 32768
+...
+006 (2139924.000.000) 2026-10-27 22:44:43 Image size of job updated: 3658360
+	3573  -  MemoryUsage of job (MB)
+	3658360  -  ResidentSetSize of job (KB)
+...
+006 (2139924.000.000) 2026-10-27 22:45:49 Image size of job updated: 8937236
+	3578  -  MemoryUsage of job (MB)
+	3663728  -  ResidentSetSize of job (KB)
+...
+040 (2139924.000.000) 2026-10-27 22:45:49 Finished transferring output files
+...
+005 (2139924.000.000) 2026-10-27 22:45:49 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:25:44, Sys 0 00:00:07  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:25:44, Sys 0 00:00:07  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        6        16 
+	   Disk (KB)            :       25  1048576   2103735 
+	   GPUs                 :                           0 
+	   Memory (MB)          :     3578    16384     32768 
+	   TimeExecute (s)      :       74                    
+	   TimeSlotBusy (s)     :       74                    
+...

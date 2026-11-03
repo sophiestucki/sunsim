@@ -1,0 +1,17 @@
+05:09:15 2021-06-22: 52 exposures
+05:09:19 52 exposures matched to 24 epochs (|dt| max 665 s)
+05:09:22 to do: 24 of 24 epochs (~0.8 GB), 405 of 405 frames of 45 s (~7.3 GB); all deleted after processing
+05:09:25 JPL: v_sun -12.361 to -12.326 m/s, minus berv_bary_to_helio: 0.0010 m/s at most
+05:17:38 [1/24] epoch 2021.06.22_09:36:00_TAI (18 frames), 493 s, ~189 min left
+05:21:59 [2/24] epoch 2021.06.22_09:48:00_TAI (16 frames), 754 s, ~138 min left
+05:25:34 [3/24] epoch 2021.06.22_10:00:00_TAI (16 frames), 969 s, ~113 min left
+05:27:28 [4/24] epoch 2021.06.22_10:12:00_TAI (17 frames), 1083 s, ~90 min left
+05:29:11 [5/24] epoch 2021.06.22_10:24:00_TAI (16 frames), 1186 s, ~75 min left
+05:30:31 [6/24] epoch 2021.06.22_10:36:00_TAI (16 frames), 1266 s, ~63 min left
+05:34:30 [7/24] epoch 2021.06.22_10:48:00_TAI (16 frames), 1505 s, ~61 min left
+05:35:53 [8/24] epoch 2021.06.22_11:00:00_TAI (16 frames), 1588 s, ~53 min left
+05:37:09 [9/24] epoch 2021.06.22_11:12:00_TAI (16 frames), 1664 s, ~46 min left
+05:38:27 [10/24] epoch 2021.06.22_11:24:00_TAI (16 frames), 1742 s, ~41 min left
+05:40:11 [11/24] epoch 2021.06.22_11:36:00_TAI (16 frames), 1846 s, ~36 min left
+05:41:33 [12/24] epoch 2021.06.22_11:48:00_TAI (15 frames), 1928 s, ~32 min left
+05:42:55 [13/24] epoch 2021.06.22_12:00:00_TAI (16 frames), 2010 s, ~28 min left

@@ -1,0 +1,44 @@
+000 (2136988.023.000) 2026-10-26 14:22:16 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: ident
+...
+040 (2136988.023.000) 2026-10-26 14:28:51 Started transferring input files
+	Transferring to host: <192.168.101.143:9618?addrs=192.168.101.143-9618+[2001-67c-1148-301--433]-9618&alias=tds433.pic.es&noUDP&sock=slot1_13_22389_d368_6244>
+...
+040 (2136988.023.000) 2026-10-26 14:28:51 Finished transferring input files
+...
+001 (2136988.023.000) 2026-10-26 14:28:51 Job executing on host: <192.168.101.143:9618?addrs=192.168.101.143-9618+[2001-67c-1148-301--433]-9618&alias=tds433.pic.es&noUDP&sock=startd_22323_4cbb>
+	SlotName: slot1_13@tds433.pic.es
+	CondorScratchDir = "/home/execute/dir_898832"
+	Cpus = 4
+	Disk = 1051719
+	GPUs = 0
+	Memory = 20480
+...
+006 (2136988.023.000) 2026-10-26 14:29:00 Image size of job updated: 2024688
+	1978  -  MemoryUsage of job (MB)
+	2024688  -  ResidentSetSize of job (KB)
+...
+006 (2136988.023.000) 2026-10-26 14:31:57 Image size of job updated: 6321608
+	1990  -  MemoryUsage of job (MB)
+	2037012  -  ResidentSetSize of job (KB)
+...
+040 (2136988.023.000) 2026-10-26 14:31:57 Finished transferring output files
+...
+004 (2136988.023.000) 2026-10-26 14:31:57 Job was evicted. Code 1009 Subcode 0
+	(0) CPU times
+		Usr 0 00:09:38, Sys 0 00:02:13  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Reason: Claim deactivated
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :     3.94        4         4 
+	   Disk (KB)            :    23     1048576   1051719 
+	   GPUs                 :                           0 
+	   Memory (MB)          :  1990       20480     20480 
+	   TimeExecute (s)      :   186                       
+	   TimeSlotBusy (s)     :   186                       
+...
+009 (2136988.023.000) 2026-10-26 14:31:57 Job was aborted.
+	Node Error: DAG node ident (2136988.18.0) reached failure tolerance after 1 failures. (by user sstucki)
+...

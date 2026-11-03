@@ -1,0 +1,50 @@
+000 (2125833.079.000) 2026-10-21 15:36:08 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+009 (2125833.079.000) 2026-10-21 15:36:34 Job was aborted.
+	Node Error: DAG node sets (2125833.18.0) reached failure tolerance after 1 failures. (by user sstucki)
+...
+000 (2126756.079.000) 2026-10-21 19:44:45 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: sets
+...
+040 (2126756.079.000) 2026-10-21 19:50:14 Started transferring input files
+	Transferring to host: <192.168.101.132:9618?addrs=192.168.101.132-9618&alias=tds422.pic.es&noUDP&sock=slot1_65_3792_8e93_14043>
+...
+040 (2126756.079.000) 2026-10-21 19:50:14 Finished transferring input files
+...
+001 (2126756.079.000) 2026-10-21 19:50:14 Job executing on host: <192.168.101.132:9618?addrs=192.168.101.132-9618&alias=tds422.pic.es&noUDP&sock=startd_3201_32bf>
+	SlotName: slot1_65@tds422.pic.es
+	CondorScratchDir = "/home/execute/dir_2118221"
+	Cpus = 1
+	Disk = 1051723
+	GPUs = 0
+	Memory = 2048
+...
+006 (2126756.079.000) 2026-10-21 19:50:23 Image size of job updated: 419676
+	410  -  MemoryUsage of job (MB)
+	419676  -  ResidentSetSize of job (KB)
+...
+006 (2126756.079.000) 2026-10-21 19:50:37 Image size of job updated: 440116
+	410  -  MemoryUsage of job (MB)
+	419676  -  ResidentSetSize of job (KB)
+...
+040 (2126756.079.000) 2026-10-21 19:50:38 Finished transferring output files
+...
+005 (2126756.079.000) 2026-10-21 19:50:38 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:14, Sys 0 00:00:01  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:14, Sys 0 00:00:01  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        1         1 
+	   Disk (KB)            :       22  1048576   1051723 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      410     2048      2048 
+	   TimeExecute (s)      :       24                    
+	   TimeSlotBusy (s)     :       24                    
+...

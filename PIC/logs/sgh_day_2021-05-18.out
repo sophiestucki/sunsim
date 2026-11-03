@@ -1,0 +1,10 @@
+01:47:45 2021-05-18: 6 exposures
+01:47:49 6 exposures matched to 5 epochs (|dt| max 291 s)
+01:47:51 to do: 5 of 5 epochs (~0.2 GB), 97 of 97 frames of 45 s (~1.7 GB); all deleted after processing
+01:47:52 JPL: v_sun -15.521 to -15.514 m/s, minus berv_bary_to_helio: 0.0002 m/s at most
+01:49:26 [1/5] epoch 2021.05.18_08:48:00_TAI (25 frames), 93 s, ~6 min left
+01:50:27 [2/5] epoch 2021.05.18_11:00:00_TAI (18 frames), 155 s, ~4 min left
+01:51:37 [3/5] epoch 2021.05.18_11:24:00_TAI (18 frames), 224 s, ~2 min left
+01:52:41 [4/5] epoch 2021.05.18_12:12:00_TAI (18 frames), 288 s, ~1 min left
+01:53:48 [5/5] epoch 2021.05.18_14:12:00_TAI (18 frames), 355 s, ~0 min left
+01:53:48 2021-05-18 done: 5 / 5 epochs, 97 / 97 frames, 0 failed

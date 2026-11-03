@@ -1,0 +1,37 @@
+block 19 / 80: 39 days with images (2017-08-03 to 2017-09-10), 39 to do; 28 sets of thresholds, 4 worker(s)
+2017-08-03: images not readable (Failed to read /data/spotless/scratch/sstucki/starsim/SDO_data/hmi.m_45s.20170803_120045_TAI.2.magnetogram.fits), skipped
+[2/39] 2017-08-04: 28 sets, ff_sp 0.011 %, ff_fc 7.048 % (first set) | 44 s, ~13 min left
+[3/39] 2017-08-05: 28 sets, ff_sp 0.012 %, ff_fc 7.157 % (first set) | 44 s, ~9 min left
+[4/39] 2017-08-06: 28 sets, ff_sp 0.013 %, ff_fc 7.308 % (first set) | 57 s, ~8 min left
+[5/39] 2017-08-07: 28 sets, ff_sp 0.012 %, ff_fc 7.327 % (first set) | 57 s, ~6 min left
+[6/39] 2017-08-08: 28 sets, ff_sp 0.012 %, ff_fc 7.359 % (first set) | 81 s, ~7 min left
+[7/39] 2017-08-09: 28 sets, ff_sp 0.011 %, ff_fc 7.426 % (first set) | 82 s, ~6 min left
+[8/39] 2017-08-10: 28 sets, ff_sp 0.010 %, ff_fc 7.454 % (first set) | 89 s, ~6 min left
+[9/39] 2017-08-11: 28 sets, ff_sp 0.008 %, ff_fc 7.285 % (first set) | 105 s, ~6 min left
+[10/39] 2017-08-12: 28 sets, ff_sp 0.005 %, ff_fc 7.203 % (first set) | 112 s, ~5 min left
+[11/39] 2017-08-13: 28 sets, ff_sp 0.002 %, ff_fc 7.051 % (first set) | 114 s, ~5 min left
+[12/39] 2017-08-14: 28 sets, ff_sp 0.000 %, ff_fc 6.884 % (first set) | 120 s, ~5 min left
+[13/39] 2017-08-15: 28 sets, ff_sp 0.001 %, ff_fc 6.852 % (first set) | 142 s, ~5 min left
+[14/39] 2017-08-16: 28 sets, ff_sp 0.008 %, ff_fc 6.930 % (first set) | 152 s, ~5 min left
+[15/39] 2017-08-17: 28 sets, ff_sp 0.019 %, ff_fc 7.057 % (first set) | 152 s, ~4 min left
+[16/39] 2017-08-18: 28 sets, ff_sp 0.030 %, ff_fc 7.060 % (first set) | 159 s, ~4 min left
+[17/39] 2017-08-19: 28 sets, ff_sp 0.033 %, ff_fc 7.158 % (first set) | 176 s, ~4 min left
+[18/39] 2017-08-20: 28 sets, ff_sp 0.040 %, ff_fc 7.114 % (first set) | 184 s, ~4 min left
+[19/39] 2017-08-21: 28 sets, ff_sp 0.041 %, ff_fc 7.301 % (first set) | 185 s, ~3 min left
+[20/39] 2017-08-22: 28 sets, ff_sp 0.037 %, ff_fc 7.453 % (first set) | 193 s, ~3 min left
+[21/39] 2017-08-23: 28 sets, ff_sp 0.035 %, ff_fc 7.498 % (first set) | 218 s, ~3 min left
+[22/39] 2017-08-24: 28 sets, ff_sp 0.032 %, ff_fc 7.534 % (first set) | 222 s, ~3 min left
+[23/39] 2017-08-25: 28 sets, ff_sp 0.025 %, ff_fc 7.370 % (first set) | 222 s, ~3 min left
+[24/39] 2017-08-26: 28 sets, ff_sp 0.016 %, ff_fc 7.245 % (first set) | 234 s, ~2 min left
+[25/39] 2017-08-27: 28 sets, ff_sp 0.009 %, ff_fc 7.126 % (first set) | 262 s, ~2 min left
+[26/39] 2017-08-28: 28 sets, ff_sp 0.007 %, ff_fc 7.060 % (first set) | 262 s, ~2 min left
+[27/39] 2017-08-29: 28 sets, ff_sp 0.006 %, ff_fc 7.090 % (first set) | 262 s, ~2 min left
+[28/39] 2017-08-30: 28 sets, ff_sp 0.015 %, ff_fc 7.279 % (first set) | 277 s, ~2 min left
+[29/39] 2017-08-31: 28 sets, ff_sp 0.029 %, ff_fc 7.484 % (first set) | 310 s, ~2 min left
+[30/39] 2017-09-01: 28 sets, ff_sp 0.051 %, ff_fc 7.617 % (first set) | 310 s, ~2 min left
+[31/39] 2017-09-02: 28 sets, ff_sp 0.065 %, ff_fc 7.607 % (first set) | 310 s, ~1 min left
+[32/39] 2017-09-03: 28 sets, ff_sp 0.082 %, ff_fc 7.942 % (first set) | 312 s, ~1 min left
+[33/39] 2017-09-04: 28 sets, ff_sp 0.125 %, ff_fc 8.260 % (first set) | 337 s, ~1 min left
+[34/39] 2017-09-05: 28 sets, ff_sp 0.146 %, ff_fc 8.435 % (first set) | 338 s, ~1 min left
+[35/39] 2017-09-06: 28 sets, ff_sp 0.138 %, ff_fc 8.566 % (first set) | 346 s, ~1 min left
+[36/39] 2017-09-07: 28 sets, ff_sp 0.128 %, ff_fc 8.555 % (first set) | 347 s, ~0 min left

@@ -1,0 +1,21 @@
+block 49 / 80: 39 days with images (2020-10-22 to 2020-11-29), 39 to do; 28 sets of thresholds, 4 worker(s)
+[1/39] 2020-10-22: 28 sets, ff_sp 0.004 %, ff_fc 6.891 % (first set) | 29 s, ~19 min left
+[2/39] 2020-10-23: 28 sets, ff_sp 0.003 %, ff_fc 6.971 % (first set) | 31 s, ~10 min left
+[3/39] 2020-10-24: 28 sets, ff_sp 0.002 %, ff_fc 7.009 % (first set) | 31 s, ~6 min left
+[4/39] 2020-10-25: 28 sets, ff_sp 0.001 %, ff_fc 7.084 % (first set) | 31 s, ~5 min left
+[5/39] 2020-10-26: 28 sets, ff_sp 0.005 %, ff_fc 7.211 % (first set) | 54 s, ~6 min left
+[6/39] 2020-10-27: 28 sets, ff_sp 0.007 %, ff_fc 7.596 % (first set) | 55 s, ~5 min left
+[7/39] 2020-10-28: 28 sets, ff_sp 0.016 %, ff_fc 7.497 % (first set) | 55 s, ~4 min left
+[8/39] 2020-10-29: 28 sets, ff_sp 0.019 %, ff_fc 7.443 % (first set) | 57 s, ~4 min left
+[9/39] 2020-10-30: 28 sets, ff_sp 0.009 %, ff_fc 7.266 % (first set) | 79 s, ~4 min left
+[10/39] 2020-10-31: 28 sets, ff_sp 0.003 %, ff_fc 7.166 % (first set) | 80 s, ~4 min left
+[11/39] 2020-11-01: 28 sets, ff_sp 0.000 %, ff_fc 6.761 % (first set) | 80 s, ~3 min left
+[12/39] 2020-11-02: 28 sets, ff_sp 0.000 %, ff_fc 6.731 % (first set) | 83 s, ~3 min left
+[13/39] 2020-11-03: 28 sets, ff_sp 0.001 %, ff_fc 6.801 % (first set) | 105 s, ~3 min left
+[14/39] 2020-11-04: 28 sets, ff_sp 0.007 %, ff_fc 6.967 % (first set) | 106 s, ~3 min left
+[15/39] 2020-11-05: 28 sets, ff_sp 0.020 %, ff_fc 7.163 % (first set) | 106 s, ~3 min left
+[16/39] 2020-11-06: 28 sets, ff_sp 0.030 %, ff_fc 7.196 % (first set) | 109 s, ~3 min left
+[17/39] 2020-11-07: 28 sets, ff_sp 0.026 %, ff_fc 7.346 % (first set) | 132 s, ~3 min left
+[18/39] 2020-11-08: 28 sets, ff_sp 0.024 %, ff_fc 7.436 % (first set) | 134 s, ~3 min left
+[19/39] 2020-11-09: 28 sets, ff_sp 0.019 %, ff_fc 7.392 % (first set) | 134 s, ~2 min left
+[20/39] 2020-11-10: 28 sets, ff_sp 0.014 %, ff_fc 7.329 % (first set) | 138 s, ~2 min left

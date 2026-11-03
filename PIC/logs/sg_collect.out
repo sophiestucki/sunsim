@@ -1,0 +1,44 @@
+19:07:51 2008 exposures on 38 days, 974 epochs, 45 s frames on 38 days
+19:07:52 calibration: scale 0.9886-1.0188, north-south -71 to -32 m/s/R, disc velocity std 2.81 -> 1.13 m/s (OBS_VR polynomial of degree 2)
+19:07:53 p modes for 1949 of 2008 exposures
+19:08:09 3 simulations of 2008 exposures: 16 s
+    quantity                         model  days  exposures  median r  days with r > 0 [%]  median slope  RMS obs (intra-day)  RMS obs - sim (intra-day)
+0         rv                          maps    37       2004     0.073               54.054         3.552                0.531                      0.529
+1         rv            maps + dopplergram    37       2004     0.430               89.189         0.384                0.531                      0.619
+2         rv  maps + dopplergram + p modes    37       2004     0.521               94.595         0.411                0.531                      0.624
+3       fwhm                          maps    37       2004     0.023               54.054         1.768                1.262                      1.263
+4       fwhm            maps + dopplergram    37       2004     0.206               75.676         0.616                1.262                      1.272
+5       fwhm  maps + dopplergram + p modes    37       2004     0.212               75.676         0.560                1.262                      1.269
+6        bis                          maps    37       2004    -0.034               43.243        -4.727                0.743                      0.742
+7        bis            maps + dopplergram    37       2004    -0.326               10.811        -0.481                0.743                      1.097
+8        bis  maps + dopplergram + p modes    37       2004    -0.311               10.811        -0.464                0.743                      1.098
+9   contrast                          maps    37       2004     0.037               51.351         0.808              142.774                    142.737
+10  contrast            maps + dopplergram    37       2004     0.184               78.378         0.481              142.774                    144.043
+11  contrast  maps + dopplergram + p modes    37       2004     0.243               89.189         0.411              142.774                    143.614
+    quantity                         model  days  RMS obs  MAD obs  RMS obs - sim  MAD obs - sim      r  slope  slope_err  sim std
+0         rv                          maps    37    0.825    0.371          0.657          0.518  0.641  1.500      0.303    0.353
+1         rv            maps + dopplergram    37    0.825    0.371          1.105          0.699  0.256  0.217      0.138    0.976
+2         rv  maps + dopplergram + p modes    37    0.825    0.371          1.105          0.748  0.256  0.216      0.138    0.976
+3       fwhm                          maps    37    0.919    0.611          0.862          0.601  0.367  1.463      0.626    0.231
+4       fwhm            maps + dopplergram    37    0.919    0.611          0.800          0.491  0.494  0.925      0.276    0.490
+5       fwhm  maps + dopplergram + p modes    37    0.919    0.611          0.796          0.438  0.500  0.940      0.275    0.489
+6        bis                          maps    37    0.522    0.397          0.534          0.355 -0.003 -0.014      0.785    0.112
+7        bis            maps + dopplergram    37    0.522    0.397          0.767          0.442 -0.186 -0.205      0.183    0.474
+8        bis  maps + dopplergram + p modes    37    0.522    0.397          0.769          0.431 -0.184 -0.202      0.182    0.477
+9   contrast                          maps    37  149.218   91.225        147.662        115.713  0.173  0.643      0.619   40.144
+10  contrast            maps + dopplergram    37  149.218   91.225        154.492        106.823  0.186  0.363      0.324   76.531
+11  contrast  maps + dopplergram + p modes    37  149.218   91.225        154.656        113.295  0.183  0.358      0.325   76.381
+    quantity                         model  exposures  RMS obs  MAD obs  RMS obs - sim  MAD obs - sim      r  slope  slope_err  sim std
+0         rv                          maps       2008    0.995    0.669          0.848          0.593  0.571  1.673      0.054    0.340
+1         rv            maps + dopplergram       2008    0.995    0.669          1.343          0.993  0.219  0.190      0.019    1.146
+2         rv  maps + dopplergram + p modes       2008    0.995    0.669          1.346          0.994  0.250  0.209      0.018    1.188
+3       fwhm                          maps       2008    1.569    1.076          1.544          1.037  0.180  1.195      0.146    0.236
+4       fwhm            maps + dopplergram       2008    1.569    1.076          1.500          0.996  0.308  0.765      0.053    0.632
+5       fwhm  maps + dopplergram + p modes       2008    1.569    1.076          1.498          1.014  0.315  0.757      0.051    0.653
+6        bis                          maps       2008    0.881    0.606          0.889          0.614 -0.008 -0.063      0.178    0.111
+7        bis            maps + dopplergram       2008    0.881    0.606          1.246          0.920 -0.292 -0.390      0.029    0.660
+8        bis  maps + dopplergram + p modes       2008    0.881    0.606          1.248          0.915 -0.288 -0.382      0.028    0.666
+9   contrast                          maps       2008  192.915  131.127        190.113        135.766  0.171  0.901      0.116   36.577
+10  contrast            maps + dopplergram       2008  192.915  131.127        195.955        133.145  0.203  0.429      0.046   91.401
+11  contrast  maps + dopplergram + p modes       2008  192.915  131.127        195.877        134.494  0.215  0.436      0.044   95.191
+19:08:44 results in /data/spotless/scratch/sstucki/starsim/supergranulation_2021-05-01_2021-08-01/results

@@ -1,0 +1,135 @@
+000 (2136989.000.000) 2026-10-26 14:22:16 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: grids
+...
+040 (2136989.000.000) 2026-10-26 14:23:33 Started transferring input files
+	Transferring to host: <192.168.100.9:9618?addrs=192.168.100.9-9618+[2001-67c-1148-301--107]-9618&alias=td107.pic.es&noUDP&sock=slot1_15_10875_2bd3_28976>
+...
+040 (2136989.000.000) 2026-10-26 14:23:33 Finished transferring input files
+...
+001 (2136989.000.000) 2026-10-26 14:23:33 Job executing on host: <192.168.100.9:9618?addrs=192.168.100.9-9618+[2001-67c-1148-301--107]-9618&alias=td107.pic.es&noUDP&sock=startd_9689_6d34>
+	SlotName: slot1_15@td107.pic.es
+	CondorScratchDir = "/home/execute/dir_651229"
+	Cpus = 10
+	Disk = 10498835
+	GPUs = 0
+	Memory = 16384
+...
+006 (2136989.000.000) 2026-10-26 14:23:41 Image size of job updated: 320544
+	314  -  MemoryUsage of job (MB)
+	320544  -  ResidentSetSize of job (KB)
+...
+006 (2136989.000.000) 2026-10-26 14:24:33 Image size of job updated: 398912
+	314  -  MemoryUsage of job (MB)
+	320544  -  ResidentSetSize of job (KB)
+...
+040 (2136989.000.000) 2026-10-26 14:24:33 Started transferring output files
+...
+040 (2136989.000.000) 2026-10-26 14:24:33 Finished transferring output files
+...
+005 (2136989.000.000) 2026-10-26 14:24:34 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:59, Sys 0 00:00:01  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:59, Sys 0 00:00:01  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	686  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	686  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0       10        10 
+	   Disk (KB)            :       24 10485760  10498835 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      314    16384     16384 
+	   TimeExecute (s)      :       60                    
+	   TimeSlotBusy (s)     :       60                    
+...
+000 (2138675.000.000) 2026-10-27 14:53:09 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: grids
+...
+040 (2138675.000.000) 2026-10-27 14:59:19 Started transferring input files
+	Transferring to host: <192.168.101.89:9618?addrs=192.168.101.89-9618+[2001-67c-1148-301--89]-9618&alias=gpu12.pic.es&noUDP&sock=slot1_1_6117_bad2_44088>
+...
+040 (2138675.000.000) 2026-10-27 14:59:20 Finished transferring input files
+...
+001 (2138675.000.000) 2026-10-27 14:59:20 Job executing on host: <192.168.101.89:9618?addrs=192.168.101.89-9618+[2001-67c-1148-301--89]-9618&alias=gpu12.pic.es&noUDP&sock=startd_5525_44d8>
+	SlotName: slot1_1@gpu12.pic.es
+	AvailableGPUs = {  }
+	CondorScratchDir = "/home/execute/dir_603681"
+	Cpus = 10
+	Disk = 10492182
+	GPUs = 0
+	Memory = 16384
+...
+006 (2138675.000.000) 2026-10-27 14:59:28 Image size of job updated: 340840
+	333  -  MemoryUsage of job (MB)
+	340840  -  ResidentSetSize of job (KB)
+...
+006 (2138675.000.000) 2026-10-27 14:59:59 Image size of job updated: 452156
+	333  -  MemoryUsage of job (MB)
+	340840  -  ResidentSetSize of job (KB)
+...
+040 (2138675.000.000) 2026-10-27 14:59:59 Started transferring output files
+...
+040 (2138675.000.000) 2026-10-27 14:59:59 Finished transferring output files
+...
+005 (2138675.000.000) 2026-10-27 14:59:59 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:38, Sys 0 00:00:02  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:38, Sys 0 00:00:02  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	728  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	728  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :                10        10 
+	   Disk (KB)            :       18 10485760  10492182 
+	   GPUs                 :                           0 
+	   Memory (MB)          :      333    16384     16384 
+	   TimeExecute (s)      :       39                    
+	   TimeSlotBusy (s)     :       40                    
+...
+000 (2138694.000.000) 2026-10-27 15:08:59 Job submitted from host: <193.109.174.74:9618?addrs=193.109.174.74-9618&alias=submit02.pic.es&noUDP&sock=schedd_668738_3925>
+    DAG Node: grids
+...
+040 (2138694.000.000) 2026-10-27 15:10:23 Started transferring input files
+	Transferring to host: <192.168.100.3:9618?addrs=192.168.100.3-9618+[2001-67c-1148-301--101]-9618&alias=td101.pic.es&noUDP&sock=slot1_52_10612_dd29_28444>
+...
+040 (2138694.000.000) 2026-10-27 15:10:23 Finished transferring input files
+...
+001 (2138694.000.000) 2026-10-27 15:10:23 Job executing on host: <192.168.100.3:9618?addrs=192.168.100.3-9618+[2001-67c-1148-301--101]-9618&alias=td101.pic.es&noUDP&sock=startd_9521_314b>
+	SlotName: slot1_52@td101.pic.es
+	CondorScratchDir = "/home/execute/dir_4138111"
+	Cpus = 10
+	Disk = 10498922
+	GPUs = 0
+	Memory = 16384
+...
+006 (2138694.000.000) 2026-10-27 15:10:32 Image size of job updated: 34988
+	0  -  MemoryUsage of job (MB)
+	0  -  ResidentSetSize of job (KB)
+...
+040 (2138694.000.000) 2026-10-27 15:10:32 Started transferring output files
+...
+040 (2138694.000.000) 2026-10-27 15:10:32 Finished transferring output files
+...
+005 (2138694.000.000) 2026-10-27 15:10:33 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:06, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:06, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	322  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	322  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0       10        10 
+	   Disk (KB)            :       23 10485760  10498922 
+	   GPUs                 :                           0 
+	   Memory (MB)          :        0    16384     16384 
+	   TimeExecute (s)      :        9                    
+	   TimeSlotBusy (s)     :        9                    
+...
