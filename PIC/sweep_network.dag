@@ -1,0 +1,21 @@
+# condor_submit_dag sweep_network.dag : the decade at 4096 px (60 rings, hmi.M_45s), T_sp = 500 K, ccf_norm = 2 and the
+# Dumusque bisector times mu (settings_network.sh), the parts simulated one by one (spot, plage, network full pixels,
+# network fraction B_sat; spot + plage, + network, + network fraction) for every line of parameters_network.txt
+# (noise_th, B_th, I_th, A_th, min_px, B_sat, Temp), and the noise diagnostics of the bright groups, everything in
+# ${BASE}/network:
+#   1. the grids of T_sp (build_grids_network.sub)                                              } at the same time
+#   2. identification in 80 blocks of days, every set and the noise diagnostics (identify_network.sub) }
+#   3. the days still missing, the filling factors of the parts, the noise histograms (aggregate_network.sub)
+#   4. one job per line: the simulation of the 7 parts, stats.json of the totals (run_network.sub)
+#   5. tables of the totals (collect_network.sub; it runs even if some sets failed)
+# Figures: network.ipynb
+JOB grids     build_grids_network.sub
+JOB ident     identify_network.sub
+JOB aggregate aggregate_network.sub
+JOB sets      run_network.sub
+JOB collect   collect_network.sub
+PARENT ident CHILD aggregate
+PARENT grids aggregate CHILD sets
+PARENT sets  CHILD collect
+SCRIPT POST ident /bin/true
+SCRIPT POST sets  /bin/true

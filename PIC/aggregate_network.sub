@@ -1,0 +1,20 @@
+# Condor submit file, step 3 of sweep_network.dag: the days still missing, the filling factors of the parts of every
+# set and the noise histograms, after identify_network.sub
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/aggregate_network.sh
+
+# $1 = workers
+Arguments  = "2"
+
+RequestCpus   = 2
+RequestMemory = 24GB
+RequestDisk   = 1GB
+
+Log    = logs/aggregate_network.log
+Output = logs/aggregate_network.out
+Error  = logs/aggregate_network.err
+
+stream_output = True
+stream_error  = True
+
+Queue

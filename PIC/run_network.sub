@@ -1,0 +1,21 @@
+# Condor submit file, step 4 of sweep_network.dag: the simulation of every part, one job per line of
+# parameters_network.txt, after build_grids_network.sub and aggregate_network.sub
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/run_network.sh
+
+# $1 = OMP_NUM_THREADS, $2 = noise_th, $3 = B_th, $4 = I_th, $5 = A_th, $6 = min_px, $7 = B_sat, $8 = Temp
+Arguments = "8 $(noise_th) $(B_th) $(I_th) $(A_th) $(min_px) $(B_sat) $(Temp)"
+
+max_materialize = 50
+RequestCpus   = 8
+RequestMemory = 16GB
+RequestDisk   = 1GB
+
+Log    = logs/network_noise_$(noise_th)_B_$(B_th)_I_$(I_th)_A_$(A_th)_min_$(min_px)_Bsat_$(B_sat)_T_$(Temp).log
+Output = logs/network_noise_$(noise_th)_B_$(B_th)_I_$(I_th)_A_$(A_th)_min_$(min_px)_Bsat_$(B_sat)_T_$(Temp).out
+Error  = logs/network_noise_$(noise_th)_B_$(B_th)_I_$(I_th)_A_$(A_th)_min_$(min_px)_Bsat_$(B_sat)_T_$(Temp).err
+
+stream_output = True
+stream_error  = True
+
+Queue noise_th, B_th, I_th, A_th, min_px, B_sat, Temp from parameters_network.txt
