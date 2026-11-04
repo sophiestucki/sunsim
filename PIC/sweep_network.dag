@@ -19,3 +19,4 @@ PARENT grids aggregate CHILD sets
 PARENT sets  CHILD collect
 SCRIPT POST ident /bin/true
 SCRIPT POST sets  /bin/true
+SCRIPT POST aggregate /bin/true
