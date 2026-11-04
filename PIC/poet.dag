@@ -1,0 +1,21 @@
+# condor_submit_dag poet.dag : SunSim at the times of the PoET exposures (poet_jdb.csv, BJD -> UTC at the Earth),
+# 4096 px, 60 rings, hmi.M_45s and hmi.Ic_noLimbDark_720s, everything in ${BASE}/poet (settings_poet.sh):
+#   1. one job per day of poet_days.txt: every exposure takes the closest 720 s continuum (and the 45 s magnetogram
+#      closest to it), downloaded from JSOC, identified with the two sets of thresholds of parameters_poet.txt
+#      (noise_th 8, B_th 24, mu_area 0.1, plage; I_th 0.89 and 0.9, A_th 20) and deleted (poet_day.sub)
+#   2. the filling factors of every set over all the days (poet_collect.sub; it runs even if some days failed: they
+#      are left out and listed in incomplete_days.txt)
+#   3. one simulation per line of poet_jobs.txt: every set with its T_sp (500 K with I_th 0.89, 600 K with I_th 0.9),
+#      without instrument and with PoET (R = 190000, 170 orders, Instrument.poet()), with the ESPRESSO mask and the
+#      PoET mask without the flagged lines (masks/, poet_masks.py) (poet_run.sub)
+#   4. all the simulations at every exposure in results/poet_simulations.csv (poet_table.sub)
+# Test first on a few days: condor_submit poet_day.sub with poet_days.txt cut to 3 days.
+JOB days    poet_day.sub
+JOB collect poet_collect.sub
+JOB runs    poet_run.sub
+JOB table   poet_table.sub
+PARENT days CHILD collect
+PARENT collect CHILD runs
+PARENT runs CHILD table
+SCRIPT POST days /bin/true
+SCRIPT POST runs /bin/true

@@ -11,6 +11,7 @@ Used by
                                                 them, one spectrum per order (StarSim.spec_var = {order: {...}})
 
     harps = Instrument.harps()                  # HARPS: R = 115000, the 72 orders of the files of the package
+    poet = Instrument.poet()                    # PoET: R = 190000, the 170 orders of the file of the package
     harps.observe(wavelengths, spectra)         # {order: {'wav': (n_pix,), 'flux': (n_spectra, n_pix), 'blaze': ...}}
 
 The instrument is linear in the flux (convolution, resampling, blaze), and the same for every cell of the disc: applied
@@ -101,6 +102,23 @@ class Instrument(object):
         wave = fits.getdata(os.path.join(folder, 'HARPS.2024-10-17T21-57-53.302_wave_A.fits')).astype(np.float64)
         blaze = fits.getdata(os.path.join(folder, 'HARPS.2025-12-16T23-21-06.037_blaze_A.fits')).astype(np.float64)
         return cls('HARPS', orders=(wave, blaze), efficiency=efficiency, orders_medium='air')
+
+    @classmethod
+    def poet(cls, efficiency=None):
+        """PoET: R = 190000 and the wavelengths and blaze of its 170 orders (file of sunsim/data/instruments, vacuum
+        wavelengths). The wavelengths of every order are a degree-9 Chebyshev polynomial of the pixel (x from -1 to 1
+        over the n_pix pixels); the blaze of every order is normalised to 1 at its maximum (parabola fitted to the
+        pixels with blaze >= 90 % of the maximum, analysis/poet_spectrum.ipynb); the pixels without blaze are left out.
+        efficiency: None (blaze only), or the efficiency of your PoET data (see Instrument)."""
+        from numpy.polynomial import chebyshev
+        with np.load(os.path.join(_instrument_files(), 'PoET_orders.npz')) as d:
+            x = np.linspace(-1.0, 1.0, int(d['n_pix']))
+            wave, blaze = [], []
+            for c, b in zip(d['wave_vac_cheb'], d['blaze']):
+                ok = np.isfinite(b)
+                wave.append(chebyshev.chebval(x[ok], c))
+                blaze.append(b[ok].astype(np.float64))
+        return cls('PoET', orders=(wave, blaze), efficiency=efficiency, orders_medium='vacuum')
 
     @classmethod
     def harpsn_example(cls):

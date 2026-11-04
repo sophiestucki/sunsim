@@ -1,0 +1,13 @@
+# Condor submit file, step 4: all the simulations at every exposure in one csv (after the simulations)
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/poet_table.sh
+
+RequestCpus   = 1
+RequestMemory = 4GB
+RequestDisk   = 1GB
+
+Log    = logs/poet_table.log
+Output = logs/poet_table.out
+Error  = logs/poet_table.err
+
+Queue

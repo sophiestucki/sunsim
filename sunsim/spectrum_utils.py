@@ -497,7 +497,8 @@ def interpolate_phoenix(path, temp, logg, metallicity=0.0, wavelength_lower_limi
 
 
 #resolving power of the instruments known by add_resol (a number can be given instead of a name)
-INSTRUMENT_RESOLUTION = {'EXPRESS': 137000.0, 'HARPS': 115000.0, 'HARPS-N': 118000.0, 'NEID': 120000.0}
+INSTRUMENT_RESOLUTION = {'EXPRESS': 137000.0, 'HARPS': 115000.0, 'HARPS-N': 118000.0, 'NEID': 120000.0,
+                         'PoET': 190000.0}
 
 
 def vlambda(inlamb, vstep):
@@ -522,9 +523,9 @@ def vlambda(inlamb, vstep):
 def add_resol(wavelength, flux, instrument):
     """Spectrum (wavelength [A], flux) degraded to the resolution of an instrument: convolved with a gaussian of FWHM
     c/R in velocity on a grid of constant velocity step (vlambda), then resampled on the original wavelengths.
-    instrument: a name of INSTRUMENT_RESOLUTION (EXPRESS R = 137000, HARPS 115000, HARPS-N 118000, NEID 120000) or the
-    resolving power R itself. Based on the SteParSyn broadener (Tabernero et al. 2022, two-clause BSD licence); the
-    same numbers as the old StarSim."""
+    instrument: a name of INSTRUMENT_RESOLUTION (EXPRESS R = 137000, HARPS 115000, HARPS-N 118000, NEID 120000, PoET
+    190000) or the resolving power R itself. Based on the SteParSyn broadener (Tabernero et al. 2022, two-clause BSD
+    licence); the same numbers as the old StarSim."""
     from scipy import interpolate
     from astropy.convolution import convolve_fft
     if isinstance(instrument, str):

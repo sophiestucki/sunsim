@@ -50,7 +50,8 @@ from .old_config import simulate_old_config, read_old_config, read_old_spotmap
 from .local_paths import local_path
 from . import nbspectra                 # the Numba kernels (also exported by `from sunsim import *`)
 
-#data installed with the package: orders and blaze of HARPS, efficiency of HARPS-N (Instrument.harps(), harpsn_example())
+#data installed with the package: orders and blaze of HARPS and PoET, efficiency of HARPS-N (Instrument.harps(), poet(),
+#harpsn_example())
 DATA_DIR = Path(__file__).resolve().parent / 'data'
 INSTRUMENTS_DIR = DATA_DIR / 'instruments'
 

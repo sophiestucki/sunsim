@@ -1,0 +1,13 @@
+# Condor submit file, step 2: filling factors of all the days, one folder per set of thresholds (after the days)
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/poet_collect.sh
+
+RequestCpus   = 1
+RequestMemory = 4GB
+RequestDisk   = 1GB
+
+Log    = logs/poet_collect.log
+Output = logs/poet_collect.out
+Error  = logs/poet_collect.err
+
+Queue

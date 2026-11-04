@@ -1,0 +1,20 @@
+# Condor submit file, step 3: one simulation per line of poet_jobs.txt (noise_th, I_th, A_th, Temp, instrument, mask),
+# after poet_collect.sub
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/poet_run.sh
+
+# $1 = OMP_NUM_THREADS, $2 = noise_th, $3 = I_th, $4 = A_th, $5 = Temp, $6 = instrument, $7 = mask
+Arguments = "8 $(noise_th) $(I_th) $(A_th) $(Temp) $(instrument) $(mask)"
+
+RequestCpus   = 8
+RequestMemory = 16GB
+RequestDisk   = 2GB
+
+Log    = logs/poet_run_I_$(I_th)_T_$(Temp)_$(instrument)_$(mask).log
+Output = logs/poet_run_I_$(I_th)_T_$(Temp)_$(instrument)_$(mask).out
+Error  = logs/poet_run_I_$(I_th)_T_$(Temp)_$(instrument)_$(mask).err
+
+stream_output = True
+stream_error  = True
+
+Queue noise_th, I_th, A_th, Temp, instrument, mask from poet_jobs.txt

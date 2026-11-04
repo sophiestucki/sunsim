@@ -1,0 +1,3 @@
+# noise_th I_th A_th Temp (T_sp = T_quiet - T_spot [K]); B_th 24 G, mu_area 0.1, faculae plage (sunsim.sdo defaults)
+8 0.89 20 500
+8 0.9 20 600

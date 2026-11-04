@@ -126,6 +126,8 @@ Not supported (as in the old compute_forward, or hard-coded in it): simulation_m
 ccf_template = 'model', spectral_library = 'stagger', mps_highres with highres_mu = 0 (smoothed
 ratio): a clear error or warning is given. instrument = HARPS-N with mps_highres (CCFs order by order) is converted,
 with the files of the instruments/ folder of SunSim (or the old hard-coded paths); see _instrument_ccf.
+instrument = PoET with mps_highres (not in the old code): CCFs order by order with Instrument.poet() (R = 190000, the
+170 orders of PoET, blaze normalised to 1 at the maximum of every order, no efficiency).
 """
 import os
 import re
@@ -156,6 +158,8 @@ OLD_INSTRUMENT_NAMES = {'blaze_file': 'HARPS.2025-12-16T23-21-06.037_blaze_A.fit
                         'wave_file': 'HARPS.2024-10-17T21-57-53.302_wave_A.fits',
                         'efficiency_file': 'plot-data-3.csv'}
 INSTRUMENT_FOLDER = Path(__file__).resolve().parent / 'data' / 'instruments'
+#instruments whose CCFs are computed order by order with mps_highres (_instrument_ccf)
+ORDER_INSTRUMENTS = ('HARPS-N', 'PoET')
 
 MURAM_FILES = {
     ('low', 'ph'): 'av_solar_ssd_200G_10_mu_angles_PHOENIX_low_res_specint_grid_cleaned.npy',
@@ -659,7 +663,13 @@ def _instrument_ccf(cfg, wv, flux, rv, wvm, fm, N):
     """CCF_grid that computes the CCFs order by order, as the old instrument = HARPS-N option: spectrum degraded to
     R = 118000, resampled on the 72 orders of the HARPS wavelength file, times the blaze of every order times the
     efficiency (degree-10 polynomial fitted to the efficiency table, nm -> A, as the old code), CCF of every order with
-    its mask lines, sum of the orders."""
+    its mask lines, sum of the orders. instrument = PoET: the same with Instrument.poet() (R = 190000, its 170 orders,
+    blaze only)."""
+    if cfg['instrument'] == 'PoET':
+        from .instrument import Instrument
+        return CCF_grid(N, {1.0: {'wav': wv, 'intensity': flux}}, rv, wvm, fm, normalization=bool(cfg['ccf_norm']),
+                        instrument=Instrument.poet(), mu_ratio=np.ones(N),
+                        medium='vacuum', spectrum_medium='vacuum', mask_medium='vacuum')
     absent = [k for k in INSTRUMENT_FILES if cfg.get(k) is None]
     if absent:
         raise FileNotFoundError('instrument = HARPS-N: %s not found; put %s in %s or give paths={...}'
@@ -706,10 +716,13 @@ def _ccf_grids(cfg, geometry, has_faculae, report):
 
     out = {}
     if lib == 'mps_highres':
-        by_order = cfg['instrument'] == 'HARPS-N'
-        if by_order:
+        by_order = cfg['instrument'] in ORDER_INSTRUMENTS
+        if cfg['instrument'] == 'HARPS-N':
             report['notes'].append('instrument HARPS-N: CCFs order by order (resolution 118000, HARPS orders, blaze x '
                                    'efficiency), as the old code')
+        elif cfg['instrument'] == 'PoET':
+            report['notes'].append('instrument PoET: CCFs order by order (resolution 190000, PoET orders, blaze '
+                                   'normalised to 1 at the maximum of every order)')
         elif cfg['instrument'] not in ('None', '', 'none'):
             report['notes'].append("instrument %s: the old code only used its blaze files for HARPS-N; CCF of the "
                                    "whole spectrum, as the old code" % cfg['instrument'])
@@ -717,7 +730,7 @@ def _ccf_grids(cfg, geometry, has_faculae, report):
             report['notes'].append('highres_mu = 0 (smoothed ratio of the old code) is not supported: the spectrum is '
                                    'interpolated at the mu of every ring (highres_mu = 1)')
         if raw_ccf and by_order:
-            raise ValueError('ccf_norm = 2 (raw CCFs) is not implemented with instrument = HARPS-N')
+            raise ValueError('ccf_norm = 2 (raw CCFs) is not implemented with instrument = %s' % cfg['instrument'])
         for surface in ('ph', 'sp', 'fc'):
             if surface == 'fc' and not has_faculae:
                 out['fc'] = out['ph']

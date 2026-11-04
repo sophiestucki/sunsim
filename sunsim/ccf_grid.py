@@ -228,9 +228,9 @@ class CCF_grid(object):
                     its spectrum (no mu_ratio needed with spectra at several mu), and the CCFs of the orders are added
                     with the flux of every order.
     instrument    : None -> CCF of the whole spectrum.
-                    An instrument.Instrument object (e.g. Instrument.harps()) -> its resolution, orders, efficiency
-                    and orders_medium (blaze_function, instrumental_efficiency and orders_medium must then be left out).
-                    'HARPS-N', 'HARPS', 'EXPRESS', 'NEID' or a resolving power R (a number) -> the same as
+                    An instrument.Instrument object (e.g. Instrument.harps(), Instrument.poet()) -> its resolution,
+                    orders, efficiency and orders_medium (blaze_function, instrumental_efficiency and orders_medium must then be left out).
+                    'HARPS-N', 'HARPS', 'EXPRESS', 'NEID', 'PoET' or a resolving power R (a number) -> the same as
                     Instrument(instrument, blaze_function, instrumental_efficiency, orders_medium). Every spectrum is
                     degraded to the resolution of the instrument (spectrum_utils.add_resol), then:
                       * without orders: CCF of the whole degraded spectrum (as StarSim v4 with an instrument);
