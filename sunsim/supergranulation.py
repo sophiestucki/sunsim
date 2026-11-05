@@ -95,12 +95,20 @@ def _client():
     return drms.Client()
 
 
-def query_records(series, jd_start, jd_end, good_only=True, client=None):
+def query_records(series, jd_start, jd_end, good_only=True, client=None, retries=5):
     """Records of a JSOC series between two JD (UTC): a pandas DataFrame with T_REC, T_OBS, QUALITY and 'jd' (T_OBS in
-    JD UTC), sorted. good_only: only QUALITY = 0 and a valid T_OBS."""
+    JD UTC), sorted. good_only: only QUALITY = 0 and a valid T_OBS. A network error (JSOC timed out) is tried again
+    `retries` times, 30 s, 60 s, ... later."""
     client = client or _client()
     ds = '%s[%s-%s]' % (series, t_rec_of_jd(jd_start), t_rec_of_jd(jd_end))
-    rec = client.query(ds, key='T_REC,T_OBS,QUALITY')
+    for attempt in range(retries):
+        try:
+            rec = client.query(ds, key='T_REC,T_OBS,QUALITY')
+            break
+        except OSError:                              # urllib.error.URLError, TimeoutError, ConnectionError
+            if attempt == retries - 1:
+                raise
+            _time.sleep(30 * (attempt + 1))
     if len(rec) == 0:
         rec['jd'] = []
         return rec

@@ -37,11 +37,14 @@ cat > "${folder}/poet_run.json" << JSON
  "instrument": "${instrument}", "mask": "${mask}"}
 JSON
 
+# exit code always 0: DAGMan removes the other simulations of the cluster as soon as one job fails (table leaves out
+# the simulations without exposures_simulated.csv)
 python -m sunsim.sdo --simulate-only --out "$folder" --conf "$conf" --grids-cache "$grids" --chunk-size 200
 status=$?
 if [ $status -ne 0 ]; then
-    echo "Simulation failed (outputs so far kept in $folder)"
-    exit $status
+    echo "ERROR: simulation failed, exit code $status (outputs so far kept in $folder)"
+    exit 0
 fi
-python "${PIPELINES}/poet_epochs.py" exposures --out "$POET_OUT" --set "$folder" --n-rings "$N_RINGS" || exit 1
+python "${PIPELINES}/poet_epochs.py" exposures --out "$POET_OUT" --set "$folder" --n-rings "$N_RINGS" \
+    || { echo "ERROR: exposures failed"; exit 0; }
 echo "Done: ${folder}"
