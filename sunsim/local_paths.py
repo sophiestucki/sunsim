@@ -55,6 +55,8 @@ KEYS = {
                         'analysis/supergranulation_pic_2021_quality.ipynb',
     'supergranulation_haywood_results': 'folder of PIC/supergranulation_haywood.py (days/, results/), for '
                         'analysis/supergranulation_haywood_2days.ipynb',
+    'supergranulation_haywood_neid_results': 'folder of PIC/supergranulation_haywood_neid.py (days/, results/), for '
+                        'analysis/supergranulation_haywood_2days.ipynb (section 9)',
     'poet_data':        'data of the PoET notebooks (spectra, outputs, figures)',
     'personal_data':    'other input files of the analysis notebooks (e.g. masks made by hand)',
 }

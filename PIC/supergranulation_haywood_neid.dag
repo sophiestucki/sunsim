@@ -1,0 +1,9 @@
+# condor_submit_dag supergranulation_haywood_neid.dag : SunSim at the times of the NEID exposures
+#   1. one job per day of supergranulation_haywood_neid_days.txt: HMI epochs, corrected 45 s dopplergrams and JPL
+#      velocities (Kitt Peak) of its NEID exposures (supergranulation_haywood_neid_day.sub)
+#   2. all the days: window averages, simulations, comparison with NEID (supergranulation_haywood_neid_collect.sub; it
+#      runs even if some days failed: only the complete days are used)
+JOB days    supergranulation_haywood_neid_day.sub
+JOB collect supergranulation_haywood_neid_collect.sub
+PARENT days CHILD collect
+SCRIPT POST days /bin/true

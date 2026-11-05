@@ -33,7 +33,7 @@ from datetime import datetime
 
 import numpy as np
 
-__all__ = ['mad', 'rms', 'jd_of_date', 'load_harpsn', 'sun_barycentric_rv', 'daily_average', 'load_sorce', 'load_tsis', 'load_interventions',
+__all__ = ['mad', 'rms', 'jd_of_date', 'load_harpsn', 'load_neid', 'sun_barycentric_rv', 'differential_extinction_rv', 'daily_average', 'load_sorce', 'load_tsis', 'load_interventions',
            'match_days', 'best_shift_match', 'compare_photometry', 'compare_rv', 'compare_rv_exposures', 'print_summary',
            'photometry_offsets', 'plot_photometry_comparison', 'plot_rv_comparison', 'plot_comparison', 'plot_correlation',
            'sweep_stats', 'load_sweep_stats', 'best_sets', 'plot_sweep_heatmaps', 'plot_sweep_parameters', 'PARAM_LABELS']
@@ -151,6 +151,7 @@ def load_harpsn(path, start, end=None, t_start=None, daily=True, quality=False):
 
 HORIZONS_URL = 'https://ssd.jpl.nasa.gov/api/horizons.api'
 TNG_SITE = (342.1106, 28.7540, 2.387)        # HARPS-N, TNG (La Palma): E-longitude [deg], latitude [deg], altitude [km]
+KPNO_SITE = (248.399438, 31.958092, 2.091)   # NEID, WIYN (Kitt Peak): OBSLON, OBSLAT, OBSALT of the L2 headers
 
 
 def _horizons_vectors(jd_utc, center, vec_table, vec_corr, site=None, chunk=50, retries=3, timeout=120):
@@ -207,6 +208,87 @@ def sun_barycentric_rv(jd_utc, site=TNG_SITE):
     lt = topo[:, 6]
     bary = _horizons_vectors(jd_utc - lt / 86400.0, '500@0', 2, 'NONE')           # Sun / barycentre at the emission
     return {'v': 1e3 * np.sum(bary[:, 3:6] * los, axis=1), 'lt': lt, 'rr': 1e3 * topo[:, 8]}
+
+
+def load_neid(path, date, end=None, k_extinction=0.1, snr_window=1200.0, min_snr_ratio=0.98):
+    """NEID solar feed (WIYN, Kitt Peak) exposures of the UTC days date to end, from csv of the NEID archive (solarl2: the
+    TAP table or the csv of the web interface; columns obsdate, exptime, ccfrvmod, dvrms, extsnr, flagged), or from a
+    folder of <YYYY-MM-DD>.csv. The RV as the HARPS-N RV in the rest frame of the Sun (rv_raw - v_sun (JPL) -
+    rv_diff_extinction): ccfrvmod (DRS v1.5.3, barycorrpy in solar mode) is already in the rest frame of the Sun (its
+    SSBRV = -(range rate of the Sun from JPL Horizons at Kitt Peak) - 631.78 m/s, to 1.4 cm/s over 2.6 h on 2021-05-25),
+    the differential extinction (differential_extinction_rv at KPNO_SITE, k = k_extinction: the median of the k of the
+    HARPS-N release in 2021-05 and 06; no measured k at Kitt Peak) is removed.
+    Returns a dict of arrays [m/s]: 'jd' (middle of the exposure, UTC), 'jd_start', 'texp', 'rv' (ccfrvmod minus the
+    differential extinction), 'rv_err' (dvrms), 'rv_drs' (ccfrvmod), 'rv_diff_extinction', 'extsnr', 'snr_ratio' (extsnr
+    / the highest extsnr of the day within +- snr_window / 2 [s]: extsnr has steps of a few % on clear days), 'flagged'
+    and 'good' (flagged = 0 and snr_ratio >= min_snr_ratio: no clouds, as obs_quality of HARPS-N)."""
+    import os
+    import pandas as pd
+    from astropy.time import Time
+    if os.path.isdir(path):
+        days = pd.date_range(date, end or date).strftime('%Y-%m-%d')
+        files = [os.path.join(path, d + '.csv') for d in days if os.path.exists(os.path.join(path, d + '.csv'))]
+        if not files:
+            raise FileNotFoundError('no <YYYY-MM-DD>.csv of %s to %s in %s' % (date, end or date, path))
+        d = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
+    else:
+        d = pd.read_csv(path)
+    if 'obsjd' not in d:                     # csv of the web interface: obsdate only (start of the exposure, UTC)
+        d['obsjd'] = Time(list(d['obsdate'].astype(str)), format='iso', scale='utc').jd
+    day = d['obsdate'].astype(str).str[:10]
+    keep = (day >= date) & (day <= (end or date))
+    d, day = d[keep].sort_values('obsjd'), day[keep]
+    day = day[d.index].values
+    jd = d['obsjd'].values + d['exptime'].values / 2 / 86400
+    snr = d['extsnr'].values.astype(np.float64)
+    ratio = np.ones(len(d))
+    for dd in np.unique(day):
+        m = np.flatnonzero(day == dd)
+        for i in m:
+            ratio[i] = snr[i] / snr[m[np.abs(jd[m] - jd[i]) <= snr_window / 2 / 86400]].max()
+    ext = differential_extinction_rv(jd, site=KPNO_SITE, k=k_extinction)
+    rv = 1e3 * d['ccfrvmod'].values
+    return {'name': 'NEID', 'jd': jd, 'jd_start': d['obsjd'].values, 'texp': d['exptime'].values, 'rv': rv - ext,
+            'rv_err': 1e3 * d['dvrms'].values, 'rv_drs': rv, 'rv_diff_extinction': ext, 'extsnr': snr,
+            'snr_ratio': ratio, 'flagged': d['flagged'].values,
+            'good': (d['flagged'].values == 0) & (ratio >= min_snr_ratio)}
+
+
+def differential_extinction_rv(jd_utc, site=TNG_SITE, k=0.1, n=201, u1=0.45, u2=0.25):
+    """RV of the differential extinction across the disc of the Sun in the atmosphere (Collier Cameron et al. 2019)
+    [m/s] at the times jd_utc (JD UTC) from site (E-lon, lat [deg], alt [km]): the rotation velocity of the disc
+    (Snodgrass & Ulrich 1990, B0 included) weighted by quadratic limb darkening (u1, u2) and by 10^(-0.4 k X(z)), z the
+    zenith angle of every point of the disc (n x n points; X of Kasten & Young 1989), minus the same without extinction.
+    k: extinction coefficient [mag/airmass]. With the k of every day it gives rv_diff_extinction of the HARPS-N release
+    (r > 0.999 on 2021-05/06; k = 0.07 to 0.17, median 0.10). Needs astropy and sunpy."""
+    import astropy.units as u
+    from astropy.coordinates import AltAz, EarthLocation, get_body
+    from astropy.time import Time
+    from sunpy.coordinates import sun
+
+    jd_utc = np.atleast_1d(np.asarray(jd_utc, dtype=np.float64))
+    loc = EarthLocation(lon=site[0] * u.deg, lat=site[1] * u.deg, height=site[2] * u.km)
+    t = Time(jd_utc, format='jd', scale='utc')
+    s = get_body('sun', t, loc)
+    z0 = np.pi / 2 - s.transform_to(AltAz(obstime=t, location=loc)).alt.rad
+    ha = (t.sidereal_time('apparent', longitude=loc.lon) - s.ra).wrap_at(180 * u.deg).rad
+    q = np.arctan2(np.sin(ha), np.tan(np.deg2rad(site[1])) * np.cos(s.dec.rad) - np.sin(s.dec.rad) * np.cos(ha))
+    pa, b0, rho = sun.P(t).rad, sun.B0(t).rad, sun.angular_radius(t).to(u.rad).value
+    x, y = np.meshgrid(np.linspace(-1, 1, n), np.linspace(-1, 1, n))   # x to the solar west, y to the solar north
+    on = x ** 2 + y ** 2 < 1
+    x, y = x[on], y[on]
+    mu = np.sqrt(1 - x ** 2 - y ** 2)
+    limb = 1 - u1 * (1 - mu) - u2 * (1 - mu) ** 2
+    airmass = lambda z: 1 / (np.cos(z) + 0.50572 * (96.07995 - np.rad2deg(z)) ** -1.6364)
+    out = np.zeros(len(jd_utc))
+    for i in range(len(jd_utc)):
+        s2 = (y * np.cos(b0[i]) + mu * np.sin(b0[i])) ** 2              # sin^2 of the heliographic latitude
+        omega = np.deg2rad(14.713 - 2.396 * s2 - 1.787 * s2 ** 2) / 86400.0
+        v = omega * 6.957e8 * x * np.cos(b0[i])                          # > 0 on the west limb (receding)
+        up = y * np.cos(pa[i] - q[i]) + x * np.sin(pa[i] - q[i])         # towards the zenith [solar radii]
+        w = limb * 10 ** (-0.4 * k * airmass(z0[i] - rho[i] * up))
+        out[i] = np.sum(w * v) / np.sum(w) - np.sum(limb * v) / np.sum(limb)
+    return out
 
 
 def daily_average(obs, start, keys=('rv', 'fwhm', 'bis', 'contrast')):
