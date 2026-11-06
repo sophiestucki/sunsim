@@ -1058,7 +1058,10 @@ def simulate_old_config(conf_file, times=None, observables=('lc',), spot_map=Non
             raise FileNotFoundError('%s not found: %s. Give it with paths={%r: ...}'
                                     % (name, report['paths'].get(name, report['paths']), name))
     if lib in ('mps', 'mps_highres'):
-        needed = [MURAM_FILES[('low', 'ph')], MURAM_FILES[('low', 'fc')]]
+        # low resolution: photometry, and the ring brightness of the mps CCFs (mps_highres: high resolution only)
+        needed = []
+        if do_lc or (do_rv and lib == 'mps'):
+            needed += [MURAM_FILES[('low', 'ph')], MURAM_FILES[('low', 'fc')]]
         if do_rv:
             needed += [MURAM_FILES[('high', 'ph')], MURAM_FILES[('high', 'fc')]]
         absent = [f for f in needed if not (Path(cfg['mps_folder']) / f).exists()]
