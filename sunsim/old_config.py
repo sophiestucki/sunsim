@@ -57,6 +57,9 @@ order with ccf_weight_lines, weights normalised to 1), velocity grid -range..ran
   dumusque_mu_scaling = a, b ([star], not in the old code): the Dumusque bisector of a ring is also multiplied by
                 a + b mu (e.g. 0, 1: proportional to mu, zero at the limb; ccf_grid.dumusque_bisector(mu_scaling=...)).
                 Custom: c0, c1, ..., cn -> c0 + c1 mu + ... + cn mu^n (any number of coefficients).
+  facula_B = B ([star], not in the old code; mps and mps_highres): mean field of the faculae [G]. The MURaM faculae
+                are the 200 G simulation (MURAM_FACULA_B); with another B every facula intensity (low and high
+                resolution, every mu) is (1 - B/200) I_quiet + B/200 I_faculae, extrapolated linearly above 200 G.
   mps_highres : the MURaM high resolution spectrum is interpolated at the mu of every ring and its CCF is computed in
                 every ring (highres_mu = 1); the spot as in mps. The CCF amplitude of every ring is its brightness.
 Spectroscopy ('spec', the observable of the old compute_forward added by O. Porqueras): spectrum of one cell of every
@@ -167,6 +170,7 @@ MURAM_FILES = {
     ('high', 'ph'): 'av_solar_ssd_200G_10_mu_angles_PHOENIX_high_res_grid_cleaned.npy',
     ('high', 'fc'): 'av_solar_faculae_200G_10_mu_angles_PHOENIX_high_res_grid_cleaned.npy',
 }
+MURAM_FACULA_B = 200.0      # [G] mean field of the MURaM faculae of MURAM_FILES (facula_B of the configuration)
 
 # physical keys: no default (an error if missing). (section, key, type)
 REQUIRED = [
@@ -205,6 +209,7 @@ OPTION_DEFAULTS = [
     ('general', 'add_median_diff', float, 0.0, 'no shift of the spot CCF'),
     ('star', 'convective_shift', float, 0.0, 'no bisector added'),
     ('star', 'dumusque_mu_scaling', str, '', 'the same Dumusque bisector at every mu (old code)'),
+    ('star', 'facula_B', float, 200.0, 'the MURaM faculae as they are (200 G)'),
     ('star', 'differential_rotation', float, 0.0, 'rigid rotation'),
     ('rv', 'ccf_template', str, 'mask', 'mask'),
     ('rv', 'ccf_weight_lines', int, 0, 'lines not weighted by order'),
@@ -333,6 +338,9 @@ def read_old_config(conf_file, old_package=None, observables=('lc',), paths=None
     cfg['mask_path'] = find(cfg['ccf_mask'], ['masks'], 'ccf_mask') if cfg.get('ccf_mask') else None
     cfg['weight_path'] = (find(cfg['path_weight_lines'], ['masks'], 'path_weight_lines')
                           if cfg['ccf_weight_lines'] else None)
+    if cfg['facula_B'] != MURAM_FACULA_B and cfg['spectral_library'] not in ('mps', 'mps_highres'):
+        raise ValueError('facula_B = %g: only with the MURaM spectra (spectral_library mps or mps_highres), got %s'
+                         % (cfg['facula_B'], cfg['spectral_library']))
     if cfg['spectral_library'] in ('mps', 'mps_highres'):
         # only a folder of the same name is accepted in place of a missing one (other MURaM spectra are not substituted)
         cfg['mps_folder'] = find(cfg['mps_spectra_folder'].rstrip('/'), ['.'], 'mps_spectra_folder', is_dir=True)
@@ -393,7 +401,27 @@ def _flatten(cfg, wv, flux):
 
 
 def _muram(cfg, kind, surface):
-    """MURaM intensities {mu: (wav, intensity)} (erg/s/cm^2/cm/sr), mu ascending; kind 'low' or 'high'."""
+    """MURaM intensities {mu: (wav, intensity)} (erg/s/cm^2/cm/sr), mu ascending; kind 'low' or 'high'. The faculae
+    with facula_B != MURAM_FACULA_B: w I_faculae + (1 - w) I_quiet, w = facula_B / MURAM_FACULA_B, at every mu."""
+    out = _read_muram(cfg, kind, surface)
+    B = cfg.get('facula_B', MURAM_FACULA_B)
+    if surface != 'fc' or B == MURAM_FACULA_B:
+        return out
+    w = B / MURAM_FACULA_B
+    quiet = _read_muram(cfg, kind, 'ph')
+    if set(quiet) != set(out):
+        raise ValueError('facula_B: the angles of %s and %s differ' % (MURAM_FILES[(kind, 'ph')],
+                                                                      MURAM_FILES[(kind, 'fc')]))
+    for m, (wav, f) in out.items():
+        wq, q = quiet[m]
+        if not np.array_equal(wq, wav):
+            q = np.interp(wav, wq, q)
+        out[m] = (wav, (1 - w) * q + w * f)
+    return out
+
+
+def _read_muram(cfg, kind, surface):
+    """The intensities of one file of MURAM_FILES, as _muram returns them."""
     data = np.load(Path(cfg['mps_folder']) / MURAM_FILES[(kind, surface)], allow_pickle=True).item()
     cfg['_muram_first_mu'] = float(next(iter(data)))      # the first angle of the file (1.0): the old code's flnp[0]
     out = {}

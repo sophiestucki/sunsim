@@ -1,0 +1,21 @@
+# Condor submit file, step 4 of sweep_facula_B.dag: one simulation per line of parameters_facula_B.txt
+# (noise_th, B_th, I_th, A_th, B_fc, Temp), after build_grids_facula_B.sub and aggregate_facula_B.sub
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/run_facula_B.sh
+
+# $1 = OMP_NUM_THREADS, $2 = noise_th, $3 = B_th, $4 = I_th, $5 = A_th, $6 = B_fc, $7 = Temp
+Arguments = "8 $(noise_th) $(B_th) $(I_th) $(A_th) $(B_fc) $(Temp)"
+
+max_materialize = 50
+RequestCpus   = 8
+RequestMemory = 24GB
+RequestDisk   = 1GB
+
+Log    = logs/facula_B_noise_$(noise_th)_I_$(I_th)_A_th_$(A_th)_Bfc_$(B_fc)_T_$(Temp).log
+Output = logs/facula_B_noise_$(noise_th)_I_$(I_th)_A_th_$(A_th)_Bfc_$(B_fc)_T_$(Temp).out
+Error  = logs/facula_B_noise_$(noise_th)_I_$(I_th)_A_th_$(A_th)_Bfc_$(B_fc)_T_$(Temp).err
+
+stream_output = True
+stream_error  = True
+
+Queue noise_th, B_th, I_th, A_th, B_fc, Temp from parameters_facula_B.txt

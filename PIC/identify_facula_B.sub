@@ -1,0 +1,20 @@
+# Condor submit file, step 2 of sweep_facula_B.dag: identification at 4096 px in 80 blocks of days (N_BLOCKS of
+# settings_facula_B.sh: keep the two equal), the sets of thresholds of parameters_facula_B.txt at once
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/identify_facula_B.sh
+
+# $1 = workers (days at the same time in the job: ~3-4 GB of memory each at 4096 px), $2 = block
+Arguments = "4 $(Process)"
+
+RequestCpus   = 4
+RequestMemory = 20GB
+RequestDisk   = 1GB
+
+Log    = logs/identify_facula_B_$(Process).log
+Output = logs/identify_facula_B_$(Process).out
+Error  = logs/identify_facula_B_$(Process).err
+
+stream_output = True
+stream_error  = True
+
+Queue 80

@@ -41,7 +41,7 @@ __all__ = ['mad', 'rms', 'jd_of_date', 'load_harpsn', 'load_neid', 'sun_barycent
 COLOURS = {'sim': '#ea8642', 'harpsn': '#102e37', 'sorce': '#102e37', 'tsis': '#918AE5', 'res': '#4d4d4d'}
 # names of the thresholds of the sweep in the figures
 PARAM_LABELS = {'T_sp': r'$\Delta T_s$', 'I_th': r'$I_{th}$', 'A_th': r'$A_{th}$', 'noise_th': r'$\mathrm{noise}_{th}$',
-                'B_sat': r'$B_{sat}$', 'B_th': r'$B_{th}$'}
+                'B_sat': r'$B_{sat}$', 'B_th': r'$B_{th}$', 'B_fc': r'$B_{fc}$'}
 
 
 # ----------------------------------------------------------------------------------------------------------------------

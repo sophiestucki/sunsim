@@ -1,0 +1,17 @@
+# Condor submit file, step 1 of sweep_facula_B.dag: the grids (60 rings, ccf_norm = 2, Dumusque bisector times mu,
+# facula_B = B_fc) of every line of parameters_facula_B.txt, one job each
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/build_grids_facula_B.sh
+
+# $1 = threads, $2 = Temp, $3 = B_fc
+Arguments  = "1 $(Temp) $(B_fc)"
+
+RequestCpus   = 10
+RequestMemory = 16GB
+RequestDisk   = 10GB
+
+Log    = logs/build_grids_facula_B_T_$(Temp)_Bfc_$(B_fc).log
+Output = logs/build_grids_facula_B_T_$(Temp)_Bfc_$(B_fc).out
+Error  = logs/build_grids_facula_B_T_$(Temp)_Bfc_$(B_fc).err
+
+Queue noise_th, B_th, I_th, A_th, B_fc, Temp from parameters_facula_B.txt

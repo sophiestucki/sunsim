@@ -1,0 +1,13 @@
+# Condor submit file, step 5 of sweep_facula_B.dag: the table of all the sets (after run_facula_B.sub)
+Universe   = vanilla
+Executable = /nfs/pic.es/user/s/sstucki/sunsim/PIC/collect_facula_B.sh
+
+RequestCpus   = 1
+RequestMemory = 4GB
+RequestDisk   = 1GB
+
+Log    = logs/collect_facula_B.log
+Output = logs/collect_facula_B.out
+Error  = logs/collect_facula_B.err
+
+Queue
