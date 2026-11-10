@@ -395,7 +395,7 @@ class ResidualAnalysis:
             except ImportError:
                 cmap = 'inferno'
         im = ax.pcolormesh(inj['periods'], inj['amplitudes'], rate, shading='nearest', cmap=cmap, vmin=vmin,
-                           vmax=vmax)
+                           vmax=vmax, rasterized=True)                  # one image: no seams between the cells in PDFs
         plt.colorbar(im, ax=ax, label=label)
         for p in mark:
             ax.axvline(p, color='#76a4f4')
