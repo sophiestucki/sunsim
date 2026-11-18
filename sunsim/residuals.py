@@ -44,9 +44,14 @@ class ResidualAnalysis:
     ofac, hifac     : oversampling of the frequency grid (step 1/(ofac T)) and maximum frequency in units of N/(2T)
     cache           : maximum number of values of the cos and sin of the grid kept in memory (2 x frequencies x times,
                       8 bytes each); above it they are recomputed at every periodogram
+    groups          : index of the instrumental period of every point (from_comparison), for inject(before=True);
+                      None: one period
+    t_planet        : times of the observations where inject(before=True) puts the planet (from_comparison: the days
+                      of HARPS-N without the day shift of compare_rv); None: t
     After inject(): self.injection (see inject)."""
 
-    def __init__(self, t, y, err=None, name='', fbeg=None, fend=None, ofac=10, hifac=1, cache=5e7):
+    def __init__(self, t, y, err=None, name='', fbeg=None, fend=None, ofac=10, hifac=1, cache=5e7, groups=None,
+                 t_planet=None):
         t, y = np.asarray(t, dtype=np.float64), np.asarray(y, dtype=np.float64)
         ok = np.isfinite(t) & np.isfinite(y)
         if err is not None:
@@ -55,6 +60,8 @@ class ResidualAnalysis:
         order = np.argsort(t[ok])
         self.t, self.y = t[ok][order], y[ok][order]
         self.err = None if err is None else err[ok][order]
+        self.groups = np.zeros(len(self.t), int) if groups is None else np.asarray(groups)[ok][order]
+        self.t_planet = self.t if t_planet is None else np.asarray(t_planet, dtype=np.float64)[ok][order]
         self.name = name
         self.N = len(self.t)
         if self.N < 4:
@@ -89,16 +96,18 @@ class ResidualAnalysis:
     @classmethod
     def from_comparison(cls, rv, series='res', errors=False, period_medians=False, **kw):
         """From the dict of observations.compare_rv: series 'res' (obs - sim), 'obs' or 'sim'; errors: weights from
-        rv['obs_err']; period_medians: the median of every instrumental period (between rv['interventions']) is
-        removed from the series (for 'obs': the offsets of the instrument, without the simulation)."""
+        rv['obs_err']; period_medians: the median of every instrumental period (rv['period']) is removed from the
+        series (for 'obs': the offsets of the instrument, without the simulation). The instrumental periods and the
+        days without the shift of compare_rv are kept for inject(before=True)."""
         names = {'res': 'residuals', 'obs': 'observations', 'sim': 'simulation'}
         kw.setdefault('name', names.get(series, series))
         y = np.array(rv[series], dtype=np.float64)
+        p = rv['period']
         if period_medians:
-            p = np.searchsorted(np.sort(rv['interventions']), rv['t'], side='right')
             for k in np.unique(p):
                 y[p == k] -= np.nanmedian(y[p == k])
-        return cls(rv['t'], y, err=rv['obs_err'] if errors else None, **kw)
+        shift = np.array([info['shift'] for info in rv['periods']], dtype=np.float64)
+        return cls(rv['t'], y, err=rv['obs_err'] if errors else None, groups=p, t_planet=rv['t'] - shift[p], **kw)
 
     def save(self, path):
         """Saves the series, the frequency range and the injection (if any) to a .npz file (load)."""
@@ -306,11 +315,15 @@ class ResidualAnalysis:
     # injection and recovery of planets
     # ------------------------------------------------------------------------------------------------------------------
 
-    def inject(self, periods, amplitudes, n_phases=100, fap=1e-3, fit=True, esinw=0.0, ecosw=0.0, verbose=True):
+    def inject(self, periods, amplitudes, n_phases=100, fap=1e-3, fit=True, esinw=0.0, ecosw=0.0, before=False,
+               verbose=True):
         """Injects y + planet.keplerian_orbit(t, [P, K, esinw, ecosw, t_transit]) for every period P [days],
         semi-amplitude K (unit of y) and n_phases times of transit t_transit = t[0] + P i / n_phases, and computes the
         GLS of every injected series. fit: for the series with FAP <= fap, the sinusoid of sinusoid() is fitted with
         a free period (scipy curve_fit, from the GLS peak).
+        before: the planet is injected in the observations before the comparison (compare_rv), i.e. at the times
+        t_planet, and the median of every instrumental period (groups) is removed again from the injected series (the
+        day shifts and matched days of the comparison without the planet are kept).
         Returns (and keeps in self.injection) a dict: 'periods', 'amplitudes', 't_transit' (n_periods, n_phases),
         'fap_fit' (= fap) and arrays (n_periods, n_amplitudes, n_phases): 'P', 'amp', 'fap' (GLS peak), 'P_fit',
         'amp_fit', 'phi_fit' (NaN if not fitted)."""
@@ -321,11 +334,15 @@ class ResidualAnalysis:
         out = {'periods': periods, 'amplitudes': amplitudes, 'fap_fit': fap,
                't_transit': self.t[0] + periods[:, None] * np.arange(n_phases)[None, :] / n_phases}
         out.update({k: np.full(shape, np.nan) for k in ('P', 'amp', 'fap', 'P_fit', 'amp_fit', 'phi_fit')})
+        t_pl = self.t_planet if before else self.t
+        groups = [self.groups == g for g in np.unique(self.groups)] if before else []
         for i, P in enumerate(periods):
-            unit = np.stack([planet.keplerian_orbit(self.t, [P, 1.0, esinw, ecosw, tt]) for tt in out['t_transit'][i]],
+            unit = np.stack([planet.keplerian_orbit(t_pl, [P, 1.0, esinw, ecosw, tt]) for tt in out['t_transit'][i]],
                             axis=1)                                     # K = 1, (N, n_phases)
             for j, K in enumerate(amplitudes):
                 Y = self.y[:, None] + K * unit
+                for g in groups:
+                    Y[g] -= np.median(Y[g], axis=0)
                 pg = self.periodogram(Y)
                 out['P'][i, j], out['amp'][i, j], out['fap'][i, j] = pg['P'], pg['amp'], pg['fap']
                 if not fit:
@@ -400,7 +417,7 @@ class ResidualAnalysis:
         for p in mark:
             ax.axvline(p, color='#76a4f4')
         ax.set_xlabel('Injected period [days]')
-        ax.set_ylabel('Semi-amplitude [m/s]')
+        ax.set_ylabel(r'Semi-amplitude [m$\,$s$^{-1}$]')
         if title is not None:
             ax.set_title(title)
         return ax
@@ -428,8 +445,8 @@ class ResidualAnalysis:
         lim = [0, 1.1 * inj['amplitudes'].max()]
         ax[0].plot(lim, lim, 'k', alpha=0.4)
         ax[0].set_xlim(lim)
-        ax[0].set_xlabel('Injected semi-amplitude [m/s]')
-        ax[0].set_ylabel('Recovered semi-amplitude [m/s]')
+        ax[0].set_xlabel(r'Injected semi-amplitude [m$\,$s$^{-1}$]')
+        ax[0].set_ylabel(r'Recovered semi-amplitude [m$\,$s$^{-1}$]')
         ax[0].legend(ncols=2, fontsize='small')
         lim = [0, 1.1 * inj['periods'].max()]
         ax[1].plot(lim, lim, 'k', alpha=0.4)

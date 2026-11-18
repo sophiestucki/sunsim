@@ -133,6 +133,36 @@ def closest(jd, jd_records):
     return order[k], np.abs(rs[k] - jd) * 86400.0
 
 
+def _download(url, path, timeout, resumes=20):
+    """Downloads url into path, checked against its Content-Length: a connection closed before the end (JSOC sometimes
+    does so without error) is resumed from the bytes already written (HTTP Range), up to `resumes` times."""
+    size = None
+    with open(path, 'wb') as f:
+        for _ in range(resumes + 1):
+            done = f.tell()
+            request = urllib.request.Request(url, headers={'Range': 'bytes=%d-' % done} if done else {})
+            try:
+                with urllib.request.urlopen(request, timeout=timeout) as r:
+                    if done and r.status != 206:            # the server ignored the range: from the start
+                        f.seek(0)
+                        f.truncate()
+                        done = 0
+                    if size is None and r.headers.get('Content-Length') is not None:
+                        size = done + int(r.headers['Content-Length'])
+                    while True:
+                        block = r.read(1 << 20)
+                        if not block:
+                            break
+                        f.write(block)
+            except OSError:                                 # timeout, reset: resumed
+                if size is None and not f.tell():
+                    raise
+                continue
+            if size is None or f.tell() == size:
+                return
+    raise IOError('%s: %d of %s bytes after %d resumes' % (url, os.path.getsize(path), size, resumes))
+
+
 def fetch_record(series, t_rec, segment, folder, client=None, retries=3, timeout=600):
     """Downloads the image `segment` of the record series[t_rec] into folder (the file of the JSOC storage, without
     an export request: no email needed) and returns (path, keywords): keywords is the dict of all the keywords of the
@@ -145,12 +175,7 @@ def fetch_record(series, t_rec, segment, folder, client=None, retries=3, timeout
             if len(keys) == 0:
                 raise FileNotFoundError('no record %s' % ds)
             path = os.path.join(str(folder), '%s.%s.%s.fits' % (series, t_rec.replace(':', ''), segment))
-            with urllib.request.urlopen(JSOC_URL + segs[segment].iloc[0], timeout=timeout) as r, open(path + '.part', 'wb') as f:
-                while True:
-                    block = r.read(1 << 20)
-                    if not block:
-                        break
-                    f.write(block)
+            _download(JSOC_URL + segs[segment].iloc[0], path + '.part', timeout)
             os.replace(path + '.part', path)
             return path, keys.iloc[0].to_dict()
         except Exception:

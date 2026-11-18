@@ -396,9 +396,10 @@ def compare_rv(harps, t_sim, y_sim, quantity='rv', interventions=None, shifts=(-
     """Daily HARPS-N values (load_harpsn) of quantity ('rv', 'fwhm', 'bis' [m/s] or 'contrast') against the simulation
     (t_sim in days since start, y_sim in the same unit), see the module docstring: medians removed, one period per
     interval between the interventions, the best day shift and one offset per period.
-    Returns a dict: 'quantity', 't' (days of the observations + shift), 'obs', 'obs_err', 'sim', 'res', 'mad', 'rms'
-    (of res), 'mad_obs', 'rms_obs' (of obs), 'reduction' [%] = 100 (rms_obs - rms) / rms_obs, 'n', 'interventions' (the
-    ones inside the observations) and 'periods': a list of dicts (start, end, n_sim, n_obs, n, shift, offset, rms, mad)."""
+    Returns a dict: 'quantity', 't' (days of the observations + shift), 'obs', 'obs_err', 'sim', 'res', 'period' (index
+    of the instrumental period of every point), 'mad', 'rms' (of res), 'mad_obs', 'rms_obs' (of obs), 'reduction' [%] =
+    100 (rms_obs - rms) / rms_obs, 'n', 'interventions' (the ones inside the observations) and 'periods': a list of
+    dicts (start, end, n_sim, n_obs, n, shift, offset, rms, mad)."""
     t_sim, y_sim = np.asarray(t_sim, dtype=np.float64), np.asarray(y_sim, dtype=np.float64)
     t_obs, y_obs = np.asarray(harps['t'], dtype=np.float64), np.asarray(harps[quantity], dtype=np.float64)
     err = np.asarray(harps.get(quantity + '_err', np.full(len(t_obs), np.nan)), dtype=np.float64)
@@ -415,7 +416,7 @@ def compare_rv(harps, t_sim, y_sim, quantity='rv', interventions=None, shifts=(-
     p_obs, p_sim = _periods(t_obs, cuts), _periods(t_sim, cuts)
     edges = np.concatenate(([t_obs.min() if len(t_obs) else 0], cuts, [t_obs.max() if len(t_obs) else 0]))
 
-    cols = {k: [] for k in ('t', 'obs', 'obs_err', 'sim', 'res')}
+    cols = {k: [] for k in ('t', 'obs', 'obs_err', 'sim', 'res', 'period')}
     periods = []
     for p in range(len(cuts) + 1):
         mo = np.where(p_obs == p)[0]
@@ -432,6 +433,7 @@ def compare_rv(harps, t_sim, y_sim, quantity='rv', interventions=None, shifts=(-
             cols['obs_err'].append(err[mo][io])
             cols['sim'].append(s)
             cols['res'].append(d - np.median(d))
+            cols['period'].append(np.full(len(io), p))
         periods.append(info)
     out = {k: (np.concatenate(v) if v else np.zeros(0)) for k, v in cols.items()}
     out.update(quantity=quantity, n=len(out['res']), interventions=cuts, periods=periods,
@@ -445,7 +447,7 @@ def compare_rv_exposures(obs, y_sim, quantity='rv', interventions=None):
     of the same exposure, y_sim (same length as obs['t']: e.g. the simulation at the SDO epoch closest to every
     exposure), without averaging per day. Medians removed, one offset per instrumental period (interventions, days
     since start), as compare_rv but without day shifts. Returns the dict of compare_rv ('t', 'obs', 'obs_err', 'sim',
-    'res', 'mad', 'rms', 'mad_obs', 'rms_obs', 'reduction', 'n', 'quantity', 'interventions', 'periods'), so that
+    'res', 'period', 'mad', 'rms', 'mad_obs', 'rms_obs', 'reduction', 'n', 'quantity', 'interventions', 'periods'), so that
     print_summary, plot_rv_comparison and plot_correlation work with it."""
     t = np.asarray(obs['t'], dtype=np.float64)
     y_obs = np.asarray(obs[quantity], dtype=np.float64)
@@ -471,9 +473,9 @@ def compare_rv_exposures(obs, y_sim, quantity='rv', interventions=None):
             res[m] = d - np.median(d)
             info.update(offset=float(np.median(d)), rms=rms(d), mad=mad(d))
         periods.append(info)
-    out = {'t': t, 'obs': y_obs, 'obs_err': err, 'sim': y_sim, 'res': res, 'quantity': quantity, 'n': len(t),
-           'interventions': cuts, 'periods': periods, 'mad': mad(res), 'rms': rms(res), 'mad_obs': mad(y_obs),
-           'rms_obs': rms(y_obs)}
+    out = {'t': t, 'obs': y_obs, 'obs_err': err, 'sim': y_sim, 'res': res, 'period': period, 'quantity': quantity,
+           'n': len(t), 'interventions': cuts, 'periods': periods, 'mad': mad(res), 'rms': rms(res),
+           'mad_obs': mad(y_obs), 'rms_obs': rms(y_obs)}
     out['reduction'] = 100 * (out['rms_obs'] - out['rms']) / out['rms_obs'] if out['n'] else np.nan
     return out
 
@@ -562,7 +564,7 @@ def plot_rv_comparison(rv, ax=None, ax_res=None, t0=0.0, obs_label='HARPS-N', si
     if ax is None:
         _, (ax, ax_res) = plt.subplots(2, 1, sharex=True, gridspec_kw={'hspace': 0, 'height_ratios': [2, 1]})
     q = rv['quantity']
-    unit = '' if q == 'contrast' else ' [m/s]'
+    unit = '' if q == 'contrast' else r' [m$\,$s$^{-1}$]'
     x = _x(rv['t'], t0)
     err = np.where(np.isfinite(rv['obs_err']), rv['obs_err'], 0)
     ax.errorbar(x, rv['obs'], yerr=err, marker='o', linestyle='-', color=COLOURS['harpsn'], alpha=0.3, label=obs_label)
@@ -571,7 +573,7 @@ def plot_rv_comparison(rv, ax=None, ax_res=None, t0=0.0, obs_label='HARPS-N', si
     ax.set_ylabel('%s variability%s' % ('RV' if q == 'rv' else q.upper() if q != 'contrast' else 'Contrast', unit))
     ax.legend(ncols=2)
     if stats and rv['n']:
-        scale, u = (100, 'cm/s') if q != 'contrast' else (1, '')
+        scale, u = (100, r'cm$\,$s$^{-1}$') if q != 'contrast' else (1, '')
         ax.text(0.01, 0.75, 'Res. RMS: %.2f %s\nRes. MAD: %.2f %s' % (rv['rms'] * scale, u, rv['mad'] * scale, u),
                 transform=ax.transAxes, color=COLOURS['sim'], fontsize='large',
                 bbox=dict(facecolor='white', edgecolor='none', pad=3))
@@ -626,7 +628,7 @@ def plot_correlation(rv, ax=None, label=None):
     ax.plot([lo, hi], [lo, hi], 'k-', alpha=0.4)
     ax.set_xlim(lo, hi)
     ax.set_ylim(lo, hi)
-    unit = '' if rv['quantity'] == 'contrast' else ' [m/s]'
+    unit = '' if rv['quantity'] == 'contrast' else r' [m$\,$s$^{-1}$]'
     ax.set_xlabel('%s observed%s' % (label or rv['quantity'], unit))
     ax.set_ylabel('%s simulated%s' % (label or rv['quantity'], unit))
     if rv['n'] > 2:
@@ -850,7 +852,7 @@ def _main(argv=None):
     print('%d sets -> %s' % (len(df), os.path.join(out, 'sweep_stats.csv')))
     # facular threshold of the heatmaps: A_th (area), or B_sat for a sweep of facular fractions (faculae='fraction')
     fac = 'B_sat' if 'B_sat' in df and ('A_th' not in df or df['A_th'].isna().all()) else 'A_th'
-    for value, unit, levels, title in (('rv_rms', 'm/s', a.rv_levels, 'RV - HARPS-N'),
+    for value, unit, levels, title in (('rv_rms', r'm$\,$s$^{-1}$', a.rv_levels, 'RV - HARPS-N'),
                                        ('sorce_rms', 'ppm', a.tsi_levels, 'TSI - SORCE/TIM'),
                                        ('tsis_rms', 'ppm', a.tsi_levels, 'TSI - TSIS-1/TIM')):
         if value not in df or df[value].isna().all():
